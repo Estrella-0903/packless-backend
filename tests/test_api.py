@@ -49,11 +49,20 @@ def test_analyze_rejects_non_image_upload() -> None:
     }
 
 
-def test_openapi_contains_primary_routes() -> None:
+def test_openapi_and_swagger_docs_are_available() -> None:
     response = client.get("/openapi.json")
     assert response.status_code == 200
     paths = response.json()["paths"]
-    assert {"/api/analyze", "/api/redesign", "/api/materials"} <= set(paths)
+    assert {
+        "/api/analyze",
+        "/api/redesign",
+        "/api/materials",
+        "/health",
+    } <= set(paths)
+
+    docs_response = client.get("/docs")
+    assert docs_response.status_code == 200
+    assert "url: '/openapi.json'" in docs_response.text
 
 
 def test_cors_preflight_is_enabled() -> None:
