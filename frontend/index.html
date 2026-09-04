@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="PackLess AI — 拆开包装，看见那些本可以不存在的部分。">
+  <title>PackLess AI — 包装减量体检</title>
+  <style>
+    :root {
+      --paper:#f3f0e6; --paper-2:#dde9d5; --ink:#173528; --muted:#68746c;
+      --accent:#28734a; --sage:#dde9d5; --warning:#e56a45; --line:rgba(23,53,40,.3); --hair:rgba(23,53,40,.12);
+      --font:Inter,"HarmonyOS Sans SC","PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth;background:var(--paper)}
+    body{margin:0;color:var(--ink);font-family:var(--font);background:var(--paper);overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;z-index:200;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:radial-gradient(rgba(23,25,20,.18) .45px,transparent .6px);background-size:5px 5px}
+    a{color:inherit;text-decoration:none} button,input{font:inherit} button{color:inherit}
+    ::selection{background:var(--accent);color:var(--paper)}
+    .nav{position:fixed;z-index:100;inset:0 0 auto;height:70px;padding:0 4vw;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;mix-blend-mode:multiply}
+    .brand{font-size:19px;font-weight:850;letter-spacing:-.06em}.brand sup{font-size:7px;margin-left:3px}
+    .nav-links{display:flex;gap:34px;font-size:10px;font-weight:750;letter-spacing:.12em;text-transform:uppercase}
+    .nav-links a{border-bottom:1px solid transparent;padding:7px 0}.nav-links a:hover{border-color:currentColor}
+    .nav-cta{justify-self:end;font-size:12px;font-weight:750;border-bottom:1px solid;padding:8px 0}
+    .micro{display:flex;align-items:center;gap:9px;font-size:9px;font-weight:850;letter-spacing:.17em;text-transform:uppercase}
+    .micro:before{content:"";width:20px;height:6px;background:var(--accent)}
+    .button{border:1px solid var(--ink);background:transparent;min-height:50px;padding:0 19px;display:inline-flex;align-items:center;justify-content:center;gap:22px;font-size:12px;font-weight:760;cursor:pointer;transition:transform .2s,background .2s,color .2s}
+    .button:hover{transform:translateY(-2px)}.button-primary{background:var(--ink);color:var(--paper)}.button-primary:hover{background:var(--accent);border-color:var(--accent)}
+    .button-ghost:hover{background:var(--ink);color:var(--paper)}
+
+    /* Hero: closed carton -> opened structure -> dieline */
+    .hero-scroll{height:390vh;min-height:2600px;position:relative}
+    .hero-sticky{position:sticky;top:0;height:100svh;overflow:hidden;display:grid;place-items:center;padding:72px 5vw 4vh}
+    .hero-copy{position:absolute;z-index:10;left:7vw;top:50%;transform:translateY(-50%);width:min(530px,42vw);will-change:opacity}
+    .hero-copy h1{font-size:clamp(52px,6vw,92px);line-height:.96;letter-spacing:-.075em;font-weight:650;margin:25px 0 23px}
+    .hero-copy p{font-size:16px;color:var(--muted);margin:0 0 36px}
+    .carton-stage{position:absolute;inset:70px 0 0;perspective:1200px;display:grid;place-items:center;pointer-events:none}
+    .carton-anchor{position:absolute;left:66%;top:50%;width:280px;height:390px;transform:translate(-50%,-50%) rotateX(-4deg) rotateY(-9deg) scale(1.12);transform-style:preserve-3d;will-change:transform,opacity}
+    .carton{position:relative;width:100%;height:100%;transform-style:preserve-3d;filter:drop-shadow(0 34px 22px rgba(40,31,16,.18))}
+    .carton-face{position:absolute;border:1.2px solid var(--ink);background:#efe7d5;backface-visibility:visible;transform-style:preserve-3d}
+    .carton-front{inset:70px 30px 30px 0;padding:28px 24px;display:flex;flex-direction:column;overflow:hidden;transform-origin:left center}
+    .carton-front:before{content:"";position:absolute;width:210px;height:210px;border:1.5px solid var(--accent);border-radius:50%;right:-68px;top:70px}
+    .carton-front:after{content:"";position:absolute;left:0;right:0;bottom:35px;border-top:1px dashed var(--line)}
+    .carton-kicker{font-size:9px;font-weight:850;letter-spacing:.2em}.carton-question{position:absolute;left:50px;top:68px;font:220px/.85 Georgia,serif;color:var(--accent);transform:rotate(7deg)}
+    .carton-volume{margin-top:auto;font-size:7px;font-weight:750;letter-spacing:.14em}
+    .carton-side{width:68px;height:290px;right:-37px;top:70px;transform-origin:left center;transform:rotateY(58deg);background:var(--accent);color:var(--paper);padding:18px 12px;font-size:8px;font-weight:850;line-height:1.5;letter-spacing:.12em}
+    .carton-side i{display:block;width:17px;height:17px;border-radius:50%;background:var(--ink);margin-top:18px}
+    .carton-top{left:0;top:0;width:250px;height:72px;transform-origin:bottom center;transform:rotateX(-12deg) skewX(-7deg);background:#ded4bd;display:grid;place-items:center;font-size:7px;font-weight:850;letter-spacing:.14em}
+    .carton-top:after,.carton-bottom:after{content:"";position:absolute;inset:11px;border:1px dashed var(--line)}
+    .carton-bottom{left:0;bottom:0;width:250px;height:32px;transform-origin:top center;background:#ded4bd}
+    .carton-shadow{position:absolute;left:-20px;right:-15px;bottom:-25px;height:30px;border-radius:50%;background:rgba(23,25,20,.22);filter:blur(14px);transform:rotateX(76deg)}
+    .hero-net{position:absolute;width:min(930px,82vw);height:min(650px,72vh);left:50%;top:51%;transform:translate(-43%,-50%) scale(.74) rotate(-6deg);opacity:0;display:grid;grid-template-columns:.6fr 1fr 1fr 1fr .7fr;grid-template-rows:.48fr .72fr 1fr 1fr .72fr .45fr;will-change:transform,opacity}
+    .hero-panel{position:relative;border:1px solid var(--ink);background:rgba(243,239,228,.86)}
+    .hero-panel:after{content:"";position:absolute;inset:8px;border:1px dashed var(--hair)}
+    .hp-tab-top{grid-column:3;grid-row:1;border-style:dashed;border-radius:50% 50% 0 0}.hp-top{grid-column:3;grid-row:2}
+    .hp-1{grid-column:1/3;grid-row:3/5;border-right:0}.hp-2{grid-column:3;grid-row:3/5}.hp-3{grid-column:4;grid-row:3/5}.hp-4{grid-column:5;grid-row:3/5}.hp-bottom{grid-column:3;grid-row:5}.hp-tab-bottom{grid-column:3;grid-row:6;border-style:dashed;border-radius:0 0 45% 45%}
+    .hero-step{display:flex;flex-direction:column;justify-content:flex-end;padding:20px}.hero-step b{position:absolute;left:16px;top:14px;color:var(--accent);font:30px Georgia,serif}.hero-step small{font-size:8px;font-weight:850;letter-spacing:.15em;margin-bottom:7px}.hero-step strong{font-size:clamp(14px,1.5vw,22px);letter-spacing:-.04em}
+    .hero-measure{position:absolute;right:8px;top:7px;font-size:7px;letter-spacing:.12em}
+    .unfold-meaning{position:absolute;z-index:12;left:7vw;bottom:7vh;font-size:clamp(18px,1.8vw,27px);line-height:1.45;font-weight:650;letter-spacing:-.035em;opacity:0}
+    .scroll-cue{position:absolute;left:50%;bottom:3vh;transform:translateX(-50%);display:grid;place-items:center;gap:8px;font-size:7px;font-weight:850;letter-spacing:.18em}.scroll-cue i{width:1px;height:34px;background:var(--ink);position:relative;overflow:hidden}.scroll-cue i:after{content:"";position:absolute;inset:0;background:var(--accent);animation:scrollLine 1.6s infinite}
+    @keyframes scrollLine{from{transform:translateY(-100%)}80%,to{transform:translateY(100%)}}
+
+    .paper-body{background-image:linear-gradient(var(--hair) 1px,transparent 1px),linear-gradient(90deg,var(--hair) 1px,transparent 1px);background-size:100% 100%,calc((100vw - 8vw)/12) 100%;background-position:0,4vw 0}
+    .section{width:min(1400px,92vw);margin:auto;padding:125px 0;position:relative}.section-heading{margin-bottom:58px}.section-heading h2{font-size:clamp(52px,7vw,104px);line-height:.91;letter-spacing:-.075em;font-weight:625;margin:26px 0 0}.section-tag{display:flex;gap:20px;font-size:8px;font-weight:850;letter-spacing:.17em;text-transform:uppercase}.section-tag span:first-child{color:var(--accent)}
+    .split-heading{display:grid;grid-template-columns:1.35fr .65fr;gap:6vw;align-items:end}.split-heading>p{max-width:410px;margin:0;color:var(--muted);font-size:14px;line-height:1.65}
+
+    /* Upload */
+    .upload-dieline{min-height:510px;display:grid;grid-template-columns:13% 1fr 13%}.upload-side{writing-mode:vertical-rl;transform:rotate(180deg);font-size:7px;font-weight:850;letter-spacing:.14em;padding:15px;border:1px dashed var(--line);color:var(--muted)}.upload-side:last-child{transform:none}
+    .upload-zone{position:relative;border:1.5px solid var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(243,239,228,.84)}.upload-zone:before{content:"";position:absolute;inset:13px;border:1px dashed var(--line)}.upload-zone:after{content:"FRONT PANEL / IMAGE AREA";position:absolute;left:28px;top:24px;font-size:7px;font-weight:850;letter-spacing:.15em}.upload-symbol{font:76px/1 Georgia,serif;color:var(--accent);transform:rotate(9deg)}.upload-zone h3{font-size:27px;letter-spacing:-.04em;margin:12px 0 5px}.upload-zone>p{color:var(--muted);font-size:11px}.upload-actions{display:flex;gap:10px;margin-top:22px;position:relative;z-index:2}.upload-file input{display:none}.prototype-note{text-align:center;color:var(--muted);font-size:9px;margin:20px 0 0}
+    .folded-lock{height:300px;border-top:1px solid var(--line);display:grid;place-items:center;text-align:center;color:var(--muted)}.folded-lock b{font-size:8px;letter-spacing:.17em}.folded-lock p{color:var(--ink);font-size:17px}
+
+    /* Shared packaging object */
+    .package{width:420px;height:380px;position:relative}.layer{position:absolute;left:50%;top:50%;translate:-50% -50%;transition:transform .75s,opacity .75s,width .75s,height .75s,background .75s}
+    .outer-box{z-index:2;width:230px;height:300px;background:#e9dfca;border:1.4px solid var(--ink);box-shadow:14px 15px 0 #cfc4ae;padding:27px 23px;display:flex;flex-direction:column}.outer-box:after{content:"";position:absolute;inset:18px;border:1px solid rgba(23,25,20,.22)}.outer-box b{font:38px Georgia,serif;letter-spacing:-.08em}.outer-box small{margin-top:auto;font-size:7px;font-weight:850;letter-spacing:.14em}
+    .film{z-index:6;width:256px;height:324px;border:1px solid rgba(23,25,20,.5);background:linear-gradient(115deg,rgba(255,255,255,.02) 35%,rgba(255,255,255,.48) 48%,rgba(255,255,255,.02) 60%)}.film small{position:absolute;right:-34px;top:50%;transform:rotate(-90deg);font-size:7px;font-weight:850;letter-spacing:.12em}
+    .tray{z-index:3;width:175px;height:220px;background:rgba(181,181,170,.5);border:1px solid #6f746f;box-shadow:inset 0 0 16px rgba(255,255,255,.75)}.tray:before{content:"";position:absolute;width:90px;height:150px;left:50%;top:50%;translate:-50% -50%;border:1px solid #6f746f;border-radius:44px 44px 20px 20px}.tray small{position:absolute;right:7px;top:7px;font-size:7px;font-weight:850}
+    .bottle{z-index:4;width:72px;height:142px;translate:-50% -35%;border:1px solid var(--ink);border-radius:20px 20px 7px 7px;background:linear-gradient(90deg,#754324,#bc8b5f 50%,#6f3d21);color:var(--paper);display:grid;place-items:center;font:30px Georgia,serif}.bottle:before{content:"";position:absolute;width:40px;height:24px;top:-21px;background:var(--ink);border-radius:3px 3px 0 0}
+    .package.after{transform:scale(.86)}.package.after .film{display:none}.package.after .outer-box{width:204px;height:262px;box-shadow:9px 10px 0 #cfc4ae}.package.after .tray{width:155px;height:190px;background:#a59b78;border-color:#6e664e}.package.after .tray small:after{content:"MOLDED PULP";font-size:0}.package.after .tray small{font-size:0}.package.after .tray small:after{font-size:7px}
+
+    /* Scanner */
+    .results{display:none}.results.active{display:block}.scanner-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:34px}.status{border:1px solid var(--line);padding:9px 12px;display:flex;align-items:center;gap:8px;font-size:8px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite}@keyframes pulse{50%{opacity:.25}}
+    .scanner-layout{display:grid;grid-template-columns:1fr 330px;min-height:680px;border:1px solid var(--ink);background:#e7dfcf}.scan-view{position:relative;overflow:hidden;display:grid;place-items:center;border-right:1px solid var(--ink)}.scan-grid{position:absolute;inset:0;opacity:.28;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px}.scan-grid:after{content:"";position:absolute;inset:10%;border:1px dashed var(--line);border-radius:50%}.scan-line{position:absolute;z-index:10;left:5%;right:5%;top:8%;height:2px;background:var(--accent);box-shadow:0 0 14px rgba(40,115,74,.42);animation:scan 2.3s infinite ease-in-out}@keyframes scan{50%{top:88%}}
+    .scan-corner{position:absolute;font-size:7px;font-weight:850;letter-spacing:.12em}.scan-corner.tl{left:18px;top:17px}.scan-corner.br{right:18px;bottom:17px}
+    .annotation{position:absolute;z-index:12;display:flex;align-items:flex-start;opacity:0;transform:scale(.92);transition:.35s}.annotation .line{width:95px;border-top:1px solid var(--accent);margin-top:7px;position:relative}.annotation .line:before{content:"";position:absolute;width:7px;height:7px;border:1px solid var(--accent);border-radius:50%;left:-4px;top:-4px;background:var(--paper)}.annotation .label{border-left:3px solid var(--accent);background:var(--paper);padding:7px 10px;display:grid;min-width:120px;box-shadow:2px 3px 0 rgba(23,25,20,.12)}.annotation strong{font-size:11px}.annotation span{font-size:8px;color:var(--muted)}.annotation small{font-size:7px;margin-top:4px}.a1{left:17%;top:17%}.a2{right:7%;top:26%;flex-direction:row-reverse}.a3{left:11%;bottom:23%}.a4{right:8%;bottom:16%;flex-direction:row-reverse}.a2 .label,.a4 .label{border-left:0;border-right:3px solid var(--accent);text-align:right}
+    .scan-done .scan-line{opacity:0}.scan-done .status i{animation:none}.scan-done .annotation{opacity:1;transform:scale(1)}.scan-done .a2{transition-delay:.12s}.scan-done .a3{transition-delay:.24s}.scan-done .a4{transition-delay:.36s}
+    .uncertainty{padding:85px 32px 28px;background:var(--paper);position:relative}.sticker{position:absolute;top:22px;left:68px;background:var(--accent);padding:9px 19px;font-size:7px;font-weight:850;letter-spacing:.14em;transform:rotate(-2deg)}.uncertainty h3{font-size:32px;line-height:1.07;letter-spacing:-.06em;margin:30px 0 17px}.uncertainty p{font-size:12px;line-height:1.65;color:var(--muted)}.confidence{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;margin-top:70px;font-size:7px;font-weight:850}.confidence i{height:6px;background:linear-gradient(90deg,var(--accent),var(--paper-2))}.uncertainty .tiny{border-top:1px solid var(--line);padding-top:13px;margin-top:17px;font-size:9px}
+
+    /* Diagnosis */
+    .report{border:1px solid var(--ink);background:rgba(243,239,228,.95)}.report-line{height:58px;padding:0 20px;border-bottom:1px solid;display:grid;grid-template-columns:1fr 1fr auto;align-items:center;font-size:7px;font-weight:850;letter-spacing:.12em}.stamp{border:2px solid var(--accent);color:var(--accent);padding:5px 10px;transform:rotate(-4deg);font-size:10px}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid}.metric{min-height:240px;padding:20px;display:flex;flex-direction:column;border-right:1px solid}.metric:last-child{border:0}.metric>span{color:var(--accent);font:18px Georgia,serif}.metric p{font-size:11px;margin:20px 0 auto}.metric strong{font-size:clamp(48px,5vw,76px);letter-spacing:-.08em;line-height:1}.metric small{color:var(--muted);font-size:7px;letter-spacing:.11em;text-transform:uppercase;margin-top:8px}
+    .report-body{display:grid;grid-template-columns:1fr 1fr}.critique{min-height:550px;border-right:1px solid;display:grid;place-items:center;position:relative;overflow:hidden}.critique .package{transform:scale(.8)}.circle{position:absolute;border:2px solid var(--accent);border-radius:50%;transform:rotate(-7deg)}.circle.one{width:190px;height:250px;top:120px;left:29%}.circle.two{width:280px;height:70px;bottom:78px;left:20%}.hand{position:absolute;right:13%;bottom:16%;color:var(--accent);font:italic 18px Georgia,serif;transform:rotate(-9deg)}
+    .findings{padding:58px 48px}.finding{display:grid;grid-template-columns:45px 1fr;border-top:1px solid var(--line);padding:25px 0}.finding b{color:var(--accent);font:18px Georgia,serif}.finding p{font-size:17px;line-height:1.45;margin:0}.finding small{display:block;color:var(--muted);font-size:7px;letter-spacing:.13em;text-transform:uppercase;margin-top:8px}
+    .education{display:flex;flex-wrap:wrap;gap:10px;margin-top:25px}.edu{position:relative}.edu button{border:1px solid;background:var(--paper);padding:8px 10px;font-size:9px;font-weight:760;cursor:pointer}.edu button b{color:var(--accent);margin-left:8px}.edu-panel{display:none;position:absolute;z-index:30;left:0;bottom:calc(100% + 10px);width:min(290px,75vw);background:var(--ink);color:var(--paper);padding:15px;font-size:10px;line-height:1.6;box-shadow:5px 6px 0 var(--accent)}.edu.open .edu-panel{display:block}
+
+    /* Prescription */
+    .surgery{min-height:710px;border:1px solid;position:relative;overflow:hidden;background:#e6decd}.surgery:before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--hair) 1px,transparent 1px),linear-gradient(90deg,var(--hair) 1px,transparent 1px);background-size:50px 50px}.surgery-axis{position:absolute;left:30px;right:30px;top:30px;display:grid;grid-template-columns:auto 1fr auto;gap:15px;align-items:center;font-size:7px;font-weight:850;letter-spacing:.14em}.surgery-axis i{height:1px;background:var(--ink)}
+    .surgery-layers{position:absolute;left:3%;top:48%;width:560px;height:430px;transform:translateY(-50%)}.surgery-layers .package{position:absolute;left:70px;top:20px}.surgery-layers .film{transform:translateX(-80px) rotate(-5deg);opacity:.45}.surgery-layers .outer-box{transform:translateX(-22px)}.surgery-layers .tray{transform:translateX(86px)}.surgery-layers .bottle{transform:translate(45px,-8px)}
+    .operation{position:absolute;z-index:5;width:215px;border-top:1px solid;padding-top:8px;display:grid;grid-template-columns:34px 1fr}.operation b{grid-row:1/4;color:var(--accent);font:17px Georgia,serif}.operation span{font-size:7px;font-weight:850;letter-spacing:.15em}.operation strong{font-size:16px;margin-top:3px}.operation em{font-size:9px;font-style:normal;color:var(--muted);margin-top:5px}.op-remove{left:6%;top:17%}.op-replace{left:40%;bottom:8%}.op-resize{left:42%;top:18%}
+    .surgery-result{position:absolute;right:4%;top:48%;translate:0 -50%;width:330px;height:480px;border:1px dashed var(--line);display:grid;place-items:center}.surgery-result>span{position:absolute;left:14px;top:12px;color:var(--accent);font-size:7px;font-weight:850;letter-spacing:.14em}.surgery-result .package{transform:scale(.72);opacity:.3;transition:opacity .8s .5s,transform .8s .5s}.surgery.in-view .surgery-result .package{opacity:1;transform:scale(.76)}
+
+    /* Comparison */
+    .comparison{--split:52%;height:660px;position:relative;border:1px solid;overflow:hidden;background:var(--paper-2)}.compare-scene{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:65px 7vw 30px}.compare-before{background:#ded4c1}.compare-after{background:var(--accent);clip-path:inset(0 0 0 var(--split))}.compare-scene .package{margin:auto}.compare-title{position:absolute;left:25px;top:23px;font-size:12px;font-weight:850;letter-spacing:.12em}.compare-after .compare-title{left:auto;right:25px}.compare-title small{font-size:7px;margin-left:8px}
+    .mini-net{width:300px;height:320px;position:relative;margin:auto;transform:rotate(-5deg)}.mini-net i{position:absolute;border:1px solid;background:rgba(243,239,228,.38)}.mn-panel{width:75px;height:85px;top:125px}.mn1{left:0;width:42px}.mn2{left:42px}.mn3{left:117px}.mn4{left:192px;width:55px}.mn-flap{left:42px;width:75px;height:58px}.mn-top{top:67px;border-radius:35px 35px 0 0}.mn-bottom{top:210px;border-radius:0 0 30px 30px}.mini-net i:after{content:"";position:absolute;inset:6px;border:1px dashed var(--line)}.compare-after .mini-net{transform:scale(.82) rotate(3deg)}.compare-after .mn4{display:none}
+    .divider{position:absolute;z-index:10;left:var(--split);top:0;bottom:0;width:2px;background:var(--ink)}.divider span{position:absolute;left:50%;top:50%;translate:-50% -50%;width:52px;height:52px;border:2px solid;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-size:19px}.comparison input{position:absolute;z-index:20;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize}.compare-legend{display:flex;gap:28px;margin-top:18px;font-size:8px;font-weight:750;letter-spacing:.07em}.compare-legend span{display:flex;align-items:center;gap:8px}.compare-legend i{width:12px;height:12px;border:1px solid}.compare-legend span:nth-child(2) i{background:#a59b78}.compare-legend span:nth-child(3) i{background:#e9dfca}
+
+    /* Impact */
+    .impact{background:var(--ink);color:var(--paper);margin-top:100px}.impact .section{padding:145px 0}.impact .micro:before{background:var(--accent)}.impact-grid{display:grid;grid-template-columns:repeat(4,1fr);border-block:1px solid rgba(243,239,228,.32);margin-top:65px}.impact-stat{min-height:260px;padding:23px 18px;display:flex;flex-direction:column;border-right:1px solid rgba(243,239,228,.22)}.impact-stat:last-child{border:0}.impact-stat>span{font-size:10px}.impact-stat div{margin-top:auto;white-space:nowrap}.impact-stat strong{font-size:clamp(48px,5vw,80px);letter-spacing:-.08em}.impact-stat div small{font-size:17px;color:#9a998e}.impact-stat em{color:var(--accent);font-size:7px;font-style:normal;font-weight:850;letter-spacing:.15em;text-transform:uppercase;margin-top:10px}
+    .method-toggle{width:100%;border:0;border-bottom:1px solid rgba(243,239,228,.32);background:transparent;color:var(--paper);display:flex;justify-content:space-between;padding:23px 0;cursor:pointer;font-size:13px}.method-toggle b{color:var(--accent);font-size:19px}.method{display:none;grid-template-columns:1fr 1fr;gap:60px;color:#aaa99e;font-size:11px;line-height:1.65;padding-top:18px}.method.open{display:grid}
+
+    /* Final fold */
+    .ending{min-height:100svh;padding:110px 5vw 30px;background:var(--accent);position:relative;overflow:hidden;display:grid;grid-template-columns:1.1fr .9fr;align-items:center}.ending:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(23,25,20,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(23,25,20,.1) 1px,transparent 1px);background-size:60px 60px}.ending-art{height:610px;position:relative;z-index:2;display:grid;place-items:center;perspective:900px}.refold{width:390px;height:470px;position:relative;display:grid;place-items:center;transform-style:preserve-3d}.fold-piece{position:absolute;width:112px;height:205px;background:#e8deca;border:1.5px solid;box-shadow:inset 0 0 0 9px rgba(23,25,20,.04);transition:transform 1.2s cubic-bezier(.22,1,.36,1)}.fold-piece:after{content:"";position:absolute;inset:9px;border:1px dashed var(--line)}.fold-left{transform:translateX(-112px);transform-origin:right}.fold-center{z-index:2}.fold-right{transform:translateX(112px);transform-origin:left}.fold-top{width:112px;height:92px;transform:translateY(-150px);transform-origin:bottom}.fold-bottom{width:112px;height:92px;transform:translateY(150px);transform-origin:top}.ending.in-view .fold-left{transform:translateX(-30px) rotateY(64deg)}.ending.in-view .fold-right{transform:translateX(31px) rotateY(-70deg)}.ending.in-view .fold-top{transform:translateY(-98px) rotateX(-68deg)}.ending.in-view .fold-bottom{transform:translateY(99px) rotateX(68deg)}.fold-mark{position:absolute;z-index:5;width:112px;height:205px;border:1px solid;display:grid;place-items:center;text-align:center;opacity:0;transform:scale(.85);transition:.55s 1s}.ending.in-view .fold-mark{opacity:1;transform:scale(1)}.fold-mark b{font:43px Georgia,serif;color:var(--accent)}.fold-mark small{display:block;font-size:7px;font-weight:850;letter-spacing:.14em}.fold-caption{position:absolute;bottom:25px;font-size:7px;font-weight:850;letter-spacing:.14em}.fold-caption b{font-size:21px;margin:0 10px}
+    .ending-copy{position:relative;z-index:3}.ending-copy .micro:before{background:var(--ink)}.ending-copy h2{font-size:clamp(50px,5.6vw,84px);line-height:.94;letter-spacing:-.075em;font-weight:650;margin:27px 0 42px}.ending footer{position:absolute;z-index:5;left:5vw;right:5vw;bottom:25px;border-top:1px solid rgba(23,25,20,.45);padding-top:17px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;font-size:8px;font-weight:750;letter-spacing:.09em}.ending footer span:last-child{text-align:right}
+
+    /* Version 0.2 — interaction and continuous workbench */
+    :focus-visible{outline:3px solid var(--warning);outline-offset:4px}
+    .button,.hero-step,.edu button,.method-toggle,.nav-cta{transition:transform .19s ease,background-color .19s ease,color .19s ease,border-color .19s ease,box-shadow .19s ease}
+    .button:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 7px 0 rgba(23,53,40,.12)}.button:active{transform:translateY(0) scale(.98);box-shadow:none}.button span{display:inline-block;transition:transform .19s ease}.button:hover span{transform:translateX(4px)}
+    .button-primary{background:var(--accent);border-color:var(--accent)}.button-primary:hover{background:var(--ink);border-color:var(--ink)}
+    .nav-cta:hover{color:var(--accent);transform:translateY(-2px)}.nav-cta:active{transform:scale(.98)}
+    .carton-question{color:var(--accent)}.carton-side{background:var(--accent)}
+    .carton-stage.is-ready{pointer-events:auto}.carton-anchor{pointer-events:none}.hero-net{left:50%;transform:translate(-50%,-50%) scale(.74) rotate(-6deg);pointer-events:none}.hero-net.ready{pointer-events:auto}
+    .hero-step em{font-style:normal;font-size:7px;font-weight:850;letter-spacing:.13em;margin-top:19px;transition:transform .19s ease}.hero-net.ready .hero-step{cursor:pointer}.hero-net.ready .hero-step:hover{z-index:5;background:var(--sage);color:var(--ink);transform:translateY(-5px) scale(1.018);box-shadow:0 9px 0 rgba(23,53,40,.13)}.hero-net.ready .hero-step:hover:after{border-color:rgba(23,53,40,.38)}.hero-net.ready .hero-step:hover b{transform:translateX(4px);color:var(--accent)}.hero-net.ready .hero-step:hover em{transform:translateX(5px)}.hero-step:active{transform:translateY(-1px) scale(.985)!important}
+    .hero-action-cue{position:absolute;z-index:15;left:50%;bottom:3.4vh;translate:-50% 0;margin:0;font-size:9px;font-weight:780;letter-spacing:.08em;opacity:0;transition:opacity .25s;pointer-events:none}.hero-action-cue:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:9px}.hero-action-cue.visible{opacity:1}
+    .unfold-meaning{bottom:10vh}.scroll-cue{transition:opacity .2s}
+    .paper-body>.section:first-of-type{padding-top:110px}
+
+    .upload-empty{display:flex;flex-direction:column;align-items:center;justify-content:center}.upload-empty[hidden]{display:none}.upload-confirm{width:100%;height:100%;padding:46px;display:grid;grid-template-columns:minmax(240px,.9fr) 1.1fr;gap:46px;align-items:center;text-align:left;position:relative;z-index:2}.upload-confirm[hidden]{display:none}.preview-frame{height:350px;position:relative;background:var(--sage);border:1px solid var(--ink);padding:12px}.preview-frame:after{content:"";position:absolute;inset:20px;border:1px dashed rgba(243,240,230,.6);pointer-events:none}.preview-frame img{width:100%;height:100%;object-fit:contain;background:#d6ddd5}.preview-frame>span{position:absolute;left:19px;bottom:17px;background:var(--paper);padding:6px 8px;font-size:7px;font-weight:850;letter-spacing:.12em}.confirm-copy small{font-size:8px;font-weight:850;letter-spacing:.16em;color:var(--accent)}.confirm-copy h3{font-size:clamp(28px,3vw,44px);line-height:1.05;margin:16px 0 12px}.confirm-copy p{font-size:11px;color:var(--muted);line-height:1.6}.confirm-copy .upload-actions{justify-content:flex-start}
+
+    .workbench-shell{display:grid;grid-template-columns:minmax(0,58%) minmax(360px,42%);align-items:start;border-top:1px solid var(--ink);background:var(--paper)}
+    .workbench-visual{position:sticky;top:0;height:100svh;min-height:690px;padding:82px 4vw 34px;border-right:1px solid var(--ink);display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:#e8eee5;overflow:hidden}
+    .workbench-meta{display:flex;justify-content:space-between;font-size:7px;font-weight:850;letter-spacing:.13em;margin-bottom:15px}.workbench-meta span:last-child{color:var(--accent)}
+    .workbench-canvas{position:relative;min-height:430px;border:1px solid var(--ink);display:grid;place-items:center;overflow:hidden;background-color:#dfe6de;background-image:linear-gradient(var(--hair) 1px,transparent 1px),linear-gradient(90deg,var(--hair) 1px,transparent 1px);background-size:42px 42px}
+    .workbench-canvas:after{content:"";position:absolute;inset:9%;border:1px dashed var(--line);border-radius:48%;pointer-events:none}.workbench-canvas>.original-visual{position:absolute;inset:5%;z-index:2;transition:opacity .5s,transform .65s}.workbench-canvas .package{position:absolute;left:50%;top:50%;translate:-50% -50%;transform:scale(.92)}
+    .original-visual{display:grid;place-items:center;min-width:0;min-height:0}.original-visual>.package{margin:auto}.user-photo{position:relative;width:min(90%,560px);height:min(88%,580px);display:grid;place-items:center;background:#d6ddd5;border:1px solid var(--ink);padding:12px;box-shadow:14px 15px 0 rgba(23,53,40,.12)}.user-photo img{display:block;width:100%;height:100%;object-fit:contain}.user-photo span{position:absolute;left:18px;bottom:17px;background:var(--paper);padding:7px 9px;font-size:7px;font-weight:850;letter-spacing:.13em}.user-photo:after{content:"";position:absolute;inset:21px;border:1px dashed rgba(243,240,230,.65);pointer-events:none}
+    .prototype-diagnosis{position:absolute;z-index:12;left:16px;bottom:14px;background:var(--ink);color:var(--paper);padding:7px 9px;font-size:7px;font-weight:850;letter-spacing:.12em}
+    .contour-frame{position:absolute;z-index:8;inset:14%;opacity:0;transition:opacity .35s}.contour-frame i{position:absolute;width:36px;height:36px;border-color:var(--accent)}.contour-frame i:nth-child(1){left:0;top:0;border-left:2px solid;border-top:2px solid}.contour-frame i:nth-child(2){right:0;top:0;border-right:2px solid;border-top:2px solid}.contour-frame i:nth-child(3){right:0;bottom:0;border-right:2px solid;border-bottom:2px solid}.contour-frame i:nth-child(4){left:0;bottom:0;border-left:2px solid;border-bottom:2px solid}.phase-structure .contour-frame,.phase-material .contour-frame,.phase-reduction .contour-frame,.phase-complete .contour-frame{opacity:1}
+    .workbench-scan-line{position:absolute;z-index:9;left:8%;right:8%;top:12%;height:1px;background:var(--accent);box-shadow:0 0 9px rgba(40,115,74,.32);opacity:0}.phase-structure .workbench-scan-line,.phase-material .workbench-scan-line,.phase-reduction .workbench-scan-line{opacity:1;animation:designerScan 1.7s infinite ease-in-out}@keyframes designerScan{50%{top:86%}}
+    .material-clues{position:absolute;z-index:11;inset:0;pointer-events:none}.material-clues span{position:absolute;background:var(--paper);border-left:3px solid var(--accent);padding:8px 10px;font-size:9px;font-weight:740;opacity:0;transform:translateY(8px);transition:.3s}.material-clues b{color:var(--accent);margin-left:7px}.material-clues span:nth-child(1){left:8%;top:18%}.material-clues span:nth-child(2){right:7%;top:40%}.material-clues span:nth-child(3){left:12%;bottom:17%}.phase-material .material-clues span,.phase-reduction .material-clues span,.phase-complete .material-clues span{opacity:1;transform:none}.phase-material .material-clues span:nth-child(2){transition-delay:.2s}.phase-material .material-clues span:nth-child(3){transition-delay:.4s}
+    .workbench-problems{position:absolute;z-index:10;inset:0;opacity:0;transition:opacity .35s}.phase-reduction .workbench-problems,.phase-complete .workbench-problems,.workbench-canvas[data-stage="diagnosis"] .workbench-problems{opacity:1}.wb-circle{position:absolute;border:2px solid var(--warning);border-radius:50%;transform:rotate(-8deg)}.wc1{width:42%;height:51%;left:29%;top:21%}.wc2{width:50%;height:15%;left:25%;bottom:12%}.wb-note{position:absolute;background:var(--warning);color:var(--paper);padding:7px 9px;font-size:7px;font-weight:850;letter-spacing:.11em}.wn1{right:7%;bottom:17%;transform:rotate(-3deg)}.wn2{left:7%;top:18%;transform:rotate(2deg)}
+    .workbench-redesign{position:absolute;z-index:15;inset:0;display:grid;place-items:center;background:rgba(221,233,213,.93);opacity:0;pointer-events:none;transition:opacity .55s}.workbench-canvas[data-stage="redesign"] .workbench-redesign{opacity:1}.workbench-redesign .package{transform:scale(.82)}.concept-label{font-size:7px!important;font-weight:850!important;letter-spacing:.12em!important;text-transform:uppercase}.workbench-redesign>.concept-label{position:absolute;left:15px;top:14px;background:var(--accent);color:var(--paper);padding:7px 9px}
+    .scan-stages{list-style:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}.scan-stages li{display:grid;grid-template-columns:25px 1fr;gap:5px;padding:13px 8px 0;opacity:.35;transition:opacity .2s,color .2s}.scan-stages li+li{border-left:1px solid var(--hair)}.scan-stages li.active{opacity:1;color:var(--accent)}.scan-stages li.done{opacity:.8;color:var(--accent)}.scan-stages b{font:14px Georgia,serif}.scan-stages span{font-size:7px;font-weight:850;letter-spacing:.11em}.scan-stages small{display:block;color:var(--muted);font-size:7px;line-height:1.35;letter-spacing:0;margin-top:4px}
+    .workbench-content{min-width:0;background:var(--paper)}.workbench-content>.section,.workbench-content #resultFlow>.section{width:100%;padding:105px 4vw;border-bottom:1px solid var(--line)}.workbench-content .section-heading{margin-bottom:38px}.workbench-content .section-heading h2{font-size:clamp(48px,5vw,66px)}
+    .workbench-content .scan-view{display:none}.workbench-content .scanner-layout{display:block;min-height:0;border:0;background:transparent}.workbench-content .uncertainty{padding:70px 0 0;background:transparent}.workbench-content .sticker{left:0;top:12px;background:var(--sage);color:var(--ink)}.workbench-content .uncertainty h3{font-size:34px}.workbench-content .confidence{margin-top:38px}.confidence-notes{display:grid;margin-top:17px;border-top:1px solid var(--line)}.confidence-notes span{padding:9px 0;border-bottom:1px solid var(--hair);font-size:8px;color:var(--muted)}.confidence-notes b{display:inline-block;min-width:116px;color:var(--accent);font-size:7px;letter-spacing:.1em}.confidence-notes span:last-child b{color:var(--warning)}
+    .workbench-content .report{border:0;background:transparent}.workbench-content .report-line{grid-template-columns:1fr auto;height:50px;padding:0;border-top:1px solid}.workbench-content .report-line span:nth-child(2){display:none}.workbench-content .metrics{grid-template-columns:1fr 1fr;border:1px solid}.workbench-content .metric{min-height:170px}.workbench-content .metric:nth-child(even){border-right:0}.workbench-content .metric:nth-child(-n+2){border-bottom:1px solid}.workbench-content .metric strong{font-size:clamp(38px,4vw,58px)}.workbench-content .report-body{display:block}.workbench-content .critique{display:none}.workbench-content .findings{padding:42px 0 0}
+    .workbench-content .surgery{min-height:610px;background:transparent}.workbench-content .surgery-layers{display:block;left:52%;top:35%;width:44%;height:150px;transform:none;border:1px dashed var(--line);overflow:hidden}.workbench-content .surgery-layers:before{content:"ORIGINAL / BEFORE";position:absolute;z-index:8;left:9px;top:8px;background:var(--paper);padding:5px 7px;font-size:6px;font-weight:850;letter-spacing:.11em}.workbench-content .surgery-layers .original-visual{width:100%;height:100%}.workbench-content .surgery-layers .package{left:50%;top:50%;translate:-50% -50%;transform:scale(.34)}.workbench-content .surgery-layers .user-photo{width:100%;height:100%;border:0;box-shadow:none;padding:6px}.workbench-content .surgery-layers .user-photo span{display:none}.workbench-content .operation{width:42%}.workbench-content .op-remove{left:6%;top:18%}.workbench-content .op-resize{left:52%;top:18%}.workbench-content .op-replace{left:6%;top:42%;bottom:auto}.workbench-content .surgery-result{width:44%;height:235px;right:4%;top:auto;bottom:7%;translate:0}.workbench-content .surgery-result .package{transform:scale(.4)}.workbench-content .surgery.in-view .surgery-result .package{transform:scale(.44)}.op-remove b,.finding b,.circle,.hand{color:var(--warning)}.op-remove b{color:var(--warning)}.op-remove{border-color:var(--warning)}.circle{border-color:var(--warning)}.hand{color:var(--warning)}.stamp{border-color:var(--warning);color:var(--warning)}
+    .compare-after{background:var(--sage)}.compare-after .package.after .outer-box{border-color:var(--accent)}.compare-after .compare-title{color:var(--accent)}.comparison .original-visual{height:100%;padding-top:30px}.comparison .original-visual .package{transform:scale(.95)}.comparison .user-photo{width:min(84%,520px);height:78%;box-shadow:12px 13px 0 rgba(23,53,40,.13)}.upload-mode .demo-before-net{display:none}
+    .scan-line{background:var(--accent);box-shadow:0 0 10px rgba(40,115,74,.34)}
+    .impact{background:var(--ink)}.impact-stat strong,.impact-stat em{color:#80c99b}.ending{background:var(--accent)}.fold-mark b{color:var(--accent)}
+    .edu button:hover{background:var(--sage);border-color:var(--accent);transform:translateY(-2px) scale(1.025)}.edu button:active{transform:scale(.98)}.method-toggle:hover{color:#80c99b;padding-left:4px;padding-right:4px}.method-toggle:active{transform:scale(.99)}
+
+    .noscript{position:fixed;z-index:999;inset:auto 20px 20px;background:var(--ink);color:var(--paper);padding:14px;font-size:12px}
+    @media(max-width:980px){.nav-links{display:none}.carton-anchor{left:70%;transform:translate(-50%,-50%) rotateX(-4deg) rotateY(-9deg) scale(.94)}.hero-copy{left:5vw;width:45vw}.scanner-layout{grid-template-columns:1fr 270px}.package{transform:scale(.8)}.surgery-result{right:2%;width:280px}.compare-scene{padding-inline:3vw}.compare-scene .package{transform:scale(.72)}.compare-scene .mini-net{transform:scale(.78) rotate(-5deg)}.ending{grid-template-columns:1fr}.ending-art{position:absolute;inset:8% 48% 10% 0;opacity:.75}.ending-copy{margin-left:43%}}
+    @media(max-width:720px){
+      .nav{height:60px;padding:0 20px;grid-template-columns:1fr auto}.nav-cta{font-size:10px}.hero-scroll{height:275vh;min-height:1900px}.hero-copy{left:20px;right:20px;top:12vh;transform:none;width:auto;text-align:center}.hero-copy .micro{justify-content:center}.hero-copy h1{font-size:46px;margin:18px 0}.hero-copy p{font-size:13px;margin-bottom:23px}.carton-anchor{left:50%;top:65%;transform:translate(-50%,-50%) rotateX(-4deg) rotateY(-9deg) scale(.68)}.hero-net{width:92vw;height:52vh;top:58%;transform:translate(-50%,-50%) scale(.7) rotate(-5deg)}.unfold-meaning{left:20px;right:20px;bottom:4vh;text-align:center;font-size:16px}.section{width:calc(100% - 40px);padding:85px 0}.section-heading{margin-bottom:36px}.section-heading h2{font-size:50px}.split-heading{grid-template-columns:1fr;gap:22px}.section-tag{font-size:7px;gap:9px}.paper-body{background-size:100% 100%,calc((100vw - 40px)/4) 100%;background-position:0,20px 0}
+      .upload-dieline{min-height:480px;grid-template-columns:18px 1fr 18px}.upload-side{font-size:5px;padding:3px}.upload-zone{padding:35px 17px}.upload-zone h3{font-size:22px}.upload-actions{flex-direction:column;width:100%}.upload-actions .button{width:100%}.scanner-section{width:100%;padding-top:100px}.scanner-header{padding:0 20px}.scanner-layout{grid-template-columns:1fr;min-height:790px;border-inline:0}.scan-view{height:570px;border-right:0;border-bottom:1px solid}.scan-view .package{transform:scale(.68)}.uncertainty{padding:52px 24px 24px}.uncertainty h3{font-size:25px}.confidence{margin-top:28px}.annotation .line{width:34px}.annotation .label{min-width:82px;padding:5px 7px}.annotation strong{font-size:9px}.annotation span,.annotation small{font-size:6px}.a1{left:3%}.a2{right:3%}.a3{left:2%}.a4{right:2%}
+      .metrics{grid-template-columns:1fr 1fr}.metric{min-height:180px;border-bottom:1px solid}.metric:nth-child(even){border-right:0}.metric:nth-child(3),.metric:nth-child(4){border-bottom:0}.metric strong{font-size:53px}.report-line{grid-template-columns:1fr auto}.report-line span:nth-child(2){display:none}.report-body{grid-template-columns:1fr}.critique{min-height:410px;border-right:0;border-bottom:1px solid}.critique .package{transform:scale(.67)}.findings{padding:38px 21px}.finding p{font-size:15px}
+      .surgery{min-height:990px}.surgery-layers{left:50%;top:31%;transform:translate(-50%,-50%) scale(.65)}.operation{width:165px}.op-remove{left:5%;top:10%}.op-resize{left:auto;right:5%;top:17%}.op-replace{left:5%;top:51%;bottom:auto}.surgery-result{left:50%;right:auto;top:auto;bottom:3%;translate:-50% 0;width:82%;height:380px}.surgery-result .package{transform:scale(.58)}.surgery.in-view .surgery-result .package{transform:scale(.62)}
+      .comparison{height:710px}.compare-scene{grid-template-columns:1fr;grid-template-rows:1fr 1fr;padding:55px 0 0}.compare-scene .package{transform:scale(.61)}.compare-scene .mini-net{transform:scale(.62) rotate(-5deg);margin-top:-50px}.compare-after .mini-net{transform:scale(.55) rotate(3deg)}.compare-title small{display:none}.compare-legend{flex-wrap:wrap;gap:10px 20px}.impact-grid{grid-template-columns:1fr 1fr}.impact-stat{min-height:185px;border-bottom:1px solid rgba(243,239,228,.22)}.impact-stat:nth-child(even){border-right:0}.impact-stat strong{font-size:43px}.method{grid-template-columns:1fr;gap:0}.ending{min-height:900px;padding:85px 20px 90px;display:flex;align-items:flex-end}.ending-art{position:absolute;inset:3% 0 47%;opacity:.8;transform:scale(.7)}.ending-copy{margin:0}.ending-copy h2{font-size:49px}.ending footer{left:20px;right:20px;grid-template-columns:1fr auto}.ending footer span:nth-child(2){display:none}
+    }
+    @media(max-width:980px){.workbench-shell{grid-template-columns:54% 46%}.workbench-visual{padding-inline:3vw}.workbench-content>.section,.workbench-content #resultFlow>.section{padding-inline:3vw}.workbench-content .operation{width:44%}}
+    @media(max-width:720px){
+      .hero-action-cue{width:100%;text-align:center;bottom:2.5vh;font-size:8px}.hero-net.ready .hero-step:hover{transform:none;box-shadow:none}
+      .upload-confirm{grid-template-columns:1fr;padding:28px 18px;gap:20px}.preview-frame{height:250px}.confirm-copy{text-align:center}.confirm-copy .upload-actions{justify-content:center}.upload-zone:has(.upload-confirm:not([hidden])){padding:0}
+      .workbench-shell{display:block;border-top:1px solid}.workbench-visual{position:relative;top:auto;height:auto;min-height:720px;padding:70px 20px 28px;border-right:0;border-bottom:1px solid}.workbench-canvas{height:500px}.workbench-canvas .package{transform:scale(.68)}.workbench-canvas .user-photo{height:88%;width:90%}.scan-stages{margin-top:14px}.scan-stages small{display:none}
+      .workbench-content>.section,.workbench-content #resultFlow>.section{width:calc(100% - 40px);padding:80px 0;margin:auto}.workbench-content .scanner-header{padding:0}.workbench-content .scanner-layout{display:grid;grid-template-columns:1fr;gap:0}.workbench-content .scan-view{display:grid;height:480px;border:1px solid var(--ink)}.workbench-content .scan-view>.original-visual{position:absolute;inset:5%}.workbench-content .scan-view .user-photo{width:92%;height:92%;box-shadow:8px 9px 0 rgba(23,53,40,.13)}.workbench-content .uncertainty{padding-top:68px}.workbench-content .metrics{grid-template-columns:1fr 1fr}.workbench-content .metric{min-height:150px}.workbench-content .report-body{display:block}.workbench-content .critique{display:grid;min-height:410px;border:1px solid var(--ink);margin-top:28px}.workbench-content .critique .original-visual{width:100%;height:100%}.workbench-content .finding p{font-size:15px}.workbench-content .surgery{min-height:860px}.workbench-content .operation{width:43%}.workbench-content .op-remove{left:5%;top:11%}.workbench-content .op-resize{left:52%;top:11%}.workbench-content .op-replace{left:5%;top:27%;bottom:auto}.workbench-content .surgery-layers{left:52%;top:27%;height:140px}.workbench-content .surgery-result{width:90%;height:350px;right:5%;bottom:4%}.workbench-content .surgery-result .package{transform:scale(.54)}.workbench-content .surgery.in-view .surgery-result .package{transform:scale(.57)}
+      .comparison .original-visual{height:100%;padding:25px 0 0}.comparison .original-visual .package{transform:scale(.61)}.comparison .user-photo{height:82%;width:82%;box-shadow:8px 9px 0 rgba(23,53,40,.13)}.compare-after .concept-label{display:block;margin-top:4px}.prototype-diagnosis{font-size:6px}
+    }
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.carton-top,.carton-side,.carton-front,.carton-bottom{transform:none!important}}
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="#top">PackLess AI<sup>®</sup></a>
+    <div class="nav-links"><a href="#about">How it works</a><a href="#checkup">Try it</a><a href="#about">About</a></div>
+    <a class="nav-cta" href="#checkup">开始体检 ↗</a>
+  </nav>
+
+  <main id="top">
+    <section class="hero-scroll" id="about">
+      <div class="hero-sticky">
+        <div class="hero-copy" id="heroCopy">
+          <span class="micro">PACKAGING CHECK-UP</span>
+          <h1>这个盒子，<br>真的需要这么多吗？</h1>
+          <p>拆开包装，看见那些本可以不存在的部分。</p>
+          <a class="button button-primary" href="#checkup">给包装做一次体检 <span>↗</span></a>
+        </div>
+        <div class="carton-stage" aria-label="包装从纸盒展开为刀版图">
+          <div class="carton-anchor" id="cartonAnchor">
+            <div class="carton">
+              <div class="carton-face carton-front" id="cartonFront"><span class="carton-kicker">PACK LESS</span><span class="carton-question">?</span><span class="carton-volume">VOL. 01 / 480 cm³</span></div>
+              <div class="carton-face carton-side" id="cartonSide">OPEN TO<br>UNDERSTAND<i></i></div>
+              <div class="carton-face carton-top" id="cartonTop">PEEL HERE ↗</div>
+              <div class="carton-face carton-bottom" id="cartonBottom"></div><div class="carton-shadow"></div>
+            </div>
+          </div>
+          <div class="hero-net" id="heroNet" aria-label="选择 PackLess AI 工作步骤">
+            <div class="hero-panel hp-tab-top"></div><div class="hero-panel hp-top"><span class="hero-measure">148 mm</span></div>
+            <a class="hero-panel hero-step hp-1" href="#checkup"><b>01</b><small>SEE</small><strong>看见包装</strong><em>UPLOAD →</em></a>
+            <a class="hero-panel hero-step hp-2" href="#analysis"><b>02</b><small>DIAGNOSE</small><strong>找到浪费</strong><em>INSPECT →</em></a>
+            <a class="hero-panel hero-step hp-3" href="#prescription"><b>03</b><small>REDESIGN</small><strong>重新设计</strong><em>OPERATE →</em></a>
+            <a class="hero-panel hero-step hp-4" href="#impact"><b>04</b><small>IMPACT</small><strong>算清改变</strong><em>ESTIMATE →</em></a>
+            <div class="hero-panel hp-bottom"><span class="hero-measure">220 mm</span></div><div class="hero-panel hp-tab-bottom"></div>
+          </div>
+          <p class="hero-action-cue" id="heroActionCue">选择一块，看看 PackLess AI 如何工作</p>
+        </div>
+        <p class="unfold-meaning" id="heroMeaning">只有把包装拆开，<br>我们才能看见哪些部分本可以不存在。</p>
+        <div class="scroll-cue" id="scrollCue"><span>SCROLL TO UNFOLD</span><i></i></div>
+      </div>
+    </section>
+
+    <div class="paper-body">
+      <section class="section" id="checkup">
+        <div class="section-heading split-heading"><div><div class="section-tag"><span>01 / CHECK-UP</span><span>PACKAGING CHECK-UP</span></div><h2>给你的包装<br>做一次体检</h2></div><p>先从一张照片开始。我们会试着拆解结构、材料与那些可能多余的部分。</p></div>
+        <div class="upload-dieline"><div class="upload-side">FRONT VIEW / IMAGE 01</div><div class="upload-zone" id="uploadZone"><div class="upload-empty" id="uploadEmpty"><span class="upload-symbol">⌑</span><h3>把包装放在这里</h3><p>正面或 45° 角照片更容易看清结构</p><div class="upload-actions"><label class="button button-primary upload-file">拍一个包装 / 上传包装 <span>↗</span><input id="fileInput" type="file" accept="image/*"></label><button class="button button-ghost" id="demoButton">使用示例包装 <span>↗</span></button></div></div><div class="upload-confirm" id="uploadConfirm" hidden><div class="preview-frame"><img id="uploadPreview" alt="待确认的包装照片"><span>LOCAL PHOTO / PREVIEW</span></div><div class="confirm-copy"><small>PHOTO CONFIRMATION</small><h3>这是你要检查的包装吗？</h3><p>照片将发送至分析服务，不会在当前原型中保存。</p><div class="upload-actions"><button class="button button-ghost" id="replacePhoto">更换照片</button><button class="button button-primary" id="confirmPhoto">开始体检 <span>→</span></button></div></div></div></div><div class="upload-side">JPG / PNG / MAX 10 MB</div></div>
+        <p class="prototype-note">图片仅用于本次接口分析。页面分析结果暂为模拟演示。</p>
+      </section>
+      <div class="folded-lock" id="foldedLock"><div><b>THE REST OF THE PACKAGE IS STILL FOLDED</b><p>使用示例包装，继续完整体验</p></div></div>
+
+      <div class="results" id="results">
+        <div class="workbench-shell" id="workbench">
+          <aside class="workbench-visual" aria-label="持续包装检查工作台">
+            <div class="workbench-meta"><span>PACKAGING WORKBENCH</span><span id="workbenchCase">DEMO SAMPLE / PL–024</span></div>
+            <div class="workbench-canvas" id="workbenchCanvas" data-stage="scan">
+              <div class="original-visual" data-original></div>
+              <div class="contour-frame"><i></i><i></i><i></i><i></i></div>
+              <div class="workbench-scan-line"></div>
+              <div class="material-clues"><span>Paperboard <b>96%</b></span><span>PET? <b>82%</b></span><span>Plastic Film? <b>89%</b></span></div>
+              <div class="workbench-problems"><i class="wb-circle wc1"></i><i class="wb-circle wc2"></i><span class="wb-note wn1">EMPTY SPACE? · Estimated</span><span class="wb-note wn2">MATERIAL SUBSTITUTE →</span></div>
+              <div class="workbench-redesign"><div class="package after" data-package="after"></div><span class="concept-label">CONCEPTUAL REDESIGN / 概念减量方案</span></div>
+              <span class="prototype-diagnosis" id="prototypeDiagnosis">PRESET DEMO DIAGNOSIS</span>
+            </div>
+            <ol class="scan-stages" id="scanStages">
+              <li class="active"><b>01</b><span>STRUCTURE<small>正在识别包装轮廓…</small></span></li>
+              <li><b>02</b><span>MATERIAL<small>正在判断可见材料线索…</small></span></li>
+              <li><b>03</b><span>REDUCTION<small>正在寻找可能的减量空间…</small></span></li>
+            </ol>
+          </aside>
+          <div class="workbench-content">
+        <section class="section scanner-section" id="analysis">
+          <div class="scanner-header"><div class="section-tag"><span>02 / EXAMINATION</span><span>AI EXAMINATION</span></div><span class="status" id="scanStatus"><i></i><span>正在检查结构…</span></span></div>
+          <div class="scanner-layout" id="scanner">
+            <div class="scan-view"><div class="scan-grid"></div><div class="original-visual" data-original></div><div class="scan-line"></div>
+              <div class="annotation a1"><i class="line"></i><div class="label"><strong>外盒</strong><span>Paperboard</span><small>Confidence 96%</small></div></div>
+              <div class="annotation a2"><i class="line"></i><div class="label"><strong>塑封</strong><span>Plastic Film</span><small>Confidence 89%</small></div></div>
+              <div class="annotation a3"><i class="line"></i><div class="label"><strong>内托</strong><span>PET?</span><small>Confidence 82%</small></div></div>
+              <div class="annotation a4"><i class="line"></i><div class="label"><strong>产品容器</strong><span>Glass / Plastic</span><small>Needs confirmation</small></div></div>
+              <span class="scan-corner tl">L–01</span><span class="scan-corner br" id="sampleLabel">DEMO SAMPLE</span>
+            </div>
+            <aside class="uncertainty"><span class="sticker">UNCERTAINTY NOTE</span><h3>看见，不代表<br>完全确定。</h3><p>照片能告诉我们一部分信息，看不见的材料与结构，需要进一步确认。</p><div class="confidence"><span>HIGH</span><i></i><span>LOW</span></div><div class="confidence-notes"><span><b>HIGH CONFIDENCE</b> Paperboard</span><span><b>MEDIUM CONFIDENCE</b> PET?</span><span><b>NEEDS CONFIRMATION</b> Product container</span></div><p class="tiny">材料判断来自可见特征。置信度不是材料认证。</p></aside>
+          </div>
+        </section>
+
+        <div id="resultFlow" hidden>
+          <section class="section" id="diagnosis">
+            <div class="section-heading"><div class="section-tag"><span>03 / DIAGNOSIS</span><span>PACKAGING DIAGNOSIS</span></div><h2>诊断结果</h2></div>
+            <div class="report"><div class="report-line"><span id="patientLabel">PATIENT / LUMEN 护肤礼盒</span><span>CASE No. PL–024</span><span class="stamp" id="diagnosisStamp">DEMO</span></div>
+              <div class="metrics"><div class="metric"><span>01</span><p>包装层数</p><strong>4</strong><small>layers</small></div><div class="metric"><span>02</span><p>疑似可减量结构</p><strong>2</strong><small>signals</small></div><div class="metric"><span>03</span><p>空间利用率</p><strong>54%</strong><small>Estimated</small></div><div class="metric"><span>04</span><p>可回收性</p><strong>Medium</strong><small>Estimated</small></div></div>
+              <div class="report-body"><div class="critique"><div class="original-visual" data-original></div><i class="circle one"></i><i class="circle two"></i><span class="hand">compress?</span></div><div class="findings"><span class="micro">POTENTIAL ISSUES / 03</span><div class="finding"><b>01</b><p>PET 内托可能存在材料替代空间</p></div><div class="finding"><b>02</b><p>二次塑封可能并非必要</p></div><div class="finding"><b>03</b><p>外盒存在约 18% 的可压缩空间<small>Estimated</small></p></div><div class="education"><div class="edu"><button aria-expanded="false">PET <b>＋</b></button><div class="edu-panel">透明不等于容易回收。小尺寸、着色、胶粘与其他材料连接，都可能让 PET 内托错过实际回收流程。</div></div><div class="edu"><button aria-expanded="false">空隙率 <b>＋</b></button><div class="edu-panel">包装里的空气也会被运输。过大的体积可能增加纸材用量，并降低仓储与运输效率。</div></div></div></div></div>
+            </div>
+          </section>
+
+          <section class="section" id="prescription">
+            <div class="section-heading split-heading"><div><div class="section-tag"><span>04 / PRESCRIPTION</span><span>REDESIGN PRESCRIPTION</span></div><h2>减量处方</h2></div><p>不是为包装加上“环保装饰”，而是直接对结构动手。</p></div>
+            <div class="surgery observe"><div class="surgery-axis"><span>ORIGINAL</span><i></i><span>LESS</span></div><div class="surgery-layers"><div class="original-visual" data-original></div></div><div class="operation op-remove"><b>01</b><span>REMOVE</span><strong>plastic film</strong></div><div class="operation op-resize"><b>03</b><span>RESIZE</span><strong>outer carton</strong><em>-14% · Estimated</em></div><div class="operation op-replace"><b>02</b><span>REPLACE</span><strong>PET tray</strong><em>→ molded pulp tray</em></div><div class="surgery-result"><span class="concept-label">CONCEPTUAL REDESIGN / 概念减量方案</span><div class="package after" data-package="after"></div></div></div>
+            <div class="education" style="justify-content:center"><div class="edu"><button aria-expanded="false">为什么建议单一材料？ <b>＋</b></button><div class="edu-panel">材料种类越少，消费者越容易正确分类，回收端也更少面对难以分离的组合。</div></div></div>
+          </section>
+
+        </div>
+          </div>
+        </div>
+
+        <div id="postFlow" hidden>
+
+          <section class="section" id="comparison">
+            <div class="section-heading split-heading"><div><div class="section-tag"><span>05 / COMPARISON</span><span>BEFORE / AFTER</span></div><h2>拖动，看看<br>少了什么</h2></div><p>更小的外盒、模塑纸浆内托、取消二次塑封。保留保护，减少结构。</p></div>
+            <div class="comparison" id="comparisonBox"><div class="compare-scene compare-before"><span class="compare-title"><span id="beforeTitle">BEFORE</span> <small id="beforeSub">4 LAYERS</small></span><div class="original-visual" data-original></div><div class="mini-net demo-before-net"><i class="mn-panel mn1"></i><i class="mn-panel mn2"></i><i class="mn-panel mn3"></i><i class="mn-panel mn4"></i><i class="mn-flap mn-top"></i><i class="mn-flap mn-bottom"></i></div></div><div class="compare-scene compare-after"><span class="compare-title"><span id="afterTitle">AFTER</span> <small class="concept-label">CONCEPTUAL REDESIGN</small></span><div class="package after" data-package="after"></div><div class="mini-net"><i class="mn-panel mn1"></i><i class="mn-panel mn2"></i><i class="mn-panel mn3"></i><i class="mn-panel mn4"></i><i class="mn-flap mn-top"></i><i class="mn-flap mn-bottom"></i></div></div><div class="divider"><span>↔</span></div><input id="compareRange" aria-label="调整改造前后对比" type="range" min="18" max="82" value="52"></div>
+            <div class="compare-legend"><span><i></i> Plastic film removed</span><span><i></i> PET → molded pulp</span><span><i></i> Carton resized</span></div>
+          </section>
+
+          <section class="impact" id="impact"><div class="section"><div class="section-heading"><span class="micro">06 / IMPACT · ESTIMATED</span><h2>少一点，<br>会发生什么？</h2></div><div class="impact-grid"><div class="impact-stat"><span>包装材料</span><div><strong>-31%</strong></div><em>Estimated</em></div><div class="impact-stat"><span>塑料</span><div><strong>-67%</strong></div><em>Estimated</em></div><div class="impact-stat"><span>空间利用率</span><div><small>54% → </small><strong>72%</strong></div><em>Estimated</em></div><div class="impact-stat"><span>可回收性</span><div><small>Medium → </small><strong>High</strong></div><em>Estimated</em></div></div><button class="method-toggle" id="methodToggle" aria-expanded="false">这些数字是怎么算出来的？ <b>＋</b></button><div class="method" id="method"><p>未来系统将结合材料识别、包装尺寸、材料 / 环境数据库与包装设计规则进行估算。</p><p>当前数字是用于体验设计的模拟值，不是经认证的生命周期评估（LCA）结果。</p></div></div></section>
+
+          <section class="ending observe" id="ending"><div class="ending-art"><div class="refold"><i class="fold-piece fold-left"></i><i class="fold-piece fold-center"></i><i class="fold-piece fold-right"></i><i class="fold-piece fold-top"></i><i class="fold-piece fold-bottom"></i><div class="fold-mark"><div><b>LESS</b><small>3 LAYERS</small></div></div><div class="fold-caption">FLAT DIELINE <b>→</b> SMALLER CARTON</div></div></div><div class="ending-copy"><span class="micro">A BETTER PACKAGE, WITH LESS</span><h2>包装不一定要更多，<br>才能做得更好。</h2><button class="button button-primary" id="restartButton">拆开下一个包装 ↗</button></div><footer><a class="brand" href="#top">PackLess AI<sup>®</sup></a><span>Packaging reduction, made visible.</span><span>Standalone Prototype / 2026</span></footer></section>
+        </div>
+      </div>
+    </div>
+  </main>
+  <noscript><div class="noscript">请在浏览器中启用 JavaScript，以体验包装展开与模拟分析。</div></noscript>
+
+  <script>
+    (function(){
+      "use strict";
+      const API_BASE_URL="https://packless-backend.onrender.com";
+      const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const clamp=(value,min=0,max=1)=>Math.min(max,Math.max(min,value));
+      const segment=(progress,start,end)=>clamp((progress-start)/(end-start));
+      const scrollBehavior=reduced?"auto":"smooth";
+
+      /* The same carton travels from object to interface; there is no second dieline. */
+      const hero=document.querySelector(".hero-scroll");
+      const heroCopy=document.getElementById("heroCopy");
+      const heroMeaning=document.getElementById("heroMeaning");
+      const scrollCue=document.getElementById("scrollCue");
+      const actionCue=document.getElementById("heroActionCue");
+      const cartonStage=document.querySelector(".carton-stage");
+      const anchor=document.getElementById("cartonAnchor");
+      const front=document.getElementById("cartonFront");
+      const side=document.getElementById("cartonSide");
+      const topFlap=document.getElementById("cartonTop");
+      const bottom=document.getElementById("cartonBottom");
+      const net=document.getElementById("heroNet");
+      const heroSteps=[...document.querySelectorAll(".hero-step")];
+      let ticking=false;
+
+      function updateHero(){
+        const rect=hero.getBoundingClientRect();
+        const distance=Math.max(1,rect.height-innerHeight);
+        const progress=clamp(-rect.top/distance);
+        const topOpen=segment(progress,.20,.45);
+        const sideOpen=segment(progress,.40,.70);
+        const bottomOpen=segment(progress,.52,.76);
+        const flatten=segment(progress,.68,.90);
+        const settle=segment(progress,.86,.98);
+        const centered=segment(progress,.44,.74);
+        const ready=progress>.91;
+        const isMobile=innerWidth<=720;
+        const startLeft=isMobile?50:66;
+        const baseScale=isMobile?.68:1.12;
+
+        heroCopy.style.opacity=String(1-segment(progress,.10,.24));
+        scrollCue.style.opacity=String(1-segment(progress,.03,.16));
+        heroMeaning.style.opacity=String(segment(progress,.52,.68)*(1-segment(progress,.84,.93)));
+        topFlap.style.transform=`rotateX(${-12-topOpen*108}deg) skewX(-7deg)`;
+        front.style.transform=`rotateY(${-82*sideOpen}deg)`;
+        side.style.transform=`rotateY(${58+84*sideOpen}deg)`;
+        bottom.style.transform=`rotateX(${88*bottomOpen}deg)`;
+        anchor.style.left=`${startLeft+(50-startLeft)*centered}%`;
+        anchor.style.opacity=String(1-flatten);
+        anchor.style.transform=`translate(-50%,-50%) rotateX(${-4+4*flatten}deg) rotateY(${-9+9*flatten}deg) scale(${baseScale-.15*flatten})`;
+        net.style.opacity=String(flatten);
+        net.style.transform=`translate(-50%,-50%) scale(${.74+.26*settle}) rotate(${-6+6*settle}deg)`;
+        net.classList.toggle("ready",ready);
+        net.setAttribute("aria-hidden",String(!ready));
+        heroSteps.forEach(link=>{link.tabIndex=ready?0:-1});
+        cartonStage.classList.toggle("is-ready",ready);
+        actionCue.classList.toggle("visible",ready);
+        ticking=false;
+      }
+      addEventListener("scroll",()=>{if(!ticking){ticking=true;requestAnimationFrame(updateHero)}},{passive:true});
+      addEventListener("resize",updateHero);
+      updateHero();
+
+      const packageMarkup='<div class="layer film"><small>PLASTIC FILM</small></div><div class="layer outer-box"><b>LUMEN</b><small>SKIN RITUAL / 30 ml</small></div><div class="layer tray"><small>PET</small></div><div class="layer bottle">L</div>';
+      document.querySelectorAll("[data-package]").forEach(element=>{element.innerHTML=packageMarkup});
+
+      const results=document.getElementById("results");
+      const lock=document.getElementById("foldedLock");
+      const scanner=document.getElementById("scanner");
+      const status=document.getElementById("scanStatus");
+      const resultFlow=document.getElementById("resultFlow");
+      const postFlow=document.getElementById("postFlow");
+      const sampleLabel=document.getElementById("sampleLabel");
+      const workbenchCanvas=document.getElementById("workbenchCanvas");
+      const workbenchCase=document.getElementById("workbenchCase");
+      const prototypeDiagnosis=document.getElementById("prototypeDiagnosis");
+      const patientLabel=document.getElementById("patientLabel");
+      const diagnosisStamp=document.getElementById("diagnosisStamp");
+      const beforeTitle=document.getElementById("beforeTitle");
+      const beforeSub=document.getElementById("beforeSub");
+      const stageItems=[...document.querySelectorAll("#scanStages li")];
+      const fileInput=document.getElementById("fileInput");
+      const uploadEmpty=document.getElementById("uploadEmpty");
+      const uploadConfirm=document.getElementById("uploadConfirm");
+      const uploadPreview=document.getElementById("uploadPreview");
+      const confirmPhoto=document.getElementById("confirmPhoto");
+      const confirmPhotoMarkup=confirmPhoto.innerHTML;
+      let sourceMode="demo";
+      let pendingImage="";
+      let pendingFile=null;
+      let latestAnalysisResult=null;
+      let userImage="";
+      let scanTimers=[];
+      let journeyObserver;
+
+      function makeDemoPackage(){
+        const packageElement=document.createElement("div");
+        packageElement.className="package";
+        packageElement.innerHTML=packageMarkup;
+        return packageElement;
+      }
+
+      function makeUserPhoto(){
+        const frame=document.createElement("figure");
+        frame.className="user-photo";
+        const image=document.createElement("img");
+        image.src=userImage;
+        image.alt="用户上传的包装照片";
+        const label=document.createElement("span");
+        label.textContent="ORIGINAL PHOTO";
+        frame.append(image,label);
+        return frame;
+      }
+
+      function renderOriginals(){
+        document.querySelectorAll("[data-original]").forEach(slot=>{
+          slot.replaceChildren(sourceMode==="upload"?makeUserPhoto():makeDemoPackage());
+        });
+      }
+
+      function setSource(mode){
+        sourceMode=mode;
+        const uploaded=mode==="upload";
+        document.body.classList.toggle("upload-mode",uploaded);
+        workbenchCase.textContent=uploaded?"UPLOADED PACKAGE / LOCAL":"DEMO SAMPLE / PL–024";
+        prototypeDiagnosis.textContent=uploaded?"原型模拟诊断 / PROTOTYPE SIMULATED DIAGNOSIS":"PRESET DEMO DIAGNOSIS";
+        patientLabel.textContent=uploaded?"PATIENT / UPLOADED PACKAGE":"PATIENT / LUMEN 护肤礼盒";
+        diagnosisStamp.textContent=uploaded?"SIMULATED":"DEMO";
+        beforeTitle.textContent=uploaded?"ORIGINAL PHOTO":"BEFORE";
+        beforeSub.textContent=uploaded?"USER UPLOAD":"4 LAYERS";
+        sampleLabel.textContent=uploaded?"LOCAL PHOTO / MOCK":"DEMO SAMPLE";
+        renderOriginals();
+      }
+
+      function setScanPhase(index,label,phase){
+        workbenchCanvas.classList.remove("phase-structure","phase-material","phase-reduction","phase-complete");
+        workbenchCanvas.classList.add(phase);
+        status.querySelector("span").textContent=label;
+        stageItems.forEach((item,itemIndex)=>{
+          item.classList.toggle("active",itemIndex===index);
+          item.classList.toggle("done",itemIndex<index||phase==="phase-complete");
+        });
+      }
+
+      function schedule(callback,delay){
+        const timer=setTimeout(callback,reduced?Math.min(delay,90):delay);
+        scanTimers.push(timer);
+      }
+
+      function startAnalysis(){
+        scanTimers.forEach(clearTimeout);
+        scanTimers=[];
+        results.classList.add("active");
+        lock.style.display="none";
+        scanner.classList.remove("scan-done");
+        resultFlow.hidden=true;
+        postFlow.hidden=true;
+        workbenchCanvas.dataset.stage="scan";
+        setScanPhase(0,"正在识别包装轮廓…","phase-structure");
+        schedule(()=>document.getElementById("analysis").scrollIntoView({behavior:scrollBehavior,block:"start"}),80);
+        schedule(()=>setScanPhase(1,"正在判断可见材料线索…","phase-material"),1250);
+        schedule(()=>setScanPhase(2,"正在寻找可能的减量空间…","phase-reduction"),2600);
+        schedule(()=>{
+          setScanPhase(3,"体检完成 · 模拟结果","phase-complete");
+          scanner.classList.add("scan-done");
+          resultFlow.hidden=false;
+          postFlow.hidden=false;
+          observeSections();
+          observeJourney();
+        },4100);
+      }
+
+      document.getElementById("demoButton").addEventListener("click",()=>{
+        setSource("demo");
+        startAnalysis();
+      });
+
+      fileInput.addEventListener("change",event=>{
+        const file=event.target.files&&event.target.files[0];
+        if(!file)return;
+        if(!file.type.startsWith("image/")){pendingFile=null;fileInput.value="";return}
+        pendingFile=file;
+        const reader=new FileReader();
+        reader.addEventListener("load",()=>{
+          pendingImage=String(reader.result||"");
+          uploadPreview.src=pendingImage;
+          uploadEmpty.hidden=true;
+          uploadConfirm.hidden=false;
+        });
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById("replacePhoto").addEventListener("click",()=>{
+        fileInput.value="";
+        fileInput.click();
+      });
+      confirmPhoto.addEventListener("click",async()=>{
+        if(!pendingImage||!pendingFile)return;
+        confirmPhoto.disabled=true;
+        confirmPhoto.textContent="分析中...";
+        try{
+          const formData=new FormData();
+          formData.append("image",pendingFile);
+          const response=await fetch(`${API_BASE_URL}/api/analyze`,{method:"POST",body:formData});
+          if(!response.ok)throw new Error(`HTTP ${response.status}`);
+          const result=await response.json();
+          console.log("后端分析结果：",result);
+          if(!result.success)throw new Error(result.error?.message||"包装分析失败");
+          latestAnalysisResult=result;
+          window.latestAnalysisResult=latestAnalysisResult;
+          userImage=pendingImage;
+          setSource("upload");
+          startAnalysis();
+        }catch(error){
+          console.error("包装分析请求失败：",error);
+          alert("包装分析失败，请稍后重试");
+        }finally{
+          confirmPhoto.disabled=false;
+          confirmPhoto.innerHTML=confirmPhotoMarkup;
+        }
+      });
+
+      heroSteps.forEach(link=>link.addEventListener("click",event=>{
+        if(!net.classList.contains("ready")){event.preventDefault();return}
+        const selector=link.getAttribute("href");
+        if(selector==="#checkup")return;
+        event.preventDefault();
+        const target=document.querySelector(selector);
+        const complete=results.classList.contains("active")&&!resultFlow.hidden;
+        if(complete){target.scrollIntoView({behavior:scrollBehavior,block:"start"});return}
+        setSource("demo");
+        startAnalysis();
+        if(selector!=="#analysis")schedule(()=>target.scrollIntoView({behavior:scrollBehavior,block:"start"}),reduced?120:4250);
+      }));
+
+      document.getElementById("restartButton").addEventListener("click",()=>{
+        scanTimers.forEach(clearTimeout);
+        results.classList.remove("active");
+        resultFlow.hidden=true;
+        postFlow.hidden=true;
+        lock.style.display="grid";
+        workbenchCanvas.className="workbench-canvas";
+        workbenchCanvas.dataset.stage="scan";
+        document.getElementById("checkup").scrollIntoView({behavior:scrollBehavior});
+      });
+
+      document.querySelectorAll(".edu button").forEach(button=>button.addEventListener("click",()=>{
+        const wrap=button.closest(".edu");
+        const open=!wrap.classList.contains("open");
+        document.querySelectorAll(".edu.open").forEach(item=>{item.classList.remove("open");item.querySelector("button").setAttribute("aria-expanded","false");item.querySelector("button b").textContent="＋"});
+        wrap.classList.toggle("open",open);
+        button.setAttribute("aria-expanded",String(open));
+        button.querySelector("b").textContent=open?"−":"＋";
+      }));
+
+      const range=document.getElementById("compareRange");
+      const comparison=document.getElementById("comparisonBox");
+      range.addEventListener("input",()=>comparison.style.setProperty("--split",range.value+"%"));
+      const methodToggle=document.getElementById("methodToggle");
+      const method=document.getElementById("method");
+      methodToggle.addEventListener("click",()=>{
+        const open=method.classList.toggle("open");
+        methodToggle.setAttribute("aria-expanded",String(open));
+        methodToggle.querySelector("b").textContent=open?"−":"＋";
+      });
+
+      let revealObserver;
+      function observeSections(){
+        if(revealObserver)revealObserver.disconnect();
+        revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting)entry.target.classList.add("in-view")}),{threshold:.24});
+        document.querySelectorAll(".observe").forEach(element=>revealObserver.observe(element));
+      }
+
+      function observeJourney(){
+        if(journeyObserver)journeyObserver.disconnect();
+        journeyObserver=new IntersectionObserver(entries=>{
+          const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+          if(visible)workbenchCanvas.dataset.stage=visible.target.dataset.workbenchStage;
+        },{rootMargin:"-30% 0px -48%",threshold:[0,.15,.35]});
+        [["analysis","scan"],["diagnosis","diagnosis"],["prescription","redesign"]].forEach(([id,stage])=>{
+          const section=document.getElementById(id);
+          section.dataset.workbenchStage=stage;
+          journeyObserver.observe(section);
+        });
+      }
+
+      setSource("demo");
+      observeSections();
+    })();
+  </script>
+</body>
+</html>
