@@ -2,7 +2,13 @@ import asyncio
 
 import pytest
 
-from app.services.ai_analyzer import AIAnalyzerError, _parse_analysis, analyze_image
+from app.services.ai_analyzer import (
+    AIAnalyzerError,
+    _parse_analysis,
+    analyze_image,
+    clean_model_output,
+)
+from app.services.analysis_normalizer import normalize_analysis_result
 
 
 VALID_MODEL_JSON = """{
@@ -36,8 +42,56 @@ def test_parse_analysis_strips_markdown_fence_and_validates() -> None:
 
 
 def test_parse_analysis_rejects_invalid_json() -> None:
-    with pytest.raises(AIAnalyzerError, match="invalid JSON"):
+    with pytest.raises(AIAnalyzerError, match="non-JSON"):
         _parse_analysis("not-json", "package.png")
+
+
+def test_clean_model_output_extracts_json_from_explanation_and_fence() -> None:
+    text = f"Here is the JSON:\n```json\n{VALID_MODEL_JSON}\n```\nHope this helps."
+    assert clean_model_output(text) == VALID_MODEL_JSON
+
+
+def test_parse_analysis_reports_malformed_json_specifically() -> None:
+    with pytest.raises(AIAnalyzerError, match="JSON parse failed"):
+        _parse_analysis('Result: {"product": }', "package.png")
+
+
+def test_normalizer_accepts_aliases_missing_fields_and_material_variants() -> None:
+    raw = {
+        "product_info": {"type": "cosmetics", "name": "Serum"},
+        "packaging": {
+            "layers": "about 3 layers",
+            "materials": [
+                {"name": "Paperboard", "percentage": 30},
+                {"material": "PET", "ratio": 20},
+                "Plastic film",
+            ],
+            "space_usage": "unknown",
+        },
+        "diagnosis": {"issues": "mixed materials, excess space"},
+        "impact": {"packaging_weight": "cannot determine"},
+    }
+
+    normalized = normalize_analysis_result(raw, "serum.png")
+
+    assert normalized["filename"] == "serum.png"
+    assert normalized["product"] == {
+        "category": "cosmetics",
+        "product_name": "Serum",
+    }
+    assert normalized["packaging"]["layers"] == 3
+    assert normalized["packaging"]["space_utilization"] is None
+    assert [item["material"] for item in normalized["packaging"]["materials"]] == [
+        "Paperboard",
+        "PET",
+        "Plastic film",
+    ]
+    assert normalized["diagnosis"]["issue_tags"] == [
+        "mixed materials",
+        "excess space",
+    ]
+    assert normalized["environmental_impact"]["estimated_packaging_weight_g"] is None
+    assert normalized["summary"] == ""
 
 
 def test_missing_api_key_is_clear(monkeypatch) -> None:

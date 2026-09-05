@@ -14,7 +14,15 @@ Truthfulness rules:
 - Scores may be null when there is not enough evidence.
 - Do not claim laboratory identification, certification, or lifecycle assessment.
 
-Return only one valid JSON object. Do not use Markdown fences or explanatory text. The JSON object must have exactly this structure:
+Output rules:
+- Return only valid JSON.
+- Do not use Markdown or code fences.
+- Do not add explanations, introductions, or text outside the JSON object.
+- Match the required field names and nesting as closely as possible.
+- If uncertain, use null, an empty string, or an empty array.
+- Do not invent precise numeric values.
+
+Return one JSON object with this structure:
 {
   "product": {"category": "", "product_name": ""},
   "packaging": {
@@ -35,7 +43,10 @@ Return only one valid JSON object. Do not use Markdown fences or explanatory tex
 }
 """
 
-ANALYSIS_USER_PROMPT = "Analyze the uploaded package image and return the required JSON only. Prefer null or unknown over unsupported precision."
+ANALYSIS_USER_PROMPT = """Analyze the uploaded package image and return the required JSON only.
+Return only valid JSON. Do not use markdown. Do not add explanations.
+If uncertain, use null, an empty string, or an empty array.
+Match the required schema as closely as possible and never invent precise values."""
 
 
 def build_analysis_messages(image_data_url: str) -> list[dict[str, Any]]:

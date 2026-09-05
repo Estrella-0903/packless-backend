@@ -4,15 +4,16 @@ import asyncio
 import base64
 import json
 import os
+import re
 from http import HTTPStatus
 from typing import Any
-from uuid import uuid4
 
 import dashscope
 from dotenv import load_dotenv
 from pydantic import ValidationError
 
 from app.schemas.models import AnalysisData
+from app.services.analysis_normalizer import normalize_analysis_result
 from app.services.prompt_builder import build_analysis_messages
 
 
@@ -56,41 +57,79 @@ def _extract_text(response: Any) -> str:
     )
 
 
-def _strip_json_fence(text: str) -> str:
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        first_newline = cleaned.find("\n")
-        if first_newline != -1:
-            cleaned = cleaned[first_newline + 1 :]
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
-    return cleaned.strip()
+def _preview(value: Any, limit: int = 3000) -> str:
+    text = str(value).replace("\x00", "").strip()
+    return text if len(text) <= limit else f"{text[:limit]}... [truncated]"
+
+
+def clean_model_output(text: str) -> str:
+    """Remove wrappers and return the first complete JSON object in model text."""
+    if not isinstance(text, str):
+        return ""
+    cleaned = text.lstrip("\ufeff").strip()
+    cleaned = re.sub(r"```\s*json\s*", "", cleaned, flags=re.IGNORECASE)
+    cleaned = cleaned.replace("```", "").strip()
+
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\{", cleaned):
+        candidate = cleaned[match.start() :]
+        try:
+            value, end = decoder.raw_decode(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            return candidate[:end].strip()
+    first_brace = cleaned.find("{")
+    if first_brace != -1:
+        last_brace = cleaned.rfind("}")
+        end = last_brace + 1 if last_brace >= first_brace else len(cleaned)
+        return cleaned[first_brace:end].strip()
+    return ""
 
 
 def _parse_analysis(text: str, filename: str) -> AnalysisData:
-    try:
-        payload = json.loads(_strip_json_fence(text))
-    except json.JSONDecodeError as exc:
+    print(f"[ANALYZE] raw model output: {_preview(text)}", flush=True)
+    cleaned = clean_model_output(text)
+    print(f"[ANALYZE] cleaned model output: {_preview(cleaned)}", flush=True)
+    if not cleaned:
+        print("[ANALYZE] json parse fail: AI returned non-JSON text", flush=True)
         raise AIAnalyzerError(
             "AI_ANALYSIS_FAILED",
-            "AI packaging analysis returned invalid JSON.",
+            "AI returned non-JSON text.",
+        )
+    try:
+        payload = json.loads(cleaned)
+    except json.JSONDecodeError as exc:
+        print(f"[ANALYZE] json parse fail: {_preview(exc)}", flush=True)
+        raise AIAnalyzerError(
+            "AI_ANALYSIS_FAILED",
+            "JSON parse failed.",
         ) from exc
 
+    print("[ANALYZE] json parse success", flush=True)
     if not isinstance(payload, dict):
+        print("[ANALYZE] schema normalize fail: Missing required root object", flush=True)
         raise AIAnalyzerError(
             "AI_ANALYSIS_FAILED",
-            "AI packaging analysis returned an invalid data structure.",
+            "Missing required root object.",
         )
 
-    payload["analysis_id"] = f"analysis_{uuid4().hex[:12]}"
-    payload["filename"] = filename
     try:
-        return AnalysisData.model_validate(payload)
-    except ValidationError as exc:
+        normalized = normalize_analysis_result(payload, filename)
+        result = AnalysisData.model_validate(normalized)
+    except (TypeError, ValueError, ValidationError) as exc:
+        print(f"[ANALYZE] schema normalize fail: {_preview(exc)}", flush=True)
         raise AIAnalyzerError(
             "AI_ANALYSIS_FAILED",
-            "AI packaging analysis did not match the required structure.",
+            f"JSON extracted but normalization failed: {_preview(exc, 300)}",
         ) from exc
+    print("[ANALYZE] schema normalize success", flush=True)
+    print(
+        "[ANALYZE] final normalized result: "
+        f"{_preview(json.dumps(normalized, ensure_ascii=False))}",
+        flush=True,
+    )
+    return result
 
 
 def _call_dashscope(
@@ -102,6 +141,7 @@ def _call_dashscope(
     messages = build_analysis_messages(_image_data_url(image_bytes, content_type))
 
     try:
+        print("[ANALYZE] calling qwen vision model", flush=True)
         response = dashscope.MultiModalConversation.call(
             api_key=api_key,
             model=MODEL_NAME,

@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api", tags=["analysis"])
 )
 async def analyze_packaging(image: UploadFile = File(...)) -> AnalysisResponse | JSONResponse:
     """Validate an uploaded image and analyze it with Qwen Vision."""
+    print("[ANALYZE] request received", flush=True)
     if not image.content_type or not image.content_type.startswith("image/"):
         await image.close()
         return JSONResponse(
