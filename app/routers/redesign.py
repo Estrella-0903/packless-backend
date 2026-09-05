@@ -90,10 +90,16 @@ async def _parse_request(request: Request) -> tuple[dict[str, Any], bytes | None
     },
 )
 async def redesign_packaging(request: Request) -> RedesignResponse | JSONResponse:
+    print("[REDESIGN] request received", flush=True)
     parsed = await _parse_request(request)
     if isinstance(parsed, JSONResponse):
         return parsed
     analysis_result, image_bytes = parsed
+    print(
+        f"[REDESIGN] image uploaded={bool(image_bytes)}, "
+        f"analysis received={bool(analysis_result)}",
+        flush=True,
+    )
     plan = create_redesign_plan(analysis_result)
 
     if image_bytes:
@@ -102,6 +108,7 @@ async def redesign_packaging(request: Request) -> RedesignResponse | JSONRespons
             plan.change_plan.model_dump(by_alias=True),
         )
         try:
+            print("[REDESIGN] calling wan image generator", flush=True)
             generation = await generate_optimized_image(image_bytes, prompt)
         except Exception:
             generation = {
@@ -127,4 +134,11 @@ async def redesign_packaging(request: Request) -> RedesignResponse | JSONRespons
                 }
             )
 
+    print(
+        f"[REDESIGN] returning image_generation_failed="
+        f"{plan.image_generation_failed}, "
+        f"optimized_image_url={plan.optimized_image_url}, "
+        f"error={plan.image_generation_error}",
+        flush=True,
+    )
     return RedesignResponse(data=plan)

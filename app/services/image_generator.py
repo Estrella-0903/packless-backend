@@ -139,6 +139,7 @@ def _submit_task(image_data_url: str, prompt: str, api_key: str) -> Any:
         role="user",
         content=[{"text": prompt}, {"image": image_data_url}],
     )
+    print("[WAN] submitting task", flush=True)
     return ImageGeneration.async_call(
         model=MODEL_NAME,
         api_key=api_key,
@@ -180,6 +181,7 @@ async def _submit_and_poll(
             "Wan task submission returned no task_id.", raw_response
         )
     logger.info("Wan image generation: task submitted (task_id=%s)", task_id)
+    print(f"[WAN] task_id={task_id}", flush=True)
 
     current = response
     for attempt in range(1, MAX_POLL_ATTEMPTS + 1):
@@ -191,8 +193,13 @@ async def _submit_and_poll(
             attempt,
             MAX_POLL_ATTEMPTS,
         )
+        print(
+            f"[WAN] poll={attempt}/{MAX_POLL_ATTEMPTS}, status={status}",
+            flush=True,
+        )
         if status == "SUCCEEDED":
             provider_url = _extract_result_url(current)
+            print("[WAN] provider image url exists=True", flush=True)
             logger.info(
                 "Wan image generation: task succeeded (task_id=%s, image_url=%s)",
                 task_id,
@@ -268,6 +275,10 @@ async def _download_result(provider_url: str) -> str:
         destination,
         local_url,
     )
+    print(
+        f"[WAN] local image saved=True, optimized_image_url={local_url}",
+        flush=True,
+    )
     return local_url
 
 
@@ -275,10 +286,14 @@ async def generate_optimized_image(
     image_bytes: bytes, prompt: str
 ) -> dict[str, Any]:
     """Create, poll, download, and expose one Wan-optimized package image."""
+    print("[WAN] generate_optimized_image entered", flush=True)
     api_key = os.getenv("DASHSCOPE_API_KEY")
+    print(f"[WAN] DASHSCOPE_API_KEY configured={bool(api_key)}", flush=True)
+    print(f"[WAN] model={MODEL_NAME}", flush=True)
     if not api_key:
         error = "DASHSCOPE_API_KEY is not configured."
         logger.error("Wan image generation: %s", error)
+        print(f"[WAN] ERROR: {error}", flush=True)
         return {"success": False, "image_url": "", "raw_response": {}, "error": error}
 
     raw_response: dict[str, Any] = {}
@@ -300,6 +315,7 @@ async def generate_optimized_image(
         if isinstance(exc, ImageGeneratorError):
             raw_response = exc.raw_response
         logger.error("Wan image generation failed: %s", error)
+        print(f"[WAN] ERROR: {error}", flush=True)
         return {
             "success": False,
             "image_url": "",
