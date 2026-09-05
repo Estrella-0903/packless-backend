@@ -147,6 +147,18 @@
     .impact{background:var(--ink)}.impact-stat strong,.impact-stat em{color:#80c99b}.ending{background:var(--accent)}.fold-mark b{color:var(--accent)}
     .edu button:hover{background:var(--sage);border-color:var(--accent);transform:translateY(-2px) scale(1.025)}.edu button:active{transform:scale(.98)}.method-toggle:hover{color:#80c99b;padding-left:4px;padding-right:4px}.method-toggle:active{transform:scale(.99)}
 
+    /* Version 0.3 — automated packaging surgery */
+    .analysis-controls{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:18px}.analysis-progress{height:3px;background:var(--hair);overflow:hidden}.analysis-progress i{display:block;width:100%;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform 8.8s linear}.analysis-controls.playing .analysis-progress i{transform:scaleX(1)}.analysis-play{min-width:148px;min-height:44px}.analysis-play:disabled{cursor:progress;opacity:.72;transform:none;box-shadow:none}.analysis-hint{grid-column:1/-1;margin:0;color:var(--muted);font-size:7px;letter-spacing:.08em;text-align:right}
+    .scan-mode-label{position:absolute;z-index:13;left:16px;top:14px;border-left:3px solid var(--accent);background:var(--paper);padding:7px 10px;font-size:8px;font-weight:850;letter-spacing:.15em;opacity:0;transform:translateY(8px);transition:.3s}.timeline-scan .scan-mode-label,.timeline-identify .scan-mode-label,.timeline-issues .scan-mode-label{opacity:1;transform:none}
+    .timeline-enter>.original-visual{animation:packageArrival .55s cubic-bezier(.22,1,.36,1) both}@keyframes packageArrival{from{opacity:0;transform:translateX(-11%) scale(.9)}to{opacity:1;transform:none}}
+    .timeline-identify .material-clues span,.timeline-issues .material-clues span{opacity:1;transform:none}.timeline-identify .material-clues span:nth-child(2){transition-delay:.35s}.timeline-identify .material-clues span:nth-child(3){transition-delay:.7s}
+    .workbench-problems{opacity:1;pointer-events:none}.issue-stack{position:absolute;z-index:2;right:13px;bottom:14px;width:min(205px,45%);display:grid;gap:5px}.issue-stack span{display:grid;grid-template-columns:24px 1fr;gap:7px;align-items:center;background:var(--warning);color:var(--paper);padding:7px 8px;font-size:7px;font-weight:850;letter-spacing:.09em;opacity:0;transform:translateY(8px);transition:.3s}.issue-stack b{font:13px Georgia,serif}.timeline-issues .issue-stack span{opacity:1;transform:none}.timeline-issues .issue-stack span:nth-child(2){transition-delay:.35s}.timeline-issues .issue-stack span:nth-child(3){transition-delay:.7s}.timeline-issues .issue-stack span:nth-child(4){transition-delay:1.05s}.timeline-issues .wb-circle{opacity:1}.wb-circle{opacity:0;transition:opacity .3s}
+    .workbench-redesign{visibility:hidden;opacity:0}.timeline-redesign .workbench-redesign,.timeline-remove .workbench-redesign,.timeline-replace .workbench-redesign,.timeline-resize .workbench-redesign,.timeline-finished .workbench-redesign{visibility:visible;opacity:1}.timeline-redesign>.original-visual,.timeline-remove>.original-visual,.timeline-replace>.original-visual,.timeline-resize>.original-visual,.timeline-finished>.original-visual{opacity:0;transform:translateX(-8%) scale(.94)}.workbench-redesign .redesign-package{transform:scale(.94);transition:transform .8s cubic-bezier(.22,1,.36,1)}
+    .timeline-remove .redesign-package .film,.timeline-replace .redesign-package .film,.timeline-resize .redesign-package .film,.timeline-finished .redesign-package .film{opacity:0;transform:translateY(-55px) rotate(5deg);pointer-events:none}.timeline-replace .redesign-package .tray,.timeline-resize .redesign-package .tray,.timeline-finished .redesign-package .tray{width:155px;height:190px;background:#a59b78;border-color:#6e664e;box-shadow:inset 0 0 0 6px rgba(243,240,230,.16)}.timeline-resize .redesign-package .outer-box,.timeline-finished .redesign-package .outer-box{width:190px;height:246px;box-shadow:8px 9px 0 #cfc4ae}.timeline-resize .redesign-package,.timeline-finished .redesign-package{transform:scale(.78)}
+    .comparison{transition:background-color .45s}.comparison:not(.comparison-ready) .compare-after,.comparison:not(.comparison-ready) .divider{opacity:0}.compare-after,.divider{transition:clip-path .85s,opacity .45s,left .08s}.comparison.comparison-ready{box-shadow:0 18px 0 rgba(23,53,40,.08)}.divider span{box-shadow:0 5px 0 rgba(23,53,40,.13);font-weight:850}.comparison:focus-within .divider span{outline:3px solid var(--warning);outline-offset:3px}
+    .optimization-dashboard{margin-top:30px;border:1px solid var(--ink);background:rgba(243,240,230,.88)}.change-metrics{display:grid;grid-template-columns:repeat(4,1fr)}.change-metric{min-height:150px;padding:18px;border-right:1px solid var(--line);display:flex;flex-direction:column}.change-metric:last-child{border:0}.change-metric>small{font-size:7px;font-weight:850;letter-spacing:.12em}.metric-values{margin-top:auto;display:flex;align-items:baseline;gap:6px;white-space:nowrap}.metric-values b{font:22px Georgia,serif;color:var(--muted)}.metric-values i{font-style:normal;color:var(--warning)}.metric-values strong{font-size:36px;letter-spacing:-.06em;color:var(--accent)}.metric-values em{font-size:9px;font-style:normal;color:var(--muted)}
+    .decision-row{display:grid;grid-template-columns:repeat(3,1fr) 1.25fr;border-top:1px solid var(--ink)}.decision-score,.balanced-solution{min-height:135px;padding:18px;border-right:1px solid var(--line);opacity:0;transform:translateY(8px);transition:.45s}.decision-score:last-of-type{border-right:1px solid var(--line)}.decision-score span,.balanced-solution span{font-size:7px;font-weight:850;letter-spacing:.13em}.decision-score strong{display:block;margin-top:24px;font-size:30px;color:var(--accent)}.scores-visible .decision-score{opacity:1;transform:none}.scores-visible .decision-score:nth-child(2){transition-delay:.22s}.scores-visible .decision-score:nth-child(3){transition-delay:.44s}.balanced-solution{border-right:0;background:var(--accent);color:var(--paper)}.balanced-solution strong{display:block;margin-top:22px;font-size:18px;line-height:1.15}.recommendation-visible .balanced-solution{opacity:1;transform:none}
+
     .noscript{position:fixed;z-index:999;inset:auto 20px 20px;background:var(--ink);color:var(--paper);padding:14px;font-size:12px}
     @media(max-width:980px){.nav-links{display:none}.carton-anchor{left:70%;transform:translate(-50%,-50%) rotateX(-4deg) rotateY(-9deg) scale(.94)}.hero-copy{left:5vw;width:45vw}.scanner-layout{grid-template-columns:1fr 270px}.package{transform:scale(.8)}.surgery-result{right:2%;width:280px}.compare-scene{padding-inline:3vw}.compare-scene .package{transform:scale(.72)}.compare-scene .mini-net{transform:scale(.78) rotate(-5deg)}.ending{grid-template-columns:1fr}.ending-art{position:absolute;inset:8% 48% 10% 0;opacity:.75}.ending-copy{margin-left:43%}}
     @media(max-width:720px){
@@ -161,6 +173,7 @@
       .hero-action-cue{width:100%;text-align:center;bottom:2.5vh;font-size:8px}.hero-net.ready .hero-step:hover{transform:none;box-shadow:none}
       .upload-confirm{grid-template-columns:1fr;padding:28px 18px;gap:20px}.preview-frame{height:250px}.confirm-copy{text-align:center}.confirm-copy .upload-actions{justify-content:center}.upload-zone:has(.upload-confirm:not([hidden])){padding:0}
       .workbench-shell{display:block;border-top:1px solid}.workbench-visual{position:relative;top:auto;height:auto;min-height:720px;padding:70px 20px 28px;border-right:0;border-bottom:1px solid}.workbench-canvas{height:500px}.workbench-canvas .package{transform:scale(.68)}.workbench-canvas .user-photo{height:88%;width:90%}.scan-stages{margin-top:14px}.scan-stages small{display:none}
+      .analysis-controls{grid-template-columns:1fr}.analysis-play{width:100%}.analysis-hint{text-align:center}.issue-stack{width:48%;right:8px}.issue-stack span{font-size:6px;padding:6px}.timeline-redesign .redesign-package,.timeline-remove .redesign-package,.timeline-replace .redesign-package{transform:scale(.68)}.timeline-resize .redesign-package,.timeline-finished .redesign-package{transform:scale(.56)}.change-metrics{grid-template-columns:1fr 1fr}.change-metric:nth-child(2){border-right:0}.change-metric:nth-child(-n+2){border-bottom:1px solid var(--line)}.decision-row{grid-template-columns:1fr 1fr}.decision-score:nth-child(2){border-right:0}.decision-score:nth-child(3){border-top:1px solid var(--line)}.balanced-solution{border-top:1px solid var(--ink)}
       .workbench-content>.section,.workbench-content #resultFlow>.section{width:calc(100% - 40px);padding:80px 0;margin:auto}.workbench-content .scanner-header{padding:0}.workbench-content .scanner-layout{display:grid;grid-template-columns:1fr;gap:0}.workbench-content .scan-view{display:grid;height:480px;border:1px solid var(--ink)}.workbench-content .scan-view>.original-visual{position:absolute;inset:5%}.workbench-content .scan-view .user-photo{width:92%;height:92%;box-shadow:8px 9px 0 rgba(23,53,40,.13)}.workbench-content .uncertainty{padding-top:68px}.workbench-content .metrics{grid-template-columns:1fr 1fr}.workbench-content .metric{min-height:150px}.workbench-content .report-body{display:block}.workbench-content .critique{display:grid;min-height:410px;border:1px solid var(--ink);margin-top:28px}.workbench-content .critique .original-visual{width:100%;height:100%}.workbench-content .finding p{font-size:15px}.workbench-content .surgery{min-height:860px}.workbench-content .operation{width:43%}.workbench-content .op-remove{left:5%;top:11%}.workbench-content .op-resize{left:52%;top:11%}.workbench-content .op-replace{left:5%;top:27%;bottom:auto}.workbench-content .surgery-layers{left:52%;top:27%;height:140px}.workbench-content .surgery-result{width:90%;height:350px;right:5%;bottom:4%}.workbench-content .surgery-result .package{transform:scale(.54)}.workbench-content .surgery.in-view .surgery-result .package{transform:scale(.57)}
       .comparison .original-visual{height:100%;padding:25px 0 0}.comparison .original-visual .package{transform:scale(.61)}.comparison .user-photo{height:82%;width:82%;box-shadow:8px 9px 0 rgba(23,53,40,.13)}.compare-after .concept-label{display:block;margin-top:4px}.prototype-diagnosis{font-size:6px}
     }
@@ -223,9 +236,10 @@
               <div class="original-visual" data-original></div>
               <div class="contour-frame"><i></i><i></i><i></i><i></i></div>
               <div class="workbench-scan-line"></div>
+              <span class="scan-mode-label">AI PACKAGING SCAN</span>
               <div class="material-clues"><span>Paperboard <b>96%</b></span><span>PET? <b>82%</b></span><span>Plastic Film? <b>89%</b></span></div>
-              <div class="workbench-problems"><i class="wb-circle wc1"></i><i class="wb-circle wc2"></i><span class="wb-note wn1">EMPTY SPACE? · Estimated</span><span class="wb-note wn2">MATERIAL SUBSTITUTE →</span></div>
-              <div class="workbench-redesign"><div class="package after" data-package="after"></div><span class="concept-label">CONCEPTUAL REDESIGN / 概念减量方案</span></div>
+              <div class="workbench-problems"><i class="wb-circle wc1"></i><i class="wb-circle wc2"></i><div class="issue-stack"><span><b>01</b>EXCESSIVE LAYER</span><span><b>02</b>PLASTIC INNER TRAY</span><span><b>03</b>LOW SPACE UTILIZATION</span><span><b>04</b>MIXED MATERIALS</span></div></div>
+              <div class="workbench-redesign"><div class="package redesign-package" data-package="after"></div><span class="concept-label">AI REDESIGN / 包装减量手术</span></div>
               <span class="prototype-diagnosis" id="prototypeDiagnosis">PRESET DEMO DIAGNOSIS</span>
             </div>
             <ol class="scan-stages" id="scanStages">
@@ -233,6 +247,7 @@
               <li><b>02</b><span>MATERIAL<small>正在判断可见材料线索…</small></span></li>
               <li><b>03</b><span>REDUCTION<small>正在寻找可能的减量空间…</small></span></li>
             </ol>
+            <div class="analysis-controls" id="analysisControls"><div class="analysis-progress" aria-hidden="true"><i></i></div><button class="button button-primary analysis-play" id="analysisPlayButton">开始检测 <span>→</span></button><p class="analysis-hint">8.8 SEC · AUTOMATED PACKAGING SURGERY</p></div>
           </aside>
           <div class="workbench-content">
         <section class="section scanner-section" id="analysis">
@@ -274,6 +289,7 @@
             <div class="section-heading split-heading"><div><div class="section-tag"><span>05 / COMPARISON</span><span>BEFORE / AFTER</span></div><h2>拖动，看看<br>少了什么</h2></div><p>更小的外盒、模塑纸浆内托、取消二次塑封。保留保护，减少结构。</p></div>
             <div class="comparison" id="comparisonBox"><div class="compare-scene compare-before"><span class="compare-title"><span id="beforeTitle">BEFORE</span> <small id="beforeSub">4 LAYERS</small></span><div class="original-visual" data-original></div><div class="mini-net demo-before-net"><i class="mn-panel mn1"></i><i class="mn-panel mn2"></i><i class="mn-panel mn3"></i><i class="mn-panel mn4"></i><i class="mn-flap mn-top"></i><i class="mn-flap mn-bottom"></i></div></div><div class="compare-scene compare-after"><span class="compare-title"><span id="afterTitle">AFTER</span> <small class="concept-label">CONCEPTUAL REDESIGN</small></span><div class="package after" data-package="after"></div><div class="mini-net"><i class="mn-panel mn1"></i><i class="mn-panel mn2"></i><i class="mn-panel mn3"></i><i class="mn-panel mn4"></i><i class="mn-flap mn-top"></i><i class="mn-flap mn-bottom"></i></div></div><div class="divider"><span>↔</span></div><input id="compareRange" aria-label="调整改造前后对比" type="range" min="18" max="82" value="52"></div>
             <div class="compare-legend"><span><i></i> Plastic film removed</span><span><i></i> PET → molded pulp</span><span><i></i> Carton resized</span></div>
+            <div class="optimization-dashboard" id="optimizationDashboard" aria-live="polite"><div class="change-metrics"><div class="change-metric"><small>PACKAGING WEIGHT</small><div class="metric-values"><b data-before-metric="packagingWeight">186</b><i>→</i><strong data-after-metric="packagingWeight">186</strong><em>g</em></div></div><div class="change-metric"><small>PLASTIC USE</small><div class="metric-values"><b data-before-metric="plasticWeight">74</b><i>→</i><strong data-after-metric="plasticWeight">74</strong><em>g</em></div></div><div class="change-metric"><small>SPACE UTILIZATION</small><div class="metric-values"><b data-before-metric="spaceUtilization">54</b><i>→</i><strong data-after-metric="spaceUtilization">54</strong><em>%</em></div></div><div class="change-metric"><small>RECYCLABILITY</small><div class="metric-values"><b data-before-metric="recyclability">62</b><i>→</i><strong data-after-metric="recyclability">62</strong><em>/100</em></div></div></div><div class="decision-row"><div class="decision-score"><span>ENVIRONMENT</span><strong><b data-score="environment">87</b> / 100</strong></div><div class="decision-score"><span>BUSINESS</span><strong><b data-score="business">82</b> / 100</strong></div><div class="decision-score"><span>SUPPLY CHAIN</span><strong><b data-score="supplyChain">86</b> / 100</strong></div><div class="balanced-solution"><span>RECOMMENDED</span><strong>BALANCED<br>SOLUTION</strong></div></div></div>
           </section>
 
           <section class="impact" id="impact"><div class="section"><div class="section-heading"><span class="micro">06 / IMPACT · ESTIMATED</span><h2>少一点，<br>会发生什么？</h2></div><div class="impact-grid"><div class="impact-stat"><span>包装材料</span><div><strong>-31%</strong></div><em>Estimated</em></div><div class="impact-stat"><span>塑料</span><div><strong>-67%</strong></div><em>Estimated</em></div><div class="impact-stat"><span>空间利用率</span><div><small>54% → </small><strong>72%</strong></div><em>Estimated</em></div><div class="impact-stat"><span>可回收性</span><div><small>Medium → </small><strong>High</strong></div><em>Estimated</em></div></div><button class="method-toggle" id="methodToggle" aria-expanded="false">这些数字是怎么算出来的？ <b>＋</b></button><div class="method" id="method"><p>未来系统将结合材料识别、包装尺寸、材料 / 环境数据库与包装设计规则进行估算。</p><p>当前数字是用于体验设计的模拟值，不是经认证的生命周期评估（LCA）结果。</p></div></div></section>
@@ -350,6 +366,12 @@
       const packageMarkup='<div class="layer film"><small>PLASTIC FILM</small></div><div class="layer outer-box"><b>LUMEN</b><small>SKIN RITUAL / 30 ml</small></div><div class="layer tray"><small>PET</small></div><div class="layer bottle">L</div>';
       document.querySelectorAll("[data-package]").forEach(element=>{element.innerHTML=packageMarkup});
 
+      const demoAnalysis={
+        before:{layers:4,packagingWeight:186,plasticWeight:74,spaceUtilization:54,recyclability:62},
+        after:{layers:2,packagingWeight:128,plasticWeight:24,spaceUtilization:81,recyclability:89},
+        scores:{environment:87,business:82,supplyChain:86}
+      };
+
       const results=document.getElementById("results");
       const lock=document.getElementById("foldedLock");
       const scanner=document.getElementById("scanner");
@@ -371,6 +393,12 @@
       const uploadPreview=document.getElementById("uploadPreview");
       const confirmPhoto=document.getElementById("confirmPhoto");
       const confirmPhotoMarkup=confirmPhoto.innerHTML;
+      const analysisControls=document.getElementById("analysisControls");
+      const analysisPlayButton=document.getElementById("analysisPlayButton");
+      const analysisPlayMarkup=analysisPlayButton.innerHTML;
+      const optimizationDashboard=document.getElementById("optimizationDashboard");
+      const range=document.getElementById("compareRange");
+      const comparison=document.getElementById("comparisonBox");
       let sourceMode="demo";
       let pendingImage="";
       let pendingFile=null;
@@ -378,6 +406,8 @@
       let userImage="";
       let scanTimers=[];
       let journeyObserver;
+      let activeAnalysis=JSON.parse(JSON.stringify(demoAnalysis));
+      let isPlaying=false;
 
       function makeDemoPackage(){
         const packageElement=document.createElement("div");
@@ -433,33 +463,167 @@
         scanTimers.push(timer);
       }
 
-      function startAnalysis(){
+      function analysisFromResponse(result){
+        const next=JSON.parse(JSON.stringify(demoAnalysis));
+        const data=result&&result.data;
+        if(!data)return next;
+        const mergeKnown=(target,source)=>{
+          if(!source)return;
+          Object.keys(target).forEach(key=>{
+            if(Number.isFinite(source[key]))target[key]=source[key];
+          });
+        };
+        mergeKnown(next.before,data.before);
+        mergeKnown(next.after,data.after);
+        mergeKnown(next.scores,data.scores);
+        const packaging=data.packaging||{};
+        const impact=data.environmental_impact||{};
+        next.before.layers=packaging.layers??next.before.layers;
+        next.before.packagingWeight=impact.estimated_packaging_weight_g??next.before.packagingWeight;
+        next.before.plasticWeight=impact.estimated_plastic_weight_g??next.before.plasticWeight;
+        next.before.spaceUtilization=packaging.space_utilization??next.before.spaceUtilization;
+        next.before.recyclability=packaging.recyclability_score??next.before.recyclability;
+        return next;
+      }
+
+      function renderAnalysisNumbers(showFinal=false){
+        document.querySelectorAll("[data-before-metric]").forEach(element=>{
+          element.textContent=activeAnalysis.before[element.dataset.beforeMetric];
+        });
+        document.querySelectorAll("[data-after-metric]").forEach(element=>{
+          const key=element.dataset.afterMetric;
+          element.textContent=showFinal?activeAnalysis.after[key]:activeAnalysis.before[key];
+        });
+        document.querySelectorAll("[data-score]").forEach(element=>{
+          element.textContent=activeAnalysis.scores[element.dataset.score];
+        });
+        beforeSub.textContent=sourceMode==="upload"?"USER UPLOAD":`${activeAnalysis.before.layers} LAYERS`;
+      }
+
+      function animateNumber(element,from,to,duration=1100){
+        if(reduced){element.textContent=to;return}
+        const started=performance.now();
+        const tick=now=>{
+          const progress=clamp((now-started)/duration);
+          const eased=1-Math.pow(1-progress,3);
+          element.textContent=Math.round(from+(to-from)*eased);
+          if(progress<1)requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+
+      function animateImpactMetrics(){
+        document.querySelectorAll("[data-after-metric]").forEach((element,index)=>{
+          const key=element.dataset.afterMetric;
+          animateNumber(element,activeAnalysis.before[key],activeAnalysis.after[key],900+index*120);
+        });
+      }
+
+      function animateComparison(){
+        comparison.classList.add("comparison-ready");
+        const from=82;
+        const to=52;
+        range.value=String(from);
+        comparison.style.setProperty("--split",from+"%");
+        if(reduced){range.value=String(to);comparison.style.setProperty("--split",to+"%");return}
+        const started=performance.now();
+        const tick=now=>{
+          const progress=clamp((now-started)/760);
+          const value=Math.round(from+(to-from)*(1-Math.pow(1-progress,3)));
+          range.value=String(value);
+          comparison.style.setProperty("--split",value+"%");
+          if(progress<1)requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+
+      const timelineClasses=["phase-ready","timeline-enter","timeline-scan","timeline-identify","timeline-issues","timeline-redesign","timeline-remove","timeline-replace","timeline-resize","timeline-finished"];
+      function resetAnalysisPlayback(){
         scanTimers.forEach(clearTimeout);
         scanTimers=[];
-        results.classList.add("active");
-        lock.style.display="none";
+        isPlaying=false;
+        workbenchCanvas.classList.remove(...timelineClasses,"phase-structure","phase-material","phase-reduction","phase-complete");
+        workbenchCanvas.dataset.stage="scan";
         scanner.classList.remove("scan-done");
         resultFlow.hidden=true;
         postFlow.hidden=true;
-        workbenchCanvas.dataset.stage="scan";
-        setScanPhase(0,"正在识别包装轮廓…","phase-structure");
-        schedule(()=>document.getElementById("analysis").scrollIntoView({behavior:scrollBehavior,block:"start"}),80);
-        schedule(()=>setScanPhase(1,"正在判断可见材料线索…","phase-material"),1250);
-        schedule(()=>setScanPhase(2,"正在寻找可能的减量空间…","phase-reduction"),2600);
+        comparison.classList.remove("comparison-ready");
+        comparison.style.setProperty("--split","82%");
+        range.value="82";
+        optimizationDashboard.classList.remove("scores-visible","recommendation-visible");
+        const redesignTray=workbenchCanvas.querySelector(".redesign-package .tray small");
+        if(redesignTray)redesignTray.textContent="PET";
+        analysisControls.classList.remove("playing");
+        analysisPlayButton.disabled=false;
+        analysisPlayButton.innerHTML=analysisPlayMarkup;
+        setScanPhase(0,"等待开始检测…","phase-ready");
+        renderAnalysisNumbers(false);
+      }
+
+      function prepareAnalysis(mode,result=null){
+        setSource(mode);
+        activeAnalysis=result?analysisFromResponse(result):JSON.parse(JSON.stringify(demoAnalysis));
+        results.classList.add("active");
+        lock.style.display="none";
+        resetAnalysisPlayback();
+        document.getElementById("workbench").scrollIntoView({behavior:scrollBehavior,block:"start"});
+      }
+
+      function startAnalysis(){
+        resetAnalysisPlayback();
+        isPlaying=true;
+        results.classList.add("active");
+        lock.style.display="none";
+        analysisControls.getBoundingClientRect();
+        analysisControls.classList.add("playing");
+        analysisPlayButton.disabled=true;
+        analysisPlayButton.textContent="正在分析...";
+        workbenchCanvas.classList.add("timeline-enter","timeline-scan");
+        setScanPhase(0,"AI PACKAGING SCAN","phase-structure");
+        document.getElementById("workbench").scrollIntoView({behavior:scrollBehavior,block:"start"});
+        schedule(()=>{workbenchCanvas.classList.add("timeline-identify");setScanPhase(1,"Outer box · Paperboard","phase-material")},1200);
+        schedule(()=>{status.querySelector("span").textContent="Inner tray · PET / Plastic film"},2100);
+        schedule(()=>{workbenchCanvas.classList.add("timeline-issues");setScanPhase(2,"正在标记四项减量问题…","phase-reduction")},2800);
         schedule(()=>{
-          setScanPhase(3,"体检完成 · 模拟结果","phase-complete");
-          scanner.classList.add("scan-done");
           resultFlow.hidden=false;
+          scanner.classList.add("scan-done");
+          workbenchCanvas.classList.add("timeline-redesign");
+          workbenchCanvas.dataset.stage="redesign";
+          status.querySelector("span").textContent="AI REDESIGN · 生成优化结构";
+          document.getElementById("prescription").scrollIntoView({behavior:scrollBehavior,block:"center"});
+        },3500);
+        schedule(()=>{workbenchCanvas.classList.add("timeline-remove");status.querySelector("span").textContent="REMOVE · Plastic film"},4000);
+        schedule(()=>{
+          workbenchCanvas.classList.add("timeline-replace");
+          const tray=workbenchCanvas.querySelector(".redesign-package .tray small");
+          if(tray)tray.textContent="MOLDED PULP";
+          status.querySelector("span").textContent="REPLACE · PET → Molded pulp";
+        },4800);
+        schedule(()=>{workbenchCanvas.classList.add("timeline-resize");status.querySelector("span").textContent="RESIZE · Compact outer carton"},5600);
+        schedule(()=>{
           postFlow.hidden=false;
+          workbenchCanvas.classList.add("timeline-finished");
+          document.getElementById("comparison").scrollIntoView({behavior:scrollBehavior,block:"center"});
+          animateComparison();
           observeSections();
+        },6500);
+        schedule(()=>animateImpactMetrics(),7200);
+        schedule(()=>optimizationDashboard.classList.add("scores-visible"),8000);
+        schedule(()=>optimizationDashboard.classList.add("recommendation-visible"),8600);
+        schedule(()=>{
+          isPlaying=false;
+          setScanPhase(3,"优化完成 · BALANCED SOLUTION","phase-complete");
+          analysisControls.classList.remove("playing");
+          analysisPlayButton.disabled=false;
+          analysisPlayButton.innerHTML='重新播放 <span>↻</span>';
           observeJourney();
-        },4100);
+        },8800);
       }
 
       document.getElementById("demoButton").addEventListener("click",()=>{
-        setSource("demo");
-        startAnalysis();
+        prepareAnalysis("demo");
       });
+      analysisPlayButton.addEventListener("click",startAnalysis);
 
       fileInput.addEventListener("change",event=>{
         const file=event.target.files&&event.target.files[0];
@@ -495,8 +659,7 @@
           latestAnalysisResult=result;
           window.latestAnalysisResult=latestAnalysisResult;
           userImage=pendingImage;
-          setSource("upload");
-          startAnalysis();
+          prepareAnalysis("upload",result);
         }catch(error){
           console.error("包装分析请求失败：",error);
           alert("包装分析失败，请稍后重试");
@@ -520,13 +683,11 @@
       }));
 
       document.getElementById("restartButton").addEventListener("click",()=>{
-        scanTimers.forEach(clearTimeout);
+        resetAnalysisPlayback();
         results.classList.remove("active");
         resultFlow.hidden=true;
         postFlow.hidden=true;
         lock.style.display="grid";
-        workbenchCanvas.className="workbench-canvas";
-        workbenchCanvas.dataset.stage="scan";
         document.getElementById("checkup").scrollIntoView({behavior:scrollBehavior});
       });
 
@@ -539,8 +700,6 @@
         button.querySelector("b").textContent=open?"−":"＋";
       }));
 
-      const range=document.getElementById("compareRange");
-      const comparison=document.getElementById("comparisonBox");
       range.addEventListener("input",()=>comparison.style.setProperty("--split",range.value+"%"));
       const methodToggle=document.getElementById("methodToggle");
       const method=document.getElementById("method");
@@ -560,6 +719,7 @@
       function observeJourney(){
         if(journeyObserver)journeyObserver.disconnect();
         journeyObserver=new IntersectionObserver(entries=>{
+          if(isPlaying)return;
           const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
           if(visible)workbenchCanvas.dataset.stage=visible.target.dataset.workbenchStage;
         },{rootMargin:"-30% 0px -48%",threshold:[0,.15,.35]});
