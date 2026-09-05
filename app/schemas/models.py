@@ -29,9 +29,11 @@ class SuccessResponse(APIModel, Generic[DataT]):
     data: DataT
 
 
-class MaterialShare(APIModel):
-    name: str
-    percentage: int = Field(ge=0, le=100)
+class PackagingMaterial(APIModel):
+    component: str
+    material: str
+    confidence: float = Field(ge=0, le=1)
+    evidence: str
 
 
 class ProductInfo(APIModel):
@@ -40,22 +42,22 @@ class ProductInfo(APIModel):
 
 
 class PackagingInfo(APIModel):
-    layers: int = Field(ge=0)
-    materials: list[MaterialShare]
-    space_utilization: int = Field(ge=0, le=100)
-    recyclability_score: int = Field(ge=0, le=100)
+    layers: int | None = Field(default=None, ge=0)
+    materials: list[PackagingMaterial]
+    space_utilization: int | None = Field(default=None, ge=0, le=100)
+    recyclability_score: int | None = Field(default=None, ge=0, le=100)
 
 
 class Diagnosis(APIModel):
-    overall_score: int = Field(ge=0, le=100)
+    overall_score: int | None = Field(default=None, ge=0, le=100)
     level: str
     issue_tags: list[str]
 
 
 class EnvironmentalImpact(APIModel):
-    estimated_packaging_weight_g: int = Field(ge=0)
-    estimated_plastic_weight_g: int = Field(ge=0)
-    estimated_co2e_g: int = Field(ge=0)
+    estimated_packaging_weight_g: int | None = Field(default=None, ge=0)
+    estimated_plastic_weight_g: int | None = Field(default=None, ge=0)
+    estimated_co2e_g: int | None = Field(default=None, ge=0)
 
 
 class AnalysisData(APIModel):
@@ -76,40 +78,112 @@ class RedesignRequest(APIModel):
     issue_tags: list[str] | None = None
 
 
-class OriginalDesign(APIModel):
-    layers: int = Field(ge=0)
-    materials: list[str]
+class RedesignOption(APIModel):
+    id: str
+    title: str
+    summary: str
+    environment_score: int = Field(ge=0, le=100)
+    business_score: int = Field(ge=0, le=100)
+    supply_chain_score: int = Field(ge=0, le=100)
+    overall_score: float = Field(ge=0, le=100)
+    selected_rule_ids: list[str]
+    violates_hard_constraints: bool
+    requires_validation: bool
+    estimated: bool
+    hypothesis: str
 
 
-class DesignChange(APIModel):
+class FunctionalCheck(APIModel):
+    target: str
+    functions: list[str]
+    confidence: float = Field(ge=0, le=1)
+    estimated: bool
+    hypothesis: str
+
+
+class HardConstraint(APIModel):
+    constraint_id: str
+    target: str
+    requirement: str
+    reason: str
+    confidence: float = Field(ge=0, le=1)
+    requires_validation: bool
+    estimated: bool
+    hypothesis: str
+
+
+class RiskAssessment(APIModel):
+    cost: str
+    brand_experience: str
+    consumer_experience: str
+    process_compatibility: str
+    material_availability: str
+    transport_protection: str
+
+
+class OptimizationOpportunity(APIModel):
+    rule_id: str
+    target: str
+    action: str
+    recommended_change: str
+    reason: str
+    environment_value: str
+    commercial_risk: str
+    supply_chain_risk: str
+    risk_assessment: RiskAssessment
+    confidence: float = Field(ge=0, le=1)
+    requires_validation: bool
+    estimated: bool
+    hypothesis: str
+
+
+class RedesignMetrics(APIModel):
+    layers: int | None = Field(default=None, ge=0)
+    packaging_weight_g: int | None = Field(default=None, ge=0)
+    plastic_weight_g: int | None = Field(default=None, ge=0)
+    space_utilization: int | None = Field(default=None, ge=0, le=100)
+    recyclability: int | None = Field(default=None, ge=0, le=100)
+    estimated: bool
+    hypothesis: str
+
+
+class TrayReplacement(APIModel):
     from_: str = Field(alias="from", serialization_alias="from")
     to: str
-    reason: str
 
 
-class RecommendedDesign(APIModel):
-    layers: int = Field(ge=0)
-    materials: list[str]
-    changes: list[DesignChange]
+class ChangePlan(APIModel):
+    remove_plastic_film: bool
+    replace_inner_tray: TrayReplacement
+    resize_outer_box: str
+    reduce_material_types: bool
+    keep_brand_style: bool
+    layout_compact: bool
 
 
-class EstimatedImprovement(APIModel):
-    packaging_reduction_percent: int = Field(ge=0, le=100)
-    plastic_reduction_percent: int = Field(ge=0, le=100)
-    co2_reduction_percent: int = Field(ge=0, le=100)
-    space_utilization_before: int = Field(ge=0, le=100)
-    space_utilization_after: int = Field(ge=0, le=100)
-    recyclability_score_before: int = Field(ge=0, le=100)
-    recyclability_score_after: int = Field(ge=0, le=100)
+class AfterRenderSpec(APIModel):
+    box_scale: float = Field(gt=0, le=1)
+    remove_plastic_film: bool
+    tray_material: str
+    layout_compact: bool
+    style: str
 
 
 class RedesignData(APIModel):
     redesign_id: str
-    analysis_id: str
-    original: OriginalDesign
-    recommended_design: RecommendedDesign
-    estimated_improvement: EstimatedImprovement
-    recommendation: str
+    analysis_id: str | None = None
+    recommended_option: str
+    functional_checks: list[FunctionalCheck]
+    hard_constraints: list[HardConstraint]
+    opportunities: list[OptimizationOpportunity]
+    options: list[RedesignOption]
+    before: RedesignMetrics
+    after: RedesignMetrics
+    change_plan: ChangePlan
+    after_render_spec: AfterRenderSpec
+    optimized_image_url: str
+    image_generation_failed: bool
+    image_generation_error: str
 
 
 class Material(APIModel):

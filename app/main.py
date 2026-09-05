@@ -11,6 +11,7 @@ from app.routers import analyze, materials, redesign
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 FRONTEND_INDEX = FRONTEND_DIR / "index.html"
+GENERATED_DIR = FRONTEND_DIR / "generated"
 
 if not FRONTEND_INDEX.is_file():
     raise RuntimeError(
@@ -18,11 +19,13 @@ if not FRONTEND_INDEX.is_file():
         "Ensure frontend/index.html is included in the deployment."
     )
 
+GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+
 
 app = FastAPI(
     title="PackLess AI Backend",
     version="0.1.0",
-    description="Mock API MVP for packaging analysis and redesign.",
+    description="AI packaging analysis and rule-guided sustainable redesign API.",
 )
 
 # Development only. Replace "*" with the deployed frontend origin(s) in production.
@@ -37,6 +40,12 @@ app.add_middleware(
 app.include_router(analyze.router)
 app.include_router(redesign.router)
 app.include_router(materials.router)
+
+app.mount(
+    "/generated",
+    StaticFiles(directory=GENERATED_DIR),
+    name="generated",
+)
 
 app.mount(
     "/static",

@@ -1,6 +1,6 @@
 # PackLess AI Backend MVP
 
-FastAPI mock backend for packaging analysis, redesign recommendations, and a material library. This phase intentionally contains no database or real AI integration.
+FastAPI backend for Qwen vision-powered packaging analysis, rule-guided redesign recommendations, Wan-generated packaging concepts, and a material library. This phase intentionally contains no database.
 
 ## Requirements
 
@@ -11,6 +11,14 @@ FastAPI mock backend for packaging analysis, redesign recommendations, and a mat
 ```bash
 pip install -r requirements.txt
 ```
+
+Copy `.env.example` to `.env` and set your Alibaba Cloud Model Studio API key:
+
+```text
+DASHSCOPE_API_KEY=your-api-key-here
+```
+
+The default vision model is `qwen3-vl-plus`, and the default image model is `wan2.6-image`. They can optionally be overridden with `DASHSCOPE_VISION_MODEL` and `DASHSCOPE_IMAGE_MODEL`.
 
 ## Run
 
@@ -36,8 +44,8 @@ http://127.0.0.1:8000/docs
 
 ## Main API endpoints
 
-- `POST /api/analyze` — send `multipart/form-data` with an `image` file. Returns mock packaging analysis and preserves the uploaded filename.
-- `POST /api/redesign` — send JSON containing an analysis ID and any available packaging context. All request fields are optional for early frontend integration.
+- `POST /api/analyze` — send `multipart/form-data` with an `image` file. Calls Alibaba Cloud Model Studio's Qwen vision model and returns validated structured packaging analysis.
+- `POST /api/redesign` — preferably send `multipart/form-data` with `analysis_result` JSON and the original `image`. Legacy JSON analysis context is still accepted; without an image the API returns the rule plan with image fallback enabled.
 - `GET /api/materials` — returns the static mock material library. Its `co2_factor` values are demo parameters, not validated LCA data.
 
 System checks are available at `GET /` and `GET /health`.
@@ -46,7 +54,7 @@ System checks are available at `GET /` and `GET /health`.
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/analyze -F "image=@package.jpg"
-curl -X POST http://127.0.0.1:8000/api/redesign -H "Content-Type: application/json" -d '{"analysis_id":"analysis_demo_001"}'
+curl -X POST http://127.0.0.1:8000/api/redesign -F 'analysis_result={"analysis_id":"analysis_demo_001","product":{"category":"cosmetics"}}' -F "image=@package.jpg"
 curl http://127.0.0.1:8000/api/materials
 ```
 
@@ -56,9 +64,7 @@ curl http://127.0.0.1:8000/api/materials
 pytest -q
 ```
 
-## Replacing mocks with AI
-
-The routes own HTTP validation and stable response contracts. Replace `build_mock_analysis` and `build_mock_redesign` in `app/mock/mock_data.py` with service/provider calls that perform image analysis, prompt construction, model invocation, and structured response validation. Keep the Pydantic response models in `app/schemas/models.py` as the frontend contract.
+Image analysis is implemented in `app/services/ai_analyzer.py`. The four-layer functional, hard-constraint, optimization, and business/supply-chain decision system lives in `app/services/rule_engine.py`; `app/services/redesign_service.py` selects rules for the three risk profiles and computes the weighted recommendation. Prompt construction is isolated in `app/services/prompt_builder.py`. Wan image editing uses an asynchronous task in `app/services/image_generator.py`: submit, poll every 2.5 seconds for up to 10 attempts, download the successful result, and serve it at `/generated/<filename>`. Render's local filesystem is ephemeral, so generated files survive only while the current instance filesystem remains available.
 
 ## Deploy to Render
 
@@ -77,5 +83,7 @@ Start command:
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
+
+Add `DASHSCOPE_API_KEY` under the Render service's **Environment** settings before deploying. Do not commit a real `.env` file.
 
 If this project is stored inside a larger repository, set Render's **Root Directory** to `packless-backend`. Otherwise leave Root Directory blank.
