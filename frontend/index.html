@@ -288,7 +288,6 @@
   <script>
     (function(){
       "use strict";
-      const API_BASE_URL="https://packless-backend.onrender.com";
       const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
       const clamp=(value,min=0,max=1)=>Math.min(max,Math.max(min,value));
       const segment=(progress,start,end)=>clamp((progress-start)/(end-start));
@@ -488,7 +487,7 @@
         try{
           const formData=new FormData();
           formData.append("image",pendingFile);
-          const response=await fetch(`${API_BASE_URL}/api/analyze`,{method:"POST",body:formData});
+          const response=await fetch("/api/analyze",{method:"POST",body:formData});
           if(!response.ok)throw new Error(`HTTP ${response.status}`);
           const result=await response.json();
           console.log("后端分析结果：",result);

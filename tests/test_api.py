@@ -6,6 +6,15 @@ from app.main import app
 client = TestClient(app)
 
 
+def test_root_serves_frontend() -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "PackLess AI" in response.text
+    assert "https://packless-backend.onrender.com" not in response.text
+    assert 'fetch("/api/analyze"' in response.text
+
+
 def test_health() -> None:
     response = client.get("/health")
     assert response.status_code == 200
