@@ -725,7 +725,7 @@
           redesignFormData.append("analysis_result",JSON.stringify(latestAnalysisResult));
           redesignFormData.append("image",pendingFile,pendingFile.name);
           console.log("Calling /api/redesign...");
-          const response=await fetch("/api/redesign",{method:"POST",body:redesignFormData,signal:AbortSignal.timeout(15000)});
+          const response=await fetch("/api/redesign",{method:"POST",body:redesignFormData,signal:AbortSignal.timeout(55000)});
           const result=await response.json().catch(()=>null);
           console.log("Redesign result:",result);
           console.log("optimized_image_url:",result?.data?.optimized_image_url);
@@ -751,7 +751,7 @@
           console.error("包装重设计图片生成失败：",error);
           comparisonState.afterImageUrl="";
           comparisonState.generationFailed=true;
-          generationErrorDetail.textContent=error instanceof TypeError||["TimeoutError","AbortError"].includes(error.name)?"AI概念图生成连接中断，请重新生成。":error.message||"未返回优化图片";
+          generationErrorDetail.textContent=error.message==="AI image task submission timed out."?"AI概念图任务提交超时，请重新生成。":error instanceof TypeError||["TimeoutError","AbortError"].includes(error.name)?"AI概念图生成连接中断，请重新生成。":error.message||"未返回优化图片";
           afterImage.removeAttribute("src");
           afterImage.style.opacity="0";
           comparison.classList.remove("after-ready");
