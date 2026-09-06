@@ -14,6 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
 
 import httpx
+from requests.exceptions import ConnectTimeout, ReadTimeout, Timeout as RequestsTimeout
 from dashscope.aigc.image_generation import ImageGeneration
 from dashscope.api_entities.dashscope_response import Message
 from dotenv import load_dotenv
@@ -32,6 +33,9 @@ GENERATED_DIR = BASE_DIR / "frontend" / "generated"
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 MIN_DIMENSION = 240
 MAX_DIMENSION = 8000
+SUBMIT_CONNECT_TIMEOUT_SECONDS = 10
+SUBMIT_READ_TIMEOUT_SECONDS = 30
+SUBMIT_DEADLINE_SECONDS = 45
 
 
 class ImageGeneratorError(RuntimeError):
@@ -154,7 +158,8 @@ def _submit_task(image_data_url: str, prompt: str, api_key: str) -> Any:
         n=1,
         enable_interleave=False,
         size="1K",
-        request_timeout=4,
+        # Installed SDK passes request_timeout unchanged to requests.Session.post.
+        request_timeout=(SUBMIT_CONNECT_TIMEOUT_SECONDS, SUBMIT_READ_TIMEOUT_SECONDS),
     )
 
 
@@ -226,6 +231,8 @@ def _task_view(task_id: str, entry: dict) -> dict:
 
 async def submit_optimized_image_task(image_bytes: bytes, prompt: str) -> dict:
     api_key = os.getenv("DASHSCOPE_API_KEY", "")
+    started = time.monotonic()
+    print("[WAN SUBMIT] start attempt=1", flush=True)
     print(f"[WAN] model={MODEL_NAME}, key configured={bool(api_key)}", flush=True)
     try:
         if not api_key:
@@ -240,19 +247,27 @@ async def submit_optimized_image_task(image_bytes: bytes, prompt: str) -> dict:
             data_url = await asyncio.to_thread(_normalized_data_url, image_bytes)
             return await asyncio.to_thread(_submit_task, data_url, prompt, api_key)
         # Bounds the HTTP wait; never polls or downloads on this request.
-        response = await asyncio.wait_for(submit(), timeout=5)
+        response = await asyncio.wait_for(submit(), timeout=SUBMIT_DEADLINE_SECONDS)
         if _value(response, "status_code") != HTTPStatus.OK:
-            raise ImageGeneratorError(_safe_error(_value(response, "message") or _value(response, "code"), api_key))
+            print(f"[WAN SUBMIT] provider_error status_code={_value(response, 'status_code')} "
+                  f"elapsed={time.monotonic()-started:.1f}s detail="
+                  f"{_safe_error(_value(response, 'message') or _value(response, 'code'), api_key)}", flush=True)
+            raise ImageGeneratorError("AI image task submission was rejected by the provider.")
         task_id = str(_output_value(response, "task_id") or "")
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", task_id):
             raise ImageGeneratorError("Wan task submission returned no valid task_id.")
         IMAGE_TASK_CACHE[task_id] = {"status": "PENDING", "created": time.monotonic(),
                                     "local_image_url": "", "error": "", "work": None}
         print(f"[WAN] submitted task_id={task_id}", flush=True)
+        print(f"[WAN SUBMIT] success task_id={task_id} elapsed={time.monotonic()-started:.1f}s", flush=True)
         return {"success": True, "task_id": task_id, "status": "PENDING"}
     except Exception as exc:
-        error = "Wan task submission timed out; no automatic resubmission was attempted." if isinstance(exc, TimeoutError) else _safe_error(exc, api_key)
-        print(f"[WAN] ERROR: {error}", flush=True)
+        timeout = isinstance(exc, (TimeoutError, RequestsTimeout))
+        kind = "connect_timeout" if isinstance(exc, ConnectTimeout) else "read_timeout" if isinstance(exc, ReadTimeout) else "deadline_timeout" if isinstance(exc, TimeoutError) else "request_error"
+        error = "AI image task submission timed out." if timeout else str(exc) if isinstance(exc, ImageGeneratorError) else "AI image task submission failed. Please try again."
+        print(f"[WAN SUBMIT] {'timeout' if timeout else 'failed'} kind={kind} "
+              f"elapsed={time.monotonic()-started:.1f}s detail={_safe_error(exc, api_key)}", flush=True)
+        # Never replay an ambiguous POST: a read/deadline timeout can hide success.
         return {"success": False, "task_id": "", "status": "FAILED", "error": error}
 
 

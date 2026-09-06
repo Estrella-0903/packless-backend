@@ -7,10 +7,20 @@ independently observed in Render logs.
 
 The new POST /api/redesign returns the existing rule plan plus image_task_id and
 image_generation_status=PENDING immediately after provider submission. It does
-not poll or download. Submission's application wait is bounded to 5 seconds
-(excluding request-body transfer and rule processing); SDK request_timeout is 4
-seconds. Provider latency is not guaranteed. A timed-out synchronous SDK call
-may finish in its worker thread, so submission is never automatically retried.
+not poll or download. Submission's application wait is bounded to 45 seconds
+(excluding request-body transfer and rule processing); SDK request_timeout is
+(10, 30): 10-second connect and 30-second read timeout. The installed SDK forwards
+this tuple to requests.Session.post, verified by a transport-level test. The
+frontend POST deadline is 55 seconds so it does not abort before the backend.
+The previous explicit request_timeout=4, outer 5-second deadline, and frontend
+15-second deadline were too short for a slow task acknowledgement.
+Provider latency is not guaranteed. A timed-out synchronous SDK call
+may finish in its worker thread, so the application does not automatically
+resubmit. The installed SDK itself retries ConnectionError once; its existing
+behavior is not changed. ReadTimeout is not retried. Logs show [WAN SUBMIT] start,
+success/task_id/elapsed, or timeout kind/elapsed and sanitized diagnostic detail.
+The user receives "AI image task submission timed out." rather than transport
+internals, mapped to a Chinese submission-timeout message by the frontend.
 
 GET /api/redesign/image-status/{task_id} returns a short cached snapshot and
 starts at most one background SDK fetch for that task. While fetching or saving,
@@ -38,7 +48,10 @@ Chinese message while console.error retains developer details.
 
 ## Validation
 
-- `python -m pytest -q`: 62 passed (two dependency deprecation warnings).
+- `python -m pytest -q`: 68 passed (two dependency deprecation warnings).
+- A simulated 5.2-second submission succeeds with a task ID without polling.
+  Connect/read timeout, missing task ID, non-200 responses and the real installed
+  SDK's timeout-parameter forwarding are covered.
 - `node tests/test_frontend_image_poll.cjs`: frontend script syntax and real
   polling-function success/failure/timeout/missing-URL/replay checks passed.
 - Regression test holds a simulated download unfinished and confirms POST
