@@ -21,3 +21,6 @@ Thumbs.db
 *.log
 frontend/generated/*
 !frontend/generated/.gitkeep
+# Keep source archives/workbooks local; deploy only small curated references.
+data/raw/**
+!data/raw/README.md

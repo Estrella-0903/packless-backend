@@ -1,0 +1,1820 @@
+[
+  {
+    "sample_id": "taco_prediction_0000",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_0.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "glass",
+    "material_subtype": "glass",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_0.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "glass"
+        ],
+        "components": [
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0001",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_1.jpg",
+    "object_category": "unknown",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "paper",
+    "material_subtype": "cardboard",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "outer box"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_1.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "cardboard"
+        ],
+        "components": [
+          "outer box"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0002",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_10.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "glass",
+    "material_subtype": "glass",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_10.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "glass"
+        ],
+        "components": [
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0003",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_11.jpg",
+    "object_category": "unknown",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "paperboard",
+      "plastic_bag"
+    ],
+    "material_family": "unknown",
+    "material_subtype": "unknown",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "plastic bag",
+      "cardboard"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_11.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "plastic",
+          "plastic film"
+        ],
+        "components": [
+          "can",
+          "plastic bag",
+          "cardboard"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0004",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_12.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging",
+      "plastic_tray"
+    ],
+    "material_family": "unknown",
+    "material_subtype": "unknown",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "outer box",
+      "bottle",
+      "cap",
+      "plastic tray",
+      "protective film",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_12.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic",
+          "glass"
+        ],
+        "components": [
+          "outer box",
+          "bottle",
+          "cap",
+          "plastic tray",
+          "protective film",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0005",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_13.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_13.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0006",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_14.jpg",
+    "object_category": "personal care",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_14.jpg",
+      "analysis": {
+        "package_type": "personal care",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0007",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_15.jpg",
+    "object_category": "personal care",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_15.jpg",
+      "analysis": {
+        "package_type": "personal care",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0008",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_16.jpg",
+    "object_category": "personal care",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "canister",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_16.jpg",
+      "analysis": {
+        "package_type": "personal care",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "canister",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0009",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_17.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "cup"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_17.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "cup"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0010",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_18.jpg",
+    "object_category": "unknown",
+    "packaging_category": "plastic_bottle",
+    "mapped_categories": [
+      "plastic_bottle"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "plastic bottle"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_18.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "plastic bottle"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0011",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_19.jpg",
+    "object_category": "food",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "pouch"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_19.jpg",
+      "analysis": {
+        "package_type": "food",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "pouch"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0012",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_2.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_2.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0013",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_20.jpg",
+    "object_category": "food",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_20.jpg",
+      "analysis": {
+        "package_type": "food",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0014",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_21.jpg",
+    "object_category": "food",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "pull tab"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_21.jpg",
+      "analysis": {
+        "package_type": "food",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can",
+          "pull tab"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0015",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_22.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_22.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0016",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_23.jpg",
+    "object_category": "cleaning products",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_23.jpg",
+      "analysis": {
+        "package_type": "cleaning products",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0017",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_24.jpg",
+    "object_category": "personal care",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "canister",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_24.jpg",
+      "analysis": {
+        "package_type": "personal care",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "canister",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0018",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_25.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "unknown",
+    "material_subtype": "unknown",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_25.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic",
+          "glass"
+        ],
+        "components": [
+          "bottle",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0019",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_26.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "glass",
+    "material_subtype": "glass",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_26.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "glass"
+        ],
+        "components": [
+          "bottle",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0020",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_27.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "unknown",
+    "material_subtype": "unknown",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "bottle"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_27.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic",
+          "metal"
+        ],
+        "components": [
+          "can",
+          "bottle"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0021",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_28.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "unknown",
+    "material_subtype": "unknown",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "can"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_28.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "glass",
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "can"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0022",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_29.jpg",
+    "object_category": "beverage",
+    "packaging_category": "metal_can",
+    "mapped_categories": [
+      "metal_can"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_29.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0023",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_3.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "unknown",
+    "material_subtype": "unknown",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "can",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_3.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic",
+          "metal"
+        ],
+        "components": [
+          "bottle",
+          "can",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0024",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_30.jpg",
+    "object_category": "unknown",
+    "packaging_category": "plastic_tray",
+    "mapped_categories": [
+      "plastic_tray"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "plastic tray"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_30.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "plastic tray"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0025",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_31.jpg",
+    "object_category": "beverage",
+    "packaging_category": "metal_can",
+    "mapped_categories": [
+      "metal_can"
+    ],
+    "material_family": "metal",
+    "material_subtype": "aluminum",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_31.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "aluminum"
+        ],
+        "components": [
+          "can"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0026",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_32.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_32.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0027",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_33.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "pull tab"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_33.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can",
+          "pull tab"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0028",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_34.jpg",
+    "object_category": "beverage",
+    "packaging_category": "metal_can",
+    "mapped_categories": [
+      "metal_can"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_34.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0029",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_35.jpg",
+    "object_category": "unknown",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "canister",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_35.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "canister",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0030",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_36.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_36.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0031",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_37.jpg",
+    "object_category": "unknown",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_37.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0032",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_38.jpg",
+    "object_category": "unknown",
+    "packaging_category": "unknown",
+    "mapped_categories": [],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": null,
+    "source_label": [],
+    "mapping_confidence": 0.0,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_38.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "plastic"
+        ],
+        "components": [],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0033",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_39.jpg",
+    "object_category": "unknown",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging",
+      "plastic_bottle"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "plastic bottle",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_39.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "plastic bottle",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0034",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_4.jpg",
+    "object_category": "beverage",
+    "packaging_category": "metal_can",
+    "mapped_categories": [
+      "metal_can"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_4.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0035",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_40.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "glass",
+    "material_subtype": "glass",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_40.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "glass"
+        ],
+        "components": [
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0036",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_41.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_41.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0037",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_42.jpg",
+    "object_category": "beverage",
+    "packaging_category": "metal_can",
+    "mapped_categories": [
+      "metal_can"
+    ],
+    "material_family": "metal",
+    "material_subtype": "aluminum",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_42.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "aluminum"
+        ],
+        "components": [
+          "can"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0038",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_43.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_43.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0039",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_44.jpg",
+    "object_category": "food",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_44.jpg",
+      "analysis": {
+        "package_type": "food",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0040",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_45.jpg",
+    "object_category": "food",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_45.jpg",
+      "analysis": {
+        "package_type": "food",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0041",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_46.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "pull tab"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_46.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can",
+          "pull tab"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0042",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_47.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "unknown",
+    "material_subtype": "unknown",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "outer box",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_47.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "cardboard",
+          "plastic"
+        ],
+        "components": [
+          "outer box",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0043",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_48.jpg",
+    "object_category": "unknown",
+    "packaging_category": "carton",
+    "mapped_categories": [
+      "carton"
+    ],
+    "material_family": "paper",
+    "material_subtype": "paperboard",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "egg carton"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_48.jpg",
+      "analysis": {
+        "package_type": "unknown",
+        "materials": [
+          "paperboard"
+        ],
+        "components": [
+          "egg carton"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0044",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_49.jpg",
+    "object_category": "food",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "paper",
+    "material_subtype": "cardboard",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "outer box",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_49.jpg",
+      "analysis": {
+        "package_type": "food",
+        "materials": [
+          "cardboard"
+        ],
+        "components": [
+          "outer box",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0045",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_5.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "unknown",
+    "material_subtype": "unknown",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_5.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic",
+          "metal"
+        ],
+        "components": [
+          "can",
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0046",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_6.jpg",
+    "object_category": "personal care",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "canister",
+      "spray nozzle"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_6.jpg",
+      "analysis": {
+        "package_type": "personal care",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "canister",
+          "spray nozzle"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0047",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_7.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_7.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0048",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_8.jpg",
+    "object_category": "beverage",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "other_packaging"
+    ],
+    "material_family": "plastic",
+    "material_subtype": "plastic",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "bottle",
+      "cap"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_8.jpg",
+      "analysis": {
+        "package_type": "beverage",
+        "materials": [
+          "plastic"
+        ],
+        "components": [
+          "bottle",
+          "cap"
+        ],
+        "issues": []
+      }
+    }
+  },
+  {
+    "sample_id": "taco_prediction_0049",
+    "source_dataset": "TACO",
+    "source_attribution": "user_supplied; dataset membership not independently verified",
+    "image_name": "img_9.jpg",
+    "object_category": "food",
+    "packaging_category": "other_packaging",
+    "mapped_categories": [
+      "metal_can",
+      "other_packaging"
+    ],
+    "material_family": "metal",
+    "material_subtype": "metal",
+    "confidence": null,
+    "is_packaging": true,
+    "source_label": [
+      "can",
+      "label"
+    ],
+    "mapping_confidence": 0.7,
+    "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+    "notes": "Image-level prediction, not ground truth. Materials and components are NOT paired by array index. Multiple materials do not imply a composite laminate.",
+    "raw_fields": {
+      "source_file": "img_9.jpg",
+      "analysis": {
+        "package_type": "food",
+        "materials": [
+          "metal"
+        ],
+        "components": [
+          "can",
+          "label"
+        ],
+        "issues": []
+      }
+    }
+  }
+]

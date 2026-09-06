@@ -1,0 +1,444 @@
+{
+  "splits": {
+    "train": {
+      "images": 410,
+      "annotations": 4669,
+      "categories": [
+        {
+          "id": 1,
+          "name": "undefined",
+          "supercategory": "none"
+        },
+        {
+          "id": 2,
+          "name": "plastic-foil/bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 3,
+          "name": "aluminium-coated-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 4,
+          "name": "paper-bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 5,
+          "name": "beverage-carton",
+          "supercategory": "none"
+        },
+        {
+          "id": 6,
+          "name": "plastic-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 7,
+          "name": "plastic-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 8,
+          "name": "plastic-cup/pot",
+          "supercategory": "none"
+        },
+        {
+          "id": 9,
+          "name": "blister",
+          "supercategory": "none"
+        },
+        {
+          "id": 10,
+          "name": "metal-can",
+          "supercategory": "none"
+        },
+        {
+          "id": 11,
+          "name": "metal-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 12,
+          "name": "net",
+          "supercategory": "none"
+        },
+        {
+          "id": 13,
+          "name": "metal-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 14,
+          "name": "tissue",
+          "supercategory": "none"
+        },
+        {
+          "id": 15,
+          "name": "wood",
+          "supercategory": "none"
+        },
+        {
+          "id": 16,
+          "name": "paper-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 17,
+          "name": "foamed-plastic",
+          "supercategory": "none"
+        },
+        {
+          "id": 18,
+          "name": "textile",
+          "supercategory": "none"
+        },
+        {
+          "id": 19,
+          "name": "plastic-bottle",
+          "supercategory": "none"
+        },
+        {
+          "id": 20,
+          "name": "ribbon/tape",
+          "supercategory": "none"
+        },
+        {
+          "id": 21,
+          "name": "metal-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 22,
+          "name": "tube",
+          "supercategory": "none"
+        },
+        {
+          "id": 23,
+          "name": "paper-cup/pot",
+          "supercategory": "none"
+        }
+      ],
+      "category_counts": {
+        "plastic-foil/bag": 1511,
+        "paper-bag": 105,
+        "aluminium-coated-foil": 268,
+        "beverage-carton": 118,
+        "plastic-other": 335,
+        "plastic-cup/pot": 454,
+        "blister": 63,
+        "net": 21,
+        "metal-can": 76,
+        "undefined": 365,
+        "tissue": 335,
+        "wood": 22,
+        "paper-other": 339,
+        "foamed-plastic": 158,
+        "plastic-lid": 104,
+        "metal-lid": 122,
+        "textile": 25,
+        "plastic-bottle": 101,
+        "ribbon/tape": 56,
+        "metal-other": 11,
+        "metal-foil": 56,
+        "tube": 10,
+        "paper-cup/pot": 14
+      }
+    },
+    "val": {
+      "images": 88,
+      "annotations": 990,
+      "categories": [
+        {
+          "id": 1,
+          "name": "undefined",
+          "supercategory": "none"
+        },
+        {
+          "id": 2,
+          "name": "plastic-foil/bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 3,
+          "name": "aluminium-coated-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 4,
+          "name": "paper-bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 5,
+          "name": "beverage-carton",
+          "supercategory": "none"
+        },
+        {
+          "id": 6,
+          "name": "plastic-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 7,
+          "name": "plastic-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 8,
+          "name": "plastic-cup/pot",
+          "supercategory": "none"
+        },
+        {
+          "id": 9,
+          "name": "blister",
+          "supercategory": "none"
+        },
+        {
+          "id": 10,
+          "name": "metal-can",
+          "supercategory": "none"
+        },
+        {
+          "id": 11,
+          "name": "metal-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 12,
+          "name": "net",
+          "supercategory": "none"
+        },
+        {
+          "id": 13,
+          "name": "metal-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 14,
+          "name": "tissue",
+          "supercategory": "none"
+        },
+        {
+          "id": 15,
+          "name": "wood",
+          "supercategory": "none"
+        },
+        {
+          "id": 16,
+          "name": "paper-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 17,
+          "name": "foamed-plastic",
+          "supercategory": "none"
+        },
+        {
+          "id": 18,
+          "name": "textile",
+          "supercategory": "none"
+        },
+        {
+          "id": 19,
+          "name": "plastic-bottle",
+          "supercategory": "none"
+        },
+        {
+          "id": 20,
+          "name": "ribbon/tape",
+          "supercategory": "none"
+        },
+        {
+          "id": 21,
+          "name": "metal-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 22,
+          "name": "tube",
+          "supercategory": "none"
+        },
+        {
+          "id": 23,
+          "name": "paper-cup/pot",
+          "supercategory": "none"
+        }
+      ],
+      "category_counts": {
+        "plastic-foil/bag": 364,
+        "paper-bag": 25,
+        "plastic-lid": 29,
+        "plastic-other": 62,
+        "beverage-carton": 27,
+        "plastic-cup/pot": 100,
+        "undefined": 73,
+        "metal-can": 15,
+        "aluminium-coated-foil": 50,
+        "metal-lid": 12,
+        "plastic-bottle": 22,
+        "tissue": 48,
+        "paper-other": 63,
+        "net": 6,
+        "textile": 6,
+        "tube": 2,
+        "foamed-plastic": 39,
+        "metal-foil": 11,
+        "blister": 17,
+        "ribbon/tape": 8,
+        "wood": 5,
+        "paper-cup/pot": 4,
+        "metal-other": 2
+      }
+    },
+    "test": {
+      "images": 88,
+      "annotations": 1054,
+      "categories": [
+        {
+          "id": 1,
+          "name": "undefined",
+          "supercategory": "none"
+        },
+        {
+          "id": 2,
+          "name": "plastic-foil/bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 3,
+          "name": "aluminium-coated-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 4,
+          "name": "paper-bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 5,
+          "name": "beverage-carton",
+          "supercategory": "none"
+        },
+        {
+          "id": 6,
+          "name": "plastic-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 7,
+          "name": "plastic-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 8,
+          "name": "plastic-cup/pot",
+          "supercategory": "none"
+        },
+        {
+          "id": 9,
+          "name": "blister",
+          "supercategory": "none"
+        },
+        {
+          "id": 10,
+          "name": "metal-can",
+          "supercategory": "none"
+        },
+        {
+          "id": 11,
+          "name": "metal-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 12,
+          "name": "net",
+          "supercategory": "none"
+        },
+        {
+          "id": 13,
+          "name": "metal-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 14,
+          "name": "tissue",
+          "supercategory": "none"
+        },
+        {
+          "id": 15,
+          "name": "wood",
+          "supercategory": "none"
+        },
+        {
+          "id": 16,
+          "name": "paper-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 17,
+          "name": "foamed-plastic",
+          "supercategory": "none"
+        },
+        {
+          "id": 18,
+          "name": "textile",
+          "supercategory": "none"
+        },
+        {
+          "id": 19,
+          "name": "plastic-bottle",
+          "supercategory": "none"
+        },
+        {
+          "id": 20,
+          "name": "ribbon/tape",
+          "supercategory": "none"
+        },
+        {
+          "id": 21,
+          "name": "metal-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 22,
+          "name": "tube",
+          "supercategory": "none"
+        },
+        {
+          "id": 23,
+          "name": "paper-cup/pot",
+          "supercategory": "none"
+        }
+      ],
+      "category_counts": {
+        "undefined": 83,
+        "plastic-foil/bag": 354,
+        "aluminium-coated-foil": 73,
+        "metal-can": 13,
+        "metal-foil": 6,
+        "net": 5,
+        "beverage-carton": 34,
+        "metal-lid": 28,
+        "foamed-plastic": 29,
+        "tissue": 74,
+        "plastic-cup/pot": 103,
+        "plastic-other": 61,
+        "plastic-lid": 23,
+        "plastic-bottle": 20,
+        "paper-other": 83,
+        "textile": 3,
+        "ribbon/tape": 13,
+        "blister": 15,
+        "paper-bag": 20,
+        "metal-other": 2,
+        "paper-cup/pot": 5,
+        "tube": 2,
+        "wood": 5
+      }
+    }
+  },
+  "source_readme": "PackWISE: Packaging Waste Instance Segmentation Dataset for Model Training and Evaluation\r\n\r\nThis dataset comprises 586 RGB images of post-consumer lightweight packaging waste captured on a conveyor belt. Annotations follow the COCO format. The samples were kindly provided by a recycling plant of Lobbe RSW GmbH in Iserlohn, Germany. Samples were recorded as received, with adherent contaminants and without pretreatment. This dataset is part of the multi-sensor-dataset of the project K3I-Cycling and funded by the Federal Ministry of Research, Technology and Space (BMFTR), Germany under the funding reference 033KI201.\r\n\r\nDataset details\r\n\r\n    Images are provided as JPEG files of size 4096x4096 pixel.\r\n    Annotations follow the COCO format: each instance is delineated by a pixel-level mask, a bounding-box, and assigned to one of 23 categories.\r\n    Bounding box coordinates are given as Integers.\r\n    Pixel masks are binary run-length encoded (RLE) and can be decoded using pycocotools.\r\n    Annotations can be converted to YOLO format using the python script convert_dataset_to_yolo_format.py in the root folder of the dataset.\r\n    This script generates text files (with categories and bounding boxes) for each image file and one yolo.yaml file in the folder named data.\r\n\r\nSplits\r\n\r\n    Training: 70%\r\n    Validation: 15%\r\n    Test: 15%\r\n\r\nImage acquisition\r\n\r\n    A prism-based RGB line-scan camera (SW-4000T-10GE) with a resolution of 4096 pixels was used.\r\n    The line rate was set to 1278 lines per second.\r\n    Two-dimensional images were reconstructed by scanning the samples as they moved along a conveyor belt at 0.2 m/s.\r\n    Illumination was provided by 12 halogen lamps.\r\n\r\nAccess and metadata\r\n\r\n    URL: https://fordatis.fraunhofer.de/handle/fordatis/463.2\r\n    License: Creative Commons Attribution 4.0 (CC BY)\r\n    Year: 2025\r\n    Contributor: L. Roming, S. Rueger, M. Kalb, F. Beutler\r\n",
+  "notes": "Metadata audit only; no training or image redistribution."
+}

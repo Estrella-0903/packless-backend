@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from app.schemas.models import OptimizationOpportunity, RedesignData, RedesignOption
 from app.services.rule_engine import run_rule_engine, violates_hard_constraints
+from app.services.material_data_service import build_carbon_data
 
 
 RISK_PENALTY = {"low": 2, "medium": 6, "high": 14}
@@ -219,6 +220,7 @@ def create_redesign_plan(payload: dict[str, Any]) -> RedesignData:
     return RedesignData.model_validate(
         {
             "redesign_id": f"redesign_{uuid4().hex[:12]}",
+            "carbon_data": build_carbon_data(analysis),
             "analysis_id": analysis.get("analysis_id"),
             "recommended_option": recommended.id,
             "functional_checks": [item.model_dump() for item in engine.functional_checks],

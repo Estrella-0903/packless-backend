@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 
 from app.schemas.models import AnalysisResponse, ErrorResponse
 from app.services.ai_analyzer import AIAnalyzerError, analyze_image
+from app.services.material_data_service import build_carbon_data
 
 
 router = APIRouter(prefix="/api", tags=["analysis"])
@@ -52,4 +53,5 @@ async def analyze_packaging(image: UploadFile = File(...)) -> AnalysisResponse |
                 "error": {"code": exc.code, "message": exc.message},
             },
         )
+    data = data.model_copy(update={"carbon_data": build_carbon_data(data.model_dump())})
     return AnalysisResponse(data=data)

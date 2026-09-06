@@ -1,0 +1,587 @@
+{
+  "c_records": 50,
+  "normalized_records": 50,
+  "top_level_fields": {
+    "analysis": {
+      "missing_rate": 0.0,
+      "empty_rate": 0.0,
+      "types": {
+        "dict": 50
+      }
+    },
+    "source_file": {
+      "missing_rate": 0.0,
+      "empty_rate": 0.0,
+      "types": {
+        "str": 50
+      }
+    }
+  },
+  "analysis_fields": {
+    "components": {
+      "missing_rate": 0.0,
+      "empty_rate": 0.02,
+      "types": {
+        "list": 50
+      }
+    },
+    "issues": {
+      "missing_rate": 0.0,
+      "empty_rate": 1.0,
+      "types": {
+        "list": 50
+      }
+    },
+    "materials": {
+      "missing_rate": 0.0,
+      "empty_rate": 0.0,
+      "types": {
+        "list": 50
+      }
+    },
+    "package_type": {
+      "missing_rate": 0.0,
+      "empty_rate": 0.0,
+      "types": {
+        "str": 50
+      }
+    }
+  },
+  "semantic_fields": {
+    "packaging_type": "analysis.package_type (product sector, not package shape)",
+    "material": "analysis.materials",
+    "image_name": "source_file",
+    "category": "analysis.package_type",
+    "confidence": null,
+    "source": null,
+    "label": null,
+    "prediction": "analysis (inferred role)"
+  },
+  "product_category_counts": {
+    "beverage": 28,
+    "unknown": 9,
+    "personal care": 5,
+    "food": 7,
+    "cleaning products": 1
+  },
+  "material_counts": {
+    "glass": 7,
+    "cardboard": 3,
+    "plastic": 30,
+    "plastic film": 1,
+    "metal": 14,
+    "aluminum": 2,
+    "paperboard": 1
+  },
+  "packaging_category_counts": {
+    "other_packaging": 41,
+    "plastic_bottle": 1,
+    "metal_can": 5,
+    "plastic_tray": 1,
+    "unknown": 1,
+    "carton": 1
+  },
+  "mapped_record_count": 49,
+  "component_occurrences": 99,
+  "mapped_component_occurrences": 99,
+  "zip_records": 50,
+  "zip_exact_duplicates": 50,
+  "defra_factor_count": 18,
+  "defra_material_count": 9,
+  "packwise_splits": {
+    "train": {
+      "images": 410,
+      "annotations": 4669,
+      "categories": [
+        {
+          "id": 1,
+          "name": "undefined",
+          "supercategory": "none"
+        },
+        {
+          "id": 2,
+          "name": "plastic-foil/bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 3,
+          "name": "aluminium-coated-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 4,
+          "name": "paper-bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 5,
+          "name": "beverage-carton",
+          "supercategory": "none"
+        },
+        {
+          "id": 6,
+          "name": "plastic-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 7,
+          "name": "plastic-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 8,
+          "name": "plastic-cup/pot",
+          "supercategory": "none"
+        },
+        {
+          "id": 9,
+          "name": "blister",
+          "supercategory": "none"
+        },
+        {
+          "id": 10,
+          "name": "metal-can",
+          "supercategory": "none"
+        },
+        {
+          "id": 11,
+          "name": "metal-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 12,
+          "name": "net",
+          "supercategory": "none"
+        },
+        {
+          "id": 13,
+          "name": "metal-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 14,
+          "name": "tissue",
+          "supercategory": "none"
+        },
+        {
+          "id": 15,
+          "name": "wood",
+          "supercategory": "none"
+        },
+        {
+          "id": 16,
+          "name": "paper-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 17,
+          "name": "foamed-plastic",
+          "supercategory": "none"
+        },
+        {
+          "id": 18,
+          "name": "textile",
+          "supercategory": "none"
+        },
+        {
+          "id": 19,
+          "name": "plastic-bottle",
+          "supercategory": "none"
+        },
+        {
+          "id": 20,
+          "name": "ribbon/tape",
+          "supercategory": "none"
+        },
+        {
+          "id": 21,
+          "name": "metal-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 22,
+          "name": "tube",
+          "supercategory": "none"
+        },
+        {
+          "id": 23,
+          "name": "paper-cup/pot",
+          "supercategory": "none"
+        }
+      ],
+      "category_counts": {
+        "plastic-foil/bag": 1511,
+        "paper-bag": 105,
+        "aluminium-coated-foil": 268,
+        "beverage-carton": 118,
+        "plastic-other": 335,
+        "plastic-cup/pot": 454,
+        "blister": 63,
+        "net": 21,
+        "metal-can": 76,
+        "undefined": 365,
+        "tissue": 335,
+        "wood": 22,
+        "paper-other": 339,
+        "foamed-plastic": 158,
+        "plastic-lid": 104,
+        "metal-lid": 122,
+        "textile": 25,
+        "plastic-bottle": 101,
+        "ribbon/tape": 56,
+        "metal-other": 11,
+        "metal-foil": 56,
+        "tube": 10,
+        "paper-cup/pot": 14
+      }
+    },
+    "val": {
+      "images": 88,
+      "annotations": 990,
+      "categories": [
+        {
+          "id": 1,
+          "name": "undefined",
+          "supercategory": "none"
+        },
+        {
+          "id": 2,
+          "name": "plastic-foil/bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 3,
+          "name": "aluminium-coated-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 4,
+          "name": "paper-bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 5,
+          "name": "beverage-carton",
+          "supercategory": "none"
+        },
+        {
+          "id": 6,
+          "name": "plastic-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 7,
+          "name": "plastic-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 8,
+          "name": "plastic-cup/pot",
+          "supercategory": "none"
+        },
+        {
+          "id": 9,
+          "name": "blister",
+          "supercategory": "none"
+        },
+        {
+          "id": 10,
+          "name": "metal-can",
+          "supercategory": "none"
+        },
+        {
+          "id": 11,
+          "name": "metal-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 12,
+          "name": "net",
+          "supercategory": "none"
+        },
+        {
+          "id": 13,
+          "name": "metal-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 14,
+          "name": "tissue",
+          "supercategory": "none"
+        },
+        {
+          "id": 15,
+          "name": "wood",
+          "supercategory": "none"
+        },
+        {
+          "id": 16,
+          "name": "paper-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 17,
+          "name": "foamed-plastic",
+          "supercategory": "none"
+        },
+        {
+          "id": 18,
+          "name": "textile",
+          "supercategory": "none"
+        },
+        {
+          "id": 19,
+          "name": "plastic-bottle",
+          "supercategory": "none"
+        },
+        {
+          "id": 20,
+          "name": "ribbon/tape",
+          "supercategory": "none"
+        },
+        {
+          "id": 21,
+          "name": "metal-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 22,
+          "name": "tube",
+          "supercategory": "none"
+        },
+        {
+          "id": 23,
+          "name": "paper-cup/pot",
+          "supercategory": "none"
+        }
+      ],
+      "category_counts": {
+        "plastic-foil/bag": 364,
+        "paper-bag": 25,
+        "plastic-lid": 29,
+        "plastic-other": 62,
+        "beverage-carton": 27,
+        "plastic-cup/pot": 100,
+        "undefined": 73,
+        "metal-can": 15,
+        "aluminium-coated-foil": 50,
+        "metal-lid": 12,
+        "plastic-bottle": 22,
+        "tissue": 48,
+        "paper-other": 63,
+        "net": 6,
+        "textile": 6,
+        "tube": 2,
+        "foamed-plastic": 39,
+        "metal-foil": 11,
+        "blister": 17,
+        "ribbon/tape": 8,
+        "wood": 5,
+        "paper-cup/pot": 4,
+        "metal-other": 2
+      }
+    },
+    "test": {
+      "images": 88,
+      "annotations": 1054,
+      "categories": [
+        {
+          "id": 1,
+          "name": "undefined",
+          "supercategory": "none"
+        },
+        {
+          "id": 2,
+          "name": "plastic-foil/bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 3,
+          "name": "aluminium-coated-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 4,
+          "name": "paper-bag",
+          "supercategory": "none"
+        },
+        {
+          "id": 5,
+          "name": "beverage-carton",
+          "supercategory": "none"
+        },
+        {
+          "id": 6,
+          "name": "plastic-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 7,
+          "name": "plastic-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 8,
+          "name": "plastic-cup/pot",
+          "supercategory": "none"
+        },
+        {
+          "id": 9,
+          "name": "blister",
+          "supercategory": "none"
+        },
+        {
+          "id": 10,
+          "name": "metal-can",
+          "supercategory": "none"
+        },
+        {
+          "id": 11,
+          "name": "metal-foil",
+          "supercategory": "none"
+        },
+        {
+          "id": 12,
+          "name": "net",
+          "supercategory": "none"
+        },
+        {
+          "id": 13,
+          "name": "metal-lid",
+          "supercategory": "none"
+        },
+        {
+          "id": 14,
+          "name": "tissue",
+          "supercategory": "none"
+        },
+        {
+          "id": 15,
+          "name": "wood",
+          "supercategory": "none"
+        },
+        {
+          "id": 16,
+          "name": "paper-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 17,
+          "name": "foamed-plastic",
+          "supercategory": "none"
+        },
+        {
+          "id": 18,
+          "name": "textile",
+          "supercategory": "none"
+        },
+        {
+          "id": 19,
+          "name": "plastic-bottle",
+          "supercategory": "none"
+        },
+        {
+          "id": 20,
+          "name": "ribbon/tape",
+          "supercategory": "none"
+        },
+        {
+          "id": 21,
+          "name": "metal-other",
+          "supercategory": "none"
+        },
+        {
+          "id": 22,
+          "name": "tube",
+          "supercategory": "none"
+        },
+        {
+          "id": 23,
+          "name": "paper-cup/pot",
+          "supercategory": "none"
+        }
+      ],
+      "category_counts": {
+        "undefined": 83,
+        "plastic-foil/bag": 354,
+        "aluminium-coated-foil": 73,
+        "metal-can": 13,
+        "metal-foil": 6,
+        "net": 5,
+        "beverage-carton": 34,
+        "metal-lid": 28,
+        "foamed-plastic": 29,
+        "tissue": 74,
+        "plastic-cup/pot": 103,
+        "plastic-other": 61,
+        "plastic-lid": 23,
+        "plastic-bottle": 20,
+        "paper-other": 83,
+        "textile": 3,
+        "ribbon/tape": 13,
+        "blister": 15,
+        "paper-bag": 20,
+        "metal-other": 2,
+        "paper-cup/pot": 5,
+        "tube": 2,
+        "wood": 5
+      }
+    }
+  },
+  "d_calculation_example": {
+    "from_part_c": {
+      "package_type": "cosmetics",
+      "materials": [
+        "paperboard",
+        "PET plastic",
+        "plastic film"
+      ],
+      "components": [
+        "outer box",
+        "plastic bottle",
+        "protective film"
+      ],
+      "issues": [
+        "oversized box",
+        "redundant plastic bottle",
+        "unnecessary plastic film"
+      ]
+    },
+    "input_data": {
+      "product_dimensions_cm": {
+        "length": 20,
+        "width": 10,
+        "height": 5
+      },
+      "original_package_dimensions_cm": {
+        "length": 25,
+        "width": 15,
+        "height": 8
+      },
+      "redesigned_package_dimensions_cm": {
+        "length": 23,
+        "width": 13,
+        "height": 7
+      },
+      "annual_units": 100000,
+      "original_weight_kg": 0.08,
+      "redesigned_weight_kg": 0.065
+    },
+    "calculation_results": {
+      "product_volume_cm3": 1000,
+      "original_package_volume_cm3": 3000,
+      "redesigned_package_volume_cm3": 2093,
+      "original_space_utilization_percent": 33.33333333333333,
+      "redesigned_space_utilization_percent": 47.778308647873864,
+      "weight_saved_per_package_kg": 0.015,
+      "material_reduction_percent": 18.75,
+      "annual_material_saved_kg": 1500.0
+    },
+    "formulas": {
+      "space_utilization": "Product Volume / Package Volume × 100%",
+      "material_reduction": "(Original Weight - Redesigned Weight) / Original Weight × 100%",
+      "annual_material_saved": "Weight Saved Per Package × Annual Units"
+    },
+    "note": "以上结果需要使用真实的包装尺寸、重量和年使用数量。"
+  }
+}
