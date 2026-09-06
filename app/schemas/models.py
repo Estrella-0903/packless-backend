@@ -171,6 +171,8 @@ class AfterRenderSpec(APIModel):
 
 
 class RedesignData(APIModel):
+    image_task_id: str = ""
+    image_generation_status: str = "FAILED"
     carbon_data: dict[str, Any] | None = None
     redesign_id: str
     analysis_id: str | None = None

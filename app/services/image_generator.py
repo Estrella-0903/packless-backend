@@ -5,6 +5,8 @@ import base64
 import io
 import logging
 import os
+import re
+import time
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any
@@ -30,9 +32,6 @@ GENERATED_DIR = BASE_DIR / "frontend" / "generated"
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 MIN_DIMENSION = 240
 MAX_DIMENSION = 8000
-POLL_INTERVAL_SECONDS = 2.5
-MAX_POLL_ATTEMPTS = 10
-TERMINAL_FAILURE_STATES = {"FAILED", "CANCELED", "UNKNOWN"}
 
 
 class ImageGeneratorError(RuntimeError):
@@ -103,6 +102,7 @@ def _safe_error(message: Any, api_key: str) -> str:
     text = str(message or "AI image generation failed.").strip()
     if api_key:
         text = text.replace(api_key, "[REDACTED]")
+    text = re.sub(r"https?://\S+", "[provider URL redacted]", text)
     return text[:500]
 
 
@@ -154,87 +154,7 @@ def _submit_task(image_data_url: str, prompt: str, api_key: str) -> Any:
         n=1,
         enable_interleave=False,
         size="1K",
-    )
-
-
-async def _submit_and_poll(
-    image_data_url: str, prompt: str, api_key: str
-) -> tuple[str, dict[str, Any]]:
-    try:
-        response = await asyncio.to_thread(
-            _submit_task, image_data_url, prompt, api_key
-        )
-    except Exception as exc:
-        raise ImageGeneratorError(_safe_error(exc, api_key)) from exc
-
-    raw_response = _safe_raw_response(response)
-    if _value(response, "status_code") != HTTPStatus.OK:
-        error = _safe_error(
-            _value(response, "message") or _value(response, "code"), api_key
-        )
-        logger.error("Wan image generation: task submission failed (%s)", error)
-        raise ImageGeneratorError(error, raw_response)
-
-    task_id = _output_value(response, "task_id")
-    if not task_id:
-        raise ImageGeneratorError(
-            "Wan task submission returned no task_id.", raw_response
-        )
-    logger.info("Wan image generation: task submitted (task_id=%s)", task_id)
-    print(f"[WAN] task_id={task_id}", flush=True)
-
-    current = response
-    for attempt in range(1, MAX_POLL_ATTEMPTS + 1):
-        status = str(_output_value(current, "task_status", "UNKNOWN")).upper()
-        logger.info(
-            "Wan image generation: task_id=%s status=%s poll=%d/%d",
-            task_id,
-            status,
-            attempt,
-            MAX_POLL_ATTEMPTS,
-        )
-        print(
-            f"[WAN] poll={attempt}/{MAX_POLL_ATTEMPTS}, status={status}",
-            flush=True,
-        )
-        if status == "SUCCEEDED":
-            provider_url = _extract_result_url(current)
-            print("[WAN] provider image url exists=True", flush=True)
-            logger.info(
-                "Wan image generation: task succeeded (task_id=%s, image_url=%s)",
-                task_id,
-                _loggable_url(provider_url),
-            )
-            return provider_url, _safe_raw_response(current)
-        if status in TERMINAL_FAILURE_STATES:
-            error = _safe_error(
-                _value(current, "message")
-                or _value(current, "code")
-                or f"Wan task ended with status {status}.",
-                api_key,
-            )
-            raise ImageGeneratorError(error, _safe_raw_response(current))
-
-        if attempt == MAX_POLL_ATTEMPTS:
-            break
-
-        await asyncio.sleep(POLL_INTERVAL_SECONDS)
-        try:
-            current = await asyncio.to_thread(
-                ImageGeneration.fetch, task_id, api_key=api_key
-            )
-        except Exception as exc:
-            raise ImageGeneratorError(_safe_error(exc, api_key)) from exc
-        if _value(current, "status_code") != HTTPStatus.OK:
-            error = _safe_error(
-                _value(current, "message") or _value(current, "code"), api_key
-            )
-            raise ImageGeneratorError(error, _safe_raw_response(current))
-
-    logger.error("Wan image generation: polling timed out (task_id=%s)", task_id)
-    raise ImageGeneratorError(
-        f"Wan image generation timed out after {MAX_POLL_ATTEMPTS} polls.",
-        _safe_raw_response(current),
+        request_timeout=4,
     )
 
 
@@ -246,11 +166,15 @@ async def _download_result(provider_url: str) -> str:
     except httpx.HTTPError as exc:
         raise ImageGeneratorError("Generated image download failed.") from exc
 
-    if not response.content:
+    return await asyncio.to_thread(_save_downloaded_image, response.content)
+
+
+def _save_downloaded_image(content: bytes) -> str:
+    if not content:
         raise ImageGeneratorError("Generated image download returned invalid content.")
 
     try:
-        with Image.open(io.BytesIO(response.content)) as source:
+        with Image.open(io.BytesIO(content)) as source:
             source.load()
             generated_image = (
                 source.copy()
@@ -282,43 +206,104 @@ async def _download_result(provider_url: str) -> str:
     return local_url
 
 
-async def generate_optimized_image(
-    image_bytes: bytes, prompt: str
-) -> dict[str, Any]:
-    """Create, poll, download, and expose one Wan-optimized package image."""
-    print("[WAN] generate_optimized_image entered", flush=True)
-    api_key = os.getenv("DASHSCOPE_API_KEY")
-    print(f"[WAN] DASHSCOPE_API_KEY configured={bool(api_key)}", flush=True)
-    print(f"[WAN] model={MODEL_NAME}", flush=True)
-    if not api_key:
-        error = "DASHSCOPE_API_KEY is not configured."
-        logger.error("Wan image generation: %s", error)
-        print(f"[WAN] ERROR: {error}", flush=True)
-        return {"success": False, "image_url": "", "raw_response": {}, "error": error}
+async def generate_optimized_image(image_bytes: bytes, prompt: str) -> dict[str, Any]:
+    """Compatibility entry point: submit only, never await image completion."""
+    return await submit_optimized_image_task(image_bytes, prompt)
 
-    raw_response: dict[str, Any] = {}
+
+# MVP in-memory task cache. Single process/worker only; restart loses tasks.
+# Internal provider URLs and task objects are NEVER serialized to API clients.
+IMAGE_TASK_CACHE: dict[str, dict[str, Any]] = {}
+TASK_TTL_SECONDS = 3600
+MAX_CACHED_TASKS = 1024
+
+
+def _task_view(task_id: str, entry: dict) -> dict:
+    return {"task_id": task_id, "status": entry["status"],
+            "optimized_image_url": entry.get("local_image_url", ""),
+            "error": entry.get("error", "")}
+
+
+async def submit_optimized_image_task(image_bytes: bytes, prompt: str) -> dict:
+    api_key = os.getenv("DASHSCOPE_API_KEY", "")
+    print(f"[WAN] model={MODEL_NAME}, key configured={bool(api_key)}", flush=True)
     try:
-        image_data_url = await asyncio.to_thread(_normalized_data_url, image_bytes)
-        provider_url, raw_response = await _submit_and_poll(
-            image_data_url, prompt, api_key
-        )
-        local_url = await _download_result(provider_url)
-        logger.info("Wan image generation: returning optimized_image_url=%s", local_url)
-        return {
-            "success": True,
-            "image_url": local_url,
-            "raw_response": raw_response,
-            "error": "",
-        }
+        if not api_key:
+            raise ImageGeneratorError("DASHSCOPE_API_KEY is not configured.")
+        for key, entry in list(IMAGE_TASK_CACHE.items()):
+            work = entry.get("work")
+            if time.monotonic() - entry["created"] > TASK_TTL_SECONDS and (work is None or work.done()):
+                IMAGE_TASK_CACHE.pop(key, None)
+        if len(IMAGE_TASK_CACHE) >= MAX_CACHED_TASKS:
+            raise ImageGeneratorError("Image task capacity reached. Please try later.")
+        async def submit():
+            data_url = await asyncio.to_thread(_normalized_data_url, image_bytes)
+            return await asyncio.to_thread(_submit_task, data_url, prompt, api_key)
+        # Bounds the HTTP wait; never polls or downloads on this request.
+        response = await asyncio.wait_for(submit(), timeout=5)
+        if _value(response, "status_code") != HTTPStatus.OK:
+            raise ImageGeneratorError(_safe_error(_value(response, "message") or _value(response, "code"), api_key))
+        task_id = str(_output_value(response, "task_id") or "")
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", task_id):
+            raise ImageGeneratorError("Wan task submission returned no valid task_id.")
+        IMAGE_TASK_CACHE[task_id] = {"status": "PENDING", "created": time.monotonic(),
+                                    "local_image_url": "", "error": "", "work": None}
+        print(f"[WAN] submitted task_id={task_id}", flush=True)
+        return {"success": True, "task_id": task_id, "status": "PENDING"}
     except Exception as exc:
-        error = _safe_error(exc, api_key)
-        if isinstance(exc, ImageGeneratorError):
-            raw_response = exc.raw_response
-        logger.error("Wan image generation failed: %s", error)
+        error = "Wan task submission timed out; no automatic resubmission was attempted." if isinstance(exc, TimeoutError) else _safe_error(exc, api_key)
         print(f"[WAN] ERROR: {error}", flush=True)
-        return {
-            "success": False,
-            "image_url": "",
-            "raw_response": raw_response,
-            "error": error,
-        }
+        return {"success": False, "task_id": "", "status": "FAILED", "error": error}
+
+
+async def finalize_optimized_image(task_id: str) -> dict:
+    entry = IMAGE_TASK_CACHE[task_id]
+    # Lock prevents concurrent status requests from downloading the same result.
+    lock = entry.setdefault("download_lock", asyncio.Lock())
+    async with lock:
+        if entry["status"] == "SUCCEEDED":
+            return _task_view(task_id, entry)
+        entry["status"] = "RUNNING"
+        local_url = await asyncio.wait_for(_download_result(entry["provider_url"]), timeout=35)
+        entry.update(status="SUCCEEDED", local_image_url=local_url, error="")
+        entry.pop("provider_url", None)
+        print(f"[WAN DOWNLOAD] task_id={task_id} local_url={local_url}", flush=True)
+        return _task_view(task_id, entry)
+
+
+async def _refresh_image_task(task_id: str) -> None:
+    entry = IMAGE_TASK_CACHE[task_id]
+    api_key = os.getenv("DASHSCOPE_API_KEY", "")
+    try:
+        if not api_key:
+            raise ImageGeneratorError("DASHSCOPE_API_KEY is not configured.")
+        # Fetch is synchronous in the installed SDK. Run outside the event loop;
+        # status HTTP requests return cached state while this operation is pending.
+        response = await asyncio.wait_for(asyncio.to_thread(ImageGeneration.fetch, task_id, api_key=api_key), timeout=8)
+        if _value(response, "status_code") != HTTPStatus.OK:
+            raise ImageGeneratorError(_safe_error(_value(response, "message") or _value(response, "code"), api_key))
+        status = str(_output_value(response, "task_status", "UNKNOWN")).upper()
+        print(f"[WAN STATUS] task_id={task_id} status={status}", flush=True)
+        if status == "SUCCEEDED":
+            entry["provider_url"] = _extract_result_url(response)
+            await finalize_optimized_image(task_id)
+        elif status in {"PENDING", "RUNNING"}:
+            entry["status"] = status
+        else:
+            raise ImageGeneratorError(_value(response, "message") or f"Wan task ended with status {status}.")
+    except Exception as exc:
+        error = "Image status query or download timed out. Please regenerate." if isinstance(exc, TimeoutError) else _safe_error(exc, api_key)
+        entry.update(status="FAILED", error=error)
+        entry.pop("provider_url", None)
+        print(f"[WAN STATUS] task_id={task_id} status=FAILED error={error}", flush=True)
+
+
+async def check_optimized_image_task(task_id: str) -> dict:
+    entry = IMAGE_TASK_CACHE.get(task_id)
+    if entry is None:
+        return {"task_id": task_id, "status": "FAILED", "optimized_image_url": "",
+                "error": "Image task not found or expired after server restart. Please regenerate."}
+    work = entry.get("work")
+    if entry["status"] not in {"SUCCEEDED", "FAILED"} and (work is None or work.done()):
+        entry["work"] = asyncio.create_task(_refresh_image_task(task_id))
+    return _task_view(task_id, entry)
