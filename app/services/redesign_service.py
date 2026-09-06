@@ -6,6 +6,7 @@ from uuid import uuid4
 from app.schemas.models import OptimizationOpportunity, RedesignData, RedesignOption
 from app.services.rule_engine import run_rule_engine, violates_hard_constraints
 from app.services.material_data_service import build_carbon_data
+from app.services.packaging_estimator import estimate_packaging
 
 
 RISK_PENALTY = {"low": 2, "medium": 6, "high": 14}
@@ -183,8 +184,13 @@ def _change_plan(
 def create_redesign_plan(payload: dict[str, Any]) -> RedesignData:
     analysis = _extract_analysis(payload)
     packaging = analysis.get("packaging") or {}
-    impact = analysis.get("environmental_impact") or {}
-    engine = run_rule_engine(analysis)
+    # Feed bounded visual estimates to existing rules so malformed 1%/1-layer
+    # model values do not suppress legitimate opportunities. Do not mutate input.
+    baseline = estimate_packaging(analysis)["before"]
+    engine_analysis = {**analysis, "packaging": {**packaging,
+        "layers": baseline["layers"], "space_utilization": baseline["space_utilization"],
+        "metric_provenance": baseline["metric_provenance"]}}
+    engine = run_rule_engine(engine_analysis)
 
     selected_by_profile: dict[str, list[OptimizationOpportunity]] = {}
     options: list[RedesignOption] = []
@@ -206,45 +212,23 @@ def create_redesign_plan(payload: dict[str, Any]) -> RedesignData:
     recommended = _recommended_option(options)
     selected = selected_by_profile[recommended.id]
     selected_actions = {item.action for item in selected}
-    before_layers = _nullable_int(packaging.get("layers"))
-    layer_reduction = 0
-    if "reduce_layers" in selected_actions:
-        layer_reduction = 2 if recommended.id == "aggressive" else 1
-    after_layers = (
-        None
-        if before_layers is None
-        else max(1, before_layers - layer_reduction)
-    )
     plan = _change_plan(analysis, selected)
+    carbon_data = build_carbon_data(analysis)
+    estimates = estimate_packaging(analysis, engine.functional_checks, selected, plan, carbon_data)
+    carbon_data["visual_estimate"] = estimates["carbon_estimate"]
 
     return RedesignData.model_validate(
         {
             "redesign_id": f"redesign_{uuid4().hex[:12]}",
-            "carbon_data": build_carbon_data(analysis),
+            "carbon_data": carbon_data,
             "analysis_id": analysis.get("analysis_id"),
             "recommended_option": recommended.id,
             "functional_checks": [item.model_dump() for item in engine.functional_checks],
             "hard_constraints": [item.model_dump() for item in engine.hard_constraints],
             "opportunities": [item.model_dump() for item in engine.opportunities],
             "options": [item.model_dump() for item in options],
-            "before": {
-                "layers": before_layers,
-                "packaging_weight_g": _nullable_int(impact.get("estimated_packaging_weight_g")),
-                "plastic_weight_g": _nullable_int(impact.get("estimated_plastic_weight_g")),
-                "space_utilization": _nullable_int(packaging.get("space_utilization")),
-                "recyclability": _nullable_int(packaging.get("recyclability_score")),
-                "estimated": True,
-                "hypothesis": "Values originate from image analysis and require physical measurement or specification validation.",
-            },
-            "after": {
-                "layers": after_layers,
-                "packaging_weight_g": None,
-                "plastic_weight_g": None,
-                "space_utilization": None,
-                "recyclability": None,
-                "estimated": True,
-                "hypothesis": "No precise after-state weight, utilization, recyclability or carbon value is asserted without engineering data and validation.",
-            },
+            "before": estimates["before"],
+            "after": estimates["after"],
             "change_plan": plan,
             "after_render_spec": {
                 "box_scale": 0.8 if "reduce_volume" in selected_actions else 1.0,

@@ -539,6 +539,7 @@
       function applyRedesignResponse(result){
         const data=result&&result.data;
         if(!data)return;
+        activeAnalysis.carbonEstimate=data.carbon_data?.visual_estimate;
         const copyMetrics=(target,source={})=>{
           target.layers=source.layers??null;
           target.packagingWeight=source.packaging_weight_g??null;
@@ -546,6 +547,7 @@
           target.spaceUtilization=source.space_utilization??null;
           target.recyclability=source.recyclability??null;
         };
+        activeAnalysis.metricProvenance={before:data.before?.metric_provenance||{},after:data.after?.metric_provenance||{}};
         copyMetrics(activeAnalysis.before,data.before);
         copyMetrics(activeAnalysis.after,data.after);
         const recommended=(data.options||[]).find(option=>option.id===data.recommended_option);
@@ -561,6 +563,34 @@
       }
 
       function renderAnalysisNumbers(showFinal=false){
+        const provenanceKeys={layers:"layers",plasticWeight:"plastic_weight_g",spaceUtilization:"space_utilization",recyclability:"recyclability"};
+        const sourceLabels={measured:"实测",estimated:"AI估计",inferred:"规则估计",pending:"待实测"};
+        const dashboard=document.getElementById("optimizationDashboard");
+        if(!document.getElementById("metricEstimateNotice")){
+          const notice=document.createElement("p");
+          notice.id="metricEstimateNotice";
+          notice.textContent="以下指标为AI/规则估算，最终以实际测量和工程验证为准。";
+          dashboard.prepend(notice);
+        }
+        let carbonNote=document.getElementById("carbonEstimateNotice");
+        if(!carbonNote){carbonNote=document.createElement("p");carbonNote.id="carbonEstimateNotice";dashboard.append(carbonNote)}
+        const carbon=activeAnalysis.carbonEstimate;
+        carbonNote.hidden=!carbon;
+        if(carbon){
+          const format=value=>Number.isFinite(value)?value.toFixed(3):"待实测";
+          carbonNote.textContent=`参考碳排（AI估算）：${format(carbon.before?.estimated_co2e_kg)} → ${format(carbon.after?.estimated_co2e_kg)} kg CO₂e；基于估计材料重量与 DEFRA 原生材料因子，非完整生命周期评价。`;
+        }
+        document.querySelectorAll("[data-before-metric]").forEach(element=>{
+          const key=provenanceKeys[element.dataset.beforeMetric];
+          const card=element.closest(".change-metric");
+          let label=card.querySelector(".metric-provenance");
+          if(!label){label=document.createElement("small");label.className="metric-provenance";card.append(label)}
+          const before=activeAnalysis.metricProvenance?.before?.[key];
+          const after=showFinal?activeAnalysis.metricProvenance?.after?.[key]:before;
+          const left=sourceLabels[before?.source]||"待实测",right=sourceLabels[after?.source]||"待实测";
+          label.textContent=left===right?left:`${left} → ${right}`;
+          label.title=[before?.hypothesis,after?.hypothesis].filter(Boolean).join(" / ");
+        });
         document.querySelectorAll("[data-before-metric]").forEach(element=>{
           const value=activeAnalysis.before[element.dataset.beforeMetric];
           element.textContent=displayMetric(value);
