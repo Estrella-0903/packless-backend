@@ -54,12 +54,12 @@ def test_redesign_multipart_generates_image(monkeypatch) -> None:
         assert "Apply only actions explicitly enabled" in prompt
         return {
             "success": True,
-            "image_url": "/generated/redesign_test.png",
+            "task_id": "test-task",
             "raw_response": {"output": {"task_status": "SUCCEEDED"}},
             "error": "",
         }
 
-    monkeypatch.setattr(redesign_router, "generate_optimized_image", fake_generate)
+    monkeypatch.setattr(redesign_router, "submit_optimized_image_task", fake_generate)
     analysis = {
         "analysis_id": "analysis_redesign_test",
         "product": {"category": "Cosmetics", "product_name": "Cream"},
@@ -106,7 +106,9 @@ def test_redesign_multipart_generates_image(monkeypatch) -> None:
         "R04",
         "R05",
     }
-    assert data["optimized_image_url"] == "/generated/redesign_test.png"
+    assert data["optimized_image_url"] == ""
+    assert data["image_task_id"] == "test-task"
+    assert data["image_generation_status"] == "PENDING"
     assert data["image_generation_failed"] is False
     assert data["image_generation_error"] == ""
 
@@ -120,7 +122,7 @@ def test_redesign_image_failure_preserves_plan(monkeypatch) -> None:
             "error": "provider unavailable",
         }
 
-    monkeypatch.setattr(redesign_router, "generate_optimized_image", fake_failure)
+    monkeypatch.setattr(redesign_router, "submit_optimized_image_task", fake_failure)
     response = client.post(
         "/api/redesign",
         data={"analysis_result": '{"analysis_id":"analysis_failed_image"}'},

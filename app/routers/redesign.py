@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.datastructures import UploadFile
 
 from app.schemas.models import ErrorResponse, RedesignResponse
-from app.services.image_generator import generate_optimized_image
+from app.services.image_generator import submit_optimized_image_task, check_optimized_image_task
 from app.services.prompt_builder import build_image_generation_prompt
 from app.services.redesign_service import create_redesign_plan
 
@@ -109,17 +109,19 @@ async def redesign_packaging(request: Request) -> RedesignResponse | JSONRespons
         )
         try:
             print("[REDESIGN] calling wan image generator", flush=True)
-            generation = await generate_optimized_image(image_bytes, prompt)
+            generation = await submit_optimized_image_task(image_bytes, prompt)
         except Exception:
             generation = {
                 "success": False,
                 "image_url": "",
                 "error": "Unexpected image generation error.",
             }
-        if generation["success"] and generation["image_url"]:
+        if generation["success"] and generation.get("task_id"):
             plan = plan.model_copy(
                 update={
-                    "optimized_image_url": generation["image_url"],
+                    "optimized_image_url": "",
+                    "image_task_id": generation["task_id"],
+                    "image_generation_status": "PENDING",
                     "image_generation_failed": False,
                     "image_generation_error": "",
                 }
@@ -142,3 +144,8 @@ async def redesign_packaging(request: Request) -> RedesignResponse | JSONRespons
         flush=True,
     )
     return RedesignResponse(data=plan)
+
+
+@router.get("/redesign/image-status/{task_id}")
+async def redesign_image_status(task_id: str) -> dict:
+    return {"success": True, "data": await check_optimized_image_task(task_id)}

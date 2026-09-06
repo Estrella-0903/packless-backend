@@ -665,7 +665,7 @@
             comparisonState.isGenerating=false;
             comparisonState.generationFailed=false;
             renderComparisonStatus();
-            updateComparison(50);
+            animateComparison(100,50);
             console.log("After image ready:",afterImage.src);
             console.log("[COMPARE] AI image loaded",{
               afterImageUrl:comparisonState.afterImageUrl,
@@ -678,7 +678,28 @@
         });
       }
 
+      async function pollImageTask(taskId,requestId=redesignRequestId){
+        for(let attempt=0;attempt<20;attempt++){
+          await new Promise(resolve=>setTimeout(resolve,2500));
+          if(requestId!==redesignRequestId)return null;
+          const response=await fetch(`/api/redesign/image-status/${encodeURIComponent(taskId)}`,{signal:AbortSignal.timeout(10000)});
+          const result=await response.json();
+          if(requestId!==redesignRequestId)return null;
+          if(!response.ok||!result.success)throw new Error(result.error?.message||"图片状态查询失败");
+          const data=result.data;
+          console.log("[IMAGE STATUS]",taskId,data.status);
+          if(data.status==="SUCCEEDED"){
+            if(!data.optimized_image_url)throw new Error("未返回优化图片");
+            return data.optimized_image_url;
+          }
+          if(data.status==="FAILED")throw new Error(data.error||"AI优化图生成失败，请重新生成。");
+          if(!["PENDING","RUNNING"].includes(data.status))throw new Error("未知图片任务状态");
+        }
+        throw new Error("AI概念图生成等待超时，请重新生成。");
+      }
+
       async function requestRedesign(){
+        if(comparisonState.isGenerating)return;
         if(sourceMode!=="upload"||!pendingFile||!latestAnalysisResult){
           comparisonState.isGenerating=false;
           comparisonState.generationFailed=true;
@@ -704,7 +725,7 @@
           redesignFormData.append("analysis_result",JSON.stringify(latestAnalysisResult));
           redesignFormData.append("image",pendingFile,pendingFile.name);
           console.log("Calling /api/redesign...");
-          const response=await fetch("/api/redesign",{method:"POST",body:redesignFormData});
+          const response=await fetch("/api/redesign",{method:"POST",body:redesignFormData,signal:AbortSignal.timeout(15000)});
           const result=await response.json().catch(()=>null);
           console.log("Redesign result:",result);
           console.log("optimized_image_url:",result?.data?.optimized_image_url);
@@ -715,7 +736,14 @@
           latestRedesignResult=result;
           window.latestRedesignResult=latestRedesignResult;
           applyRedesignResponse(result);
-          const imageUrl=result.data?.optimized_image_url;
+          resultFlow.hidden=false;
+          let imageUrl=result.data?.optimized_image_url;
+          if(["PENDING","RUNNING"].includes(result.data?.image_generation_status)){
+            if(!result.data.image_task_id)throw new Error("未返回图片任务编号");
+            imageUrl=await pollImageTask(result.data.image_task_id,requestId);
+            if(requestId!==redesignRequestId||!imageUrl)return;
+            Object.assign(result.data,{optimized_image_url:imageUrl,image_generation_status:"SUCCEEDED",image_generation_failed:false,image_generation_error:""});
+          }
           if(!imageUrl||result.data?.image_generation_failed)throw new Error(result.data?.image_generation_error||"未返回优化图片");
           await loadAfterImage(imageUrl,requestId);
         }catch(error){
@@ -723,7 +751,7 @@
           console.error("包装重设计图片生成失败：",error);
           comparisonState.afterImageUrl="";
           comparisonState.generationFailed=true;
-          generationErrorDetail.textContent=error.message||"未返回优化图片";
+          generationErrorDetail.textContent=error instanceof TypeError||["TimeoutError","AbortError"].includes(error.name)?"AI概念图生成连接中断，请重新生成。":error.message||"未返回优化图片";
           afterImage.removeAttribute("src");
           afterImage.style.opacity="0";
           comparison.classList.remove("after-ready");
@@ -956,7 +984,7 @@
           position:comparisonState.position
         });
         if(event.target.closest("#regenerateButton"))return;
-        if(!afterImage.src){
+        if(!comparisonState.afterImageUrl||comparisonState.isGenerating){
           console.warn("After image not loaded");
           return;
         }
@@ -983,6 +1011,7 @@
         if(comparison.hasPointerCapture(event.pointerId))comparison.releasePointerCapture(event.pointerId);
       });
       comparison.addEventListener("keydown",event=>{
+        if(!comparisonState.afterImageUrl||comparisonState.isGenerating)return;
         const steps={ArrowLeft:-2,ArrowRight:2,Home:-100,End:100};
         if(!(event.key in steps))return;
         event.preventDefault();
