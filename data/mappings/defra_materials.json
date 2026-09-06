@@ -1,0 +1,11 @@
+{
+  "Plastics: average plastic film": ["plastic", "plastic_film"],
+  "Plastics: HDPE (incl. forming)": ["plastic", "hdpe"],
+  "Plastics: LDPE and LLDPE (incl. forming)": ["plastic", "ldpe_lldpe"],
+  "Plastics: PET (incl. forming)": ["plastic", "pet_plastic"],
+  "Plastics: PP (incl. forming)": ["plastic", "pp"],
+  "Plastics: PS (incl. forming)": ["plastic", "ps"],
+  "Plastics: PVC (incl. forming)": ["plastic", "pvc"],
+  "Paper and board: board": ["paper", "paperboard"],
+  "Paper and board: paper": ["paper", "paper"]
+}

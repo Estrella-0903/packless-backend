@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -61,6 +61,7 @@ class EnvironmentalImpact(APIModel):
 
 
 class AnalysisData(APIModel):
+    carbon_data: dict[str, Any] | None = None
     analysis_id: str
     filename: str
     product: ProductInfo
@@ -170,6 +171,7 @@ class AfterRenderSpec(APIModel):
 
 
 class RedesignData(APIModel):
+    carbon_data: dict[str, Any] | None = None
     redesign_id: str
     analysis_id: str | None = None
     recommended_option: str

@@ -1,0 +1,32 @@
+[
+  {
+    "file": "c_results_all.json",
+    "bytes": 11691,
+    "sha256": "217a398d8fbe33ff04545d4c1fa08e486a968f52c17e8ce7d34f2d75bff799b0",
+    "raw_copy": true
+  },
+  {
+    "file": "c_results.zip",
+    "bytes": 9654,
+    "sha256": "16e16a9e789a860cac1b6dd39a8db4757084236422d4bde2e5cea63c4b1d8c60",
+    "raw_copy": true
+  },
+  {
+    "file": "D_basic_calculation_result.json",
+    "bytes": 1513,
+    "sha256": "e9f6da9acf68373496c9c2c992b21e6fbd260f62ddfcd1efe858fdc39182976a",
+    "raw_copy": true
+  },
+  {
+    "file": "ghg-conversion-factors-2024-condensed_set__for_most_users__v1_1.xlsx",
+    "bytes": 1866504,
+    "sha256": "02287cec3dfc1f3e6bee8871b88339cc1c6bcb9ac6b243f85818e475334bf301",
+    "raw_copy": true
+  },
+  {
+    "file": "PackWISE_dataset_v2.zip",
+    "bytes": 363767710,
+    "sha256": "026f5ac422c6a52994311b2a2dd6f28d977e60e7db7a39a718720709b95e37f7",
+    "raw_copy": false
+  }
+]

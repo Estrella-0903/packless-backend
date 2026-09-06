@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "default_origin": "primary_material_production",
+  "aliases": {
+    "pet_plastic": {"material": "pet_plastic", "match_type": "exact"},
+    "plastic_film": {"material": "plastic_film", "match_type": "exact"},
+    "ldpe_lldpe": {"material": "ldpe_lldpe", "match_type": "exact"},
+    "pet": {"material": "pet_plastic", "match_type": "exact"},
+    "pet plastic": {"material": "pet_plastic", "match_type": "exact"},
+    "polyethylene terephthalate": {"material": "pet_plastic", "match_type": "exact"},
+    "paperboard": {"material": "paperboard", "match_type": "exact"},
+    "cardboard": {"material": "paperboard", "match_type": "exact"},
+    "plastic film": {"material": "plastic_film", "match_type": "exact"},
+    "hdpe": {"material": "hdpe", "match_type": "exact"},
+    "ldpe": {"material": "ldpe_lldpe", "match_type": "exact"},
+    "lldpe": {"material": "ldpe_lldpe", "match_type": "exact"},
+    "pp": {"material": "pp", "match_type": "exact"},
+    "polypropylene": {"material": "pp", "match_type": "exact"},
+    "ps": {"material": "ps", "match_type": "exact"},
+    "pvc": {"material": "pvc", "match_type": "exact"},
+    "paper": {"material": "paper", "match_type": "exact"},
+    "plastic bottle": {"material": "plastic_bottle", "match_type": "inferred"},
+    "paper box": {"material": "paperboard", "match_type": "inferred"},
+    "plastic": {"material": "unknown", "match_type": "unknown"},
+    "metal": {"material": "unknown", "match_type": "unknown"},
+    "glass": {"material": "unknown", "match_type": "unknown"},
+    "aluminum": {"material": "unknown", "match_type": "unknown"},
+    "molded pulp": {"material": "molded_pulp", "match_type": "unknown"}
+  },
+  "notes": "Exact means lexical match to the reference category, not verified image identification. Plastic film uses an average-film factor, not a polymer-specific measurement. Primary origin is a scenario assumption unless independently confirmed."
+}

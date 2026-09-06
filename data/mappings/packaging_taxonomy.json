@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "mapping_source": "PackLess curated lexical mapping v1; not ground-truth verification",
+  "categories": ["plastic_bottle", "plastic_film", "plastic_tray", "paper_box", "paperboard", "carton", "paper_bag", "plastic_bag", "metal_can", "glass_container", "composite_packaging", "other_packaging", "non_packaging", "unknown"],
+  "labels": {
+    "plastic bottle": "plastic_bottle", "clear plastic bottle": "plastic_bottle", "plastic-bottle": "plastic_bottle",
+    "plastic film": "plastic_film", "plastic tray": "plastic_tray", "plastic bag": "plastic_bag",
+    "paper box": "paper_box", "cardboard": "paperboard", "paperboard": "paperboard", "paper bag": "paper_bag", "paper-bag": "paper_bag",
+    "beverage-carton": "carton", "can": "metal_can", "metal-can": "metal_can",
+    "glass bottle": "glass_container", "glass jar": "glass_container",
+    "aluminium-coated-foil": "composite_packaging",
+    "bottle": "other_packaging", "cap": "other_packaging", "label": "other_packaging", "outer box": "other_packaging",
+    "canister": "other_packaging", "pull tab": "other_packaging", "protective film": "other_packaging", "cup": "other_packaging", "pouch": "other_packaging", "egg carton": "carton", "spray nozzle": "other_packaging",
+    "plastic-foil/bag": "other_packaging", "plastic-other": "other_packaging", "plastic-lid": "other_packaging", "plastic-cup/pot": "other_packaging", "blister": "other_packaging", "metal-foil": "other_packaging", "metal-lid": "other_packaging", "paper-cup/pot": "other_packaging", "tube": "other_packaging",
+    "undefined": "unknown", "net": "unknown", "tissue": "unknown", "wood": "unknown", "paper-other": "unknown", "foamed-plastic": "unknown", "textile": "unknown", "ribbon/tape": "unknown", "metal-other": "unknown"
+  },
+  "notes": "Ambiguous multi-component samples retain all mapped_categories. No material/component pairing is inferred. Unknown context is not automatically non_packaging."
+}

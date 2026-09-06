@@ -1,0 +1,2 @@
+# Offline ingestion only; the deployed API reads JSON using the standard library.
+openpyxl>=3.1,<4
