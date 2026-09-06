@@ -33,10 +33,10 @@ def test_after_metrics_do_not_invent_precise_values() -> None:
     assert plan.after.layers in {2, 3}
     assert plan.after.packaging_weight_g is None
     assert plan.after.plastic_weight_g is None
-    assert plan.after.space_utilization is None
+    assert 54 <= plan.after.space_utilization <= 95
     assert plan.after.recyclability is None
     assert plan.after.estimated is True
-    assert "No precise" in plan.after.hypothesis
+    assert "估算" in plan.after.hypothesis
 
 
 def test_recommendation_uses_weighted_score_and_tie_break() -> None:

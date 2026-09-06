@@ -139,6 +139,8 @@ class OptimizationOpportunity(APIModel):
 
 
 class RedesignMetrics(APIModel):
+    metric_provenance: dict[str, Any] = Field(default_factory=dict)
+    estimation_method: str = "visual_rule_based"
     layers: int | None = Field(default=None, ge=0)
     packaging_weight_g: int | None = Field(default=None, ge=0)
     plastic_weight_g: int | None = Field(default=None, ge=0)
@@ -171,6 +173,8 @@ class AfterRenderSpec(APIModel):
 
 
 class RedesignData(APIModel):
+    estimated: bool = True
+    estimation_method: str = "visual_rule_based"
     image_task_id: str = ""
     image_generation_status: str = "FAILED"
     carbon_data: dict[str, Any] | None = None
