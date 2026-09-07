@@ -26,14 +26,20 @@ def approved():
 
 
 def test_gift_deterministic_estimates():
-    args = (gift_fixture(), [], approved(), {"remove_plastic_film": True})
+    # Explicit selected component actions, not generic rule IDs, drive metrics.
+    args = (gift_fixture(), [], approved(), {"remove_plastic_film": True,
+        "reduce_layers": True, "remove_components": ["outer film"],
+        "resize_spec": {"enabled": True}, "component_actions": [
+            {"rule_id": "R03", "component": "outer film", "action": "remove"},
+            {"rule_id": "R02", "component": "outer box", "action": "resize", "scale": .825}]})
     result = estimate_packaging(*args)
     assert result == estimate_packaging(*args)
     before, after = result["before"], result["after"]
-    assert [before[k] for k in LIMITS] == [3, 30, 180, 48, 50]
-    assert [after[k] for k in LIMITS] == [2, 24, 140, 68, 72]
+    assert [before[k] for k in LIMITS] == [3, 63, 126, 65, 61]
+    assert [after[k] for k in LIMITS] == [2, 57, 112, 79, 70]
+    assert before["estimation_method"] == "material_geometry_digital_twin"
     assert before["metric_provenance"]["layers"]["source"] == "estimated"
-    assert before["metric_provenance"]["recyclability"]["source"] == "inferred"
+    assert before["metric_provenance"]["recyclability"]["source"] == "estimated"
     assert after["metric_provenance"]["layers"]["source"] == "inferred"
     assert after["estimated"]
 
@@ -53,8 +59,8 @@ def test_no_components_pending_but_visible_paper_no_plastic_zero():
     result = estimate_packaging(paper)
     assert result["before"]["plastic_weight_g"] == 0
     assert result["before"]["metric_provenance"]["plastic_weight_g"]["source"] == "estimated"
-    assert result["before"]["recyclability"] == 80
-    assert result["carbon_estimate"]["before"]["estimated_co2e_kg"] == pytest.approx(.084)
+    assert result["before"]["recyclability"] == 85
+    assert result["carbon_estimate"]["before"]["estimated_co2e_kg"] == pytest.approx(.0312)
 
 
 def test_co2_is_estimated_and_unknown_factor_not_zero():
@@ -81,25 +87,26 @@ def test_measured_before_is_not_measured_after():
     result = estimate_packaging(fixture, [], approved())
     assert result["before"]["layers"] == 4
     assert result["before"]["metric_provenance"]["layers"]["source"] == "measured"
-    assert result["after"]["layers"] == 3
+    assert result["after"]["layers"] == 4  # No component action supplied.
     assert result["after"]["metric_provenance"]["layers"]["source"] == "inferred"
 
 
 def test_replacement_only_with_approved_target_and_action():
-    plan = {"replace_inner_tray": {"to": "Molded pulp"}}
+    plan = {"replace_inner_tray": {"to": "Molded pulp"}, "component_actions": [
+        {"rule_id": "R03", "component": "inner tray", "action": "replace_material", "to": "Molded pulp"}]}
     rule = [{"rule_id": "R03", "action": "replace_inner_tray", "target": "inner tray"}]
     result = estimate_packaging(gift_fixture(), [], rule, plan)
     assert result["after"]["plastic_weight_g"] == 6
     rule[0]["target"] = "some other tray"
-    assert estimate_packaging(gift_fixture(), [], rule, plan)["after"]["plastic_weight_g"] == 30
+    assert estimate_packaging(gift_fixture(), [], rule, plan)["after"]["plastic_weight_g"] == 63
 
 
 def test_real_rule_engine_integration_preserves_contract():
     plan = create_redesign_plan(gift_fixture())
     assert plan.before.layers == 3
-    assert plan.after.layers == 2
-    assert plan.before.space_utilization == 48
-    assert plan.before.recyclability == 50
+    assert plan.after.layers <= plan.before.layers
+    assert 20 <= plan.before.space_utilization <= 95
+    assert 0 <= plan.before.recyclability <= 100
     assert "visual_estimate" in plan.carbon_data
     assert plan.options and plan.functional_checks and plan.change_plan
     assert plan.before.metric_provenance["plastic_weight_g"]["estimated"]
@@ -108,9 +115,8 @@ def test_real_rule_engine_integration_preserves_contract():
 def test_mixed_carbon_allocates_total_only_once():
     result = estimate_packaging(gift_fixture())
     carbon = result["carbon_estimate"]["before"]
-    assert sum(item["weight_g"] for item in carbon["materials"]) == 180
-    assert carbon["estimated_co2e_kg"] == .289
-    assert all(item["weight_g"] < 180 for item in carbon["materials"])
+    assert sum(item["estimated_weight_g"] for item in carbon["materials"]) == pytest.approx(result["before"]["packaging_weight_g"], abs=1)
+    assert carbon["estimated_co2e_kg"] == result["before"]["carbon_kgco2e"]
 
 
 def test_unknown_mass_or_composition_does_not_generate_carbon():

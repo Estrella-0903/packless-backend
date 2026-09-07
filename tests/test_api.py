@@ -14,7 +14,8 @@ def test_root_serves_frontend() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    assert "PackLess AI" in response.text
+    assert "智减" in response.text
+    assert "PackLess AI" not in response.text
     assert "https://packless-backend.onrender.com" not in response.text
     assert 'fetch("/api/analyze"' in response.text
     assert 'fetch("/api/redesign"' in response.text
@@ -52,6 +53,9 @@ def test_redesign_multipart_generates_image(monkeypatch) -> None:
     async def fake_generate(image_bytes: bytes, prompt: str) -> dict:
         assert image_bytes == b"valid image placeholder"
         assert "Apply only actions explicitly enabled" in prompt
+        assert "Authoritative AfterRenderSpec" in prompt
+        assert "component_actions" in prompt
+        assert "approximate scale" not in prompt
         return {
             "success": True,
             "task_id": "test-task",
@@ -93,6 +97,9 @@ def test_redesign_multipart_generates_image(monkeypatch) -> None:
     ]
     option_by_id = {option["id"]: option for option in data["options"]}
     recommended = option_by_id[data["recommended_option"]]
+    assert recommended["score_breakdown"]["estimated"] is True
+    assert "environment" in recommended["score_breakdown"]
+    assert data["estimation_method"] == "material_geometry_digital_twin"
     assert recommended["overall_score"] == round(
         0.4 * recommended["environment_score"]
         + 0.3 * recommended["business_score"]
@@ -100,10 +107,8 @@ def test_redesign_multipart_generates_image(monkeypatch) -> None:
         1,
     )
     assert {item["rule_id"] for item in data["opportunities"]} == {
-        "R01",
         "R02",
         "R03",
-        "R04",
         "R05",
     }
     assert data["optimized_image_url"] == ""

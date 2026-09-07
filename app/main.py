@@ -23,9 +23,9 @@ GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 
 
 app = FastAPI(
-    title="PackLess AI Backend",
+    title="智减后端",
     version="0.1.0",
-    description="AI packaging analysis and rule-guided sustainable redesign API.",
+    description="AI包装分析与规则驱动的绿色减量重设计接口。",
 )
 
 # Development only. Replace "*" with the deployed frontend origin(s) in production.

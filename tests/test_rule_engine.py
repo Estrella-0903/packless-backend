@@ -34,7 +34,12 @@ def _analysis(category: str = "cosmetics") -> dict:
 
 
 def test_engine_outputs_all_five_rule_families_and_uncertainty() -> None:
-    result = run_rule_engine(_analysis())
+    analysis = _analysis()
+    analysis["packaging"]["materials"].extend([
+        {"component": "decorative sleeve", "material": "paperboard", "confidence": .9, "evidence": "non-protective decoration only"},
+        {"component": "plastic decorative insert", "material": "PET", "confidence": .9, "evidence": "non-protective decoration only"},
+    ])
+    result = run_rule_engine(analysis)
     assert {item.rule_id for item in result.opportunities} == {
         "R01",
         "R02",

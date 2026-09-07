@@ -56,6 +56,16 @@ def _confidence(value: Any) -> float:
     return round(min(1.0, max(0.0, number)), 3)
 
 
+def _decimal(value: Any, *, minimum: float = 0, maximum: float | None = None) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return number if number >= minimum and (maximum is None or number <= maximum) else None
+
+
 def _string_list(value: Any) -> list[str]:
     if isinstance(value, str):
         values = re.split(r"[,，;；\n]", value)
@@ -104,6 +114,11 @@ def _materials(value: Any) -> list[dict[str, Any]]:
                 "material": material,
                 "confidence": _confidence(_first(item, "confidence", "certainty")),
                 "evidence": evidence,
+                "visual_fraction": _decimal(item.get("visual_fraction"), maximum=1),
+                "size_category": _text(item.get("size_category")),
+                "functions": _string_list(item.get("functions")),
+                "essential": item.get("essential") is True,
+                "brand_critical": item.get("brand_critical") is True,
             }
         )
     return normalized
@@ -125,6 +140,8 @@ def normalize_analysis_result(raw: dict[str, Any], filename: str) -> dict[str, A
     impact = _mapping(
         _first(payload, "environmental_impact", "impact", "environmentalImpact")
     )
+    geometry = _mapping(_first(payload, "geometry_estimate", "geometry", "geometryEstimate"))
+    outer = _mapping(_first(geometry, "outer_package", "outer_dimensions", "outerPackage"))
 
     category = _first(product, "category", "type", "product_type")
     product_name = _first(product, "product_name", "name", "productName")
@@ -180,5 +197,20 @@ def normalize_analysis_result(raw: dict[str, Any], filename: str) -> dict[str, A
                 _first(impact, "estimated_co2e_g", "co2e_g", "carbon_emissions_g")
             ),
         },
+        "geometry_estimate": {
+            "outer_package": {
+                "length_mm": _decimal(_first(outer, "length_mm", "length")),
+                "width_mm": _decimal(_first(outer, "width_mm", "width")),
+                "height_mm": _decimal(_first(outer, "height_mm", "height")),
+                "estimated": True,
+                "confidence": _confidence(_first(outer, "confidence", default=geometry.get("confidence"))),
+                "source": "ai_visual_estimate",
+            },
+            "product_occupied_ratio": _decimal(_first(geometry, "product_occupied_ratio", "occupied_ratio"), maximum=1),
+            "estimated_aspect_ratio": _decimal(_first(geometry, "estimated_aspect_ratio", "aspect_ratio")),
+            "method": "visual_2d_proxy",
+            "confidence": _confidence(geometry.get("confidence")),
+        },
+        "measurements": {},
         "summary": _text(_first(payload, "summary", "description", "conclusion")),
     }

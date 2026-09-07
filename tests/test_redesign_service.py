@@ -30,7 +30,7 @@ def test_after_metrics_do_not_invent_precise_values() -> None:
             },
         }
     )
-    assert plan.after.layers in {2, 3}
+    assert plan.after.layers == 4  # No identified component may be deleted.
     assert plan.after.packaging_weight_g is None
     assert plan.after.plastic_weight_g is None
     assert 54 <= plan.after.space_utilization <= 95

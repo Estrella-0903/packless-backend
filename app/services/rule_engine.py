@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
+import re
 from typing import Any
 
 from app.schemas.models import FunctionalCheck, HardConstraint, OptimizationOpportunity
@@ -85,6 +87,9 @@ class Component:
     material: str
     confidence: float
     evidence: str
+    declared_functions: tuple[str, ...] = ()
+    essential: bool = False
+    brand_critical: bool = False
 
     @property
     def text(self) -> str:
@@ -100,7 +105,8 @@ class RuleEngineResult:
 
 def _confidence(value: Any, default: float = 0.55) -> float:
     try:
-        return min(1.0, max(0.0, float(value)))
+        number = float(value)
+        return min(1.0, max(0.0, number)) if math.isfinite(number) else default
     except (TypeError, ValueError):
         return default
 
@@ -116,6 +122,9 @@ def _components(analysis: dict[str, Any]) -> list[Component]:
                     material=str(item.get("material") or "unknown"),
                     confidence=_confidence(item.get("confidence")),
                     evidence=str(item.get("evidence") or ""),
+                    declared_functions=tuple(item.get("functions") or ()),
+                    essential=item.get("essential") is True,
+                    brand_critical=item.get("brand_critical") is True,
                 )
             )
         elif isinstance(item, str):
@@ -135,11 +144,22 @@ def _component_functions(component: Component) -> list[str]:
         FUNCTION_DISPLAY: ("box", "carton", "label", "sleeve", "window"),
         FUNCTION_TRANSPORT: ("box", "carton", "tray", "insert", "shipping"),
         FUNCTION_BRAND: ("box", "carton", "label", "sleeve", "print"),
-        FUNCTION_DECORATION: ("decoration", "ribbon", "sleeve", "window", "foil stamp"),
+        FUNCTION_DECORATION: ("decorat", "ribbon", "sleeve", "window", "foil stamp", "装饰"),
     }
     for function, keywords in keyword_map.items():
         if any(keyword in text for keyword in keywords):
             functions.append(function)
+    evidence = component.evidence.lower()
+    # Only explicitly non-functional ornamental inserts/outer wraps override
+    # generic name heuristics. Supplied protective functions always win.
+    purely_decorative = FUNCTION_DECORATION in functions and any(term in evidence for term in ("non-protective", "non-functional", "decoration only", "ornament only", "仅装饰", "无保护"))
+    if purely_decorative and not any(term in text for term in ("box", "bottle", "jar", "盒")) and not any(term in evidence for term in ("barrier", "seal", "food contact", "密封", "屏障")):
+        functions = [FUNCTION_DISPLAY, FUNCTION_DECORATION]
+    if "protective" in component.name.lower().replace("non-protective", "") or "protects" in evidence:
+        functions.append(FUNCTION_PROTECTION)
+    if any(term in evidence for term in ("sealed", "sealing", "barrier", "密封", "屏障")):
+        functions.append(FUNCTION_BARRIER)
+    functions = list(dict.fromkeys(functions + list(component.declared_functions)))
     return functions or [FUNCTION_PROTECTION]
 
 
@@ -147,10 +167,21 @@ def functional_check(analysis: dict[str, Any]) -> list[FunctionalCheck]:
     checks: list[FunctionalCheck] = []
     for component in _components(analysis):
         functions = _component_functions(component)
-        estimated = not bool(component.evidence) or component.confidence < 0.8
+        protective = any(f in functions for f in (FUNCTION_PROTECTION, FUNCTION_CUSHIONING, FUNCTION_TRANSPORT))
+        barrier = any(f in functions for f in (FUNCTION_BARRIER, FUNCTION_MOISTURE, FUNCTION_SEALING))
+        brand_critical = component.brand_critical or any(t in component.evidence.lower() for t in ("sole logo", "only brand", "mandatory", "唯一品牌", "法定"))
+        essential = component.essential or protective or barrier or brand_critical
+        estimated = True  # Visual evidence is not functional verification.
         checks.append(
             FunctionalCheck(
                 target=component.name,
+                material=component.material,
+                essential=essential,
+                protective=protective,
+                barrier=barrier,
+                brand_critical=brand_critical,
+                decorative=FUNCTION_DECORATION in functions,
+                potentially_redundant=not essential and FUNCTION_DECORATION in functions and " or " not in component.name.lower(),
                 functions=functions,
                 confidence=round(component.confidence, 2),
                 estimated=estimated,
@@ -211,7 +242,7 @@ def hard_constraints(
             "Protection function is inferred; transit/drop/compression tests are required.",
         )
 
-    if any(term in product_text for term in ("food", "beverage", "snack", "食品", "饮料")):
+    if any(term in product_text for term in ("food", "beverage", "snack", "confectionery", "mooncake", "食品", "饮料", "月饼")):
         add(
             "HC_FOOD_SAFETY",
             "primary packaging and product-contact materials",
@@ -284,159 +315,105 @@ def _opportunity(
     )
 
 
-def optimization_rules(
-    analysis: dict[str, Any],
-    checks: list[FunctionalCheck],
-    constraints: list[HardConstraint],
-) -> list[OptimizationOpportunity]:
+def _is_plastic(component: Component) -> bool:
+    value = component.material.lower()
+    return "plastic" in value or "塑料" in value or bool(re.search(r"\b(pet|pp|ps|pe|hdpe|ldpe|pvc)\b", value))
+
+
+def optimization_rules(analysis, checks, constraints) -> list[OptimizationOpportunity]:
     packaging = analysis.get("packaging") or {}
-    diagnosis = analysis.get("diagnosis") or {}
     components = _components(analysis)
-    issue_text = " ".join(str(tag) for tag in diagnosis.get("issue_tags") or []).lower()
+    checks_by_name = {c.target: c for c in checks}
+    opportunities = []
+    constraint_ids = {c.constraint_id for c in constraints}
+
+    def emit(rule, component, action, visual, changes, reason):
+        opportunity = _opportunity(rule, component.name, action, reason, reason,
+            "Potential resource reduction; quantified results remain estimates.",
+            "medium", "medium", component.confidence, True,
+            "Conditional concept action; verify component functions, material suitability and engineering performance.")
+        for change in changes:
+            change.update(rule_id=rule, reason=reason, confidence=component.confidence,
+                          requires_validation=True, estimated=True)
+        opportunities.append(OptimizationOpportunity.model_validate({
+            **opportunity.model_dump(), "visual_impact": visual, "component_actions": changes}))
+
+    for component in components:
+        check = checks_by_name[component.name]
+        # No generic 'secondary layers' target. Plastic decorative inserts belong
+        # to R04 and plastic films to R03, avoiding conflicting duplicate actions.
+        if check.potentially_redundant and component.confidence >= .65 and component.evidence and not _is_plastic(component) and any(c.protective for c in checks):
+            emit("R01", component, "reduce_layers", "high",
+                 [{"component": component.name, "action": "remove"}],
+                 f"Remove the non-essential decorative component {component.name}; retain protection, barriers and essential brand information.")
+
     try:
-        layers = int(packaging.get("layers")) if packaging.get("layers") is not None else None
-    except (TypeError, ValueError):
-        layers = None
-    try:
-        utilization = (
-            float(packaging.get("space_utilization"))
-            if packaging.get("space_utilization") is not None
-            else None
-        )
+        utilization = float(packaging.get("space_utilization"))
     except (TypeError, ValueError):
         utilization = None
+    boxes = [c for c in components if any(t in c.name.lower() for t in ("box", "carton", "盒", "箱"))]
+    outer_boxes = [c for c in boxes if any(t in c.name.lower() for t in ("outer", "rigid", "外"))] or boxes
+    # A generic medium prior is not strong geometric evidence for a resize.
+    space_meta = (packaging.get("metric_provenance") or {}).get("space_utilization", {})
+    prior_only = "medium is a conservative prior" in str(space_meta.get("hypothesis", "")) and "band=medium" in str(space_meta.get("hypothesis", ""))
+    geometry_only_fallback = packaging.get("geometry_source") == "rule_fallback" and packaging.get("space_utilization") == 65
+    if outer_boxes and utilization is not None and math.isfinite(utilization) and 20 <= utilization < 70 and not prior_only and not geometry_only_fallback:
+        box = outer_boxes[0]
+        data_scale = packaging.get("recommended_outer_volume_ratio")
+        try:
+            data_scale = float(data_scale)
+        except (TypeError, ValueError):
+            data_scale = None
+        scale = round(data_scale, 3) if data_scale is not None and .7 <= data_scale < 1 else (.78 if utilization < 45 else .825 if utilization < 60 else .885)
+        changes = [{"component": box.name, "action": "resize", "scale": scale,
+                    "scale_basis": "outer_volume_ratio", "resize_axis": "overall",
+                    "layout_strategy": "reduce void space around products; keep product size unchanged"}]
+        changes += [{"component": c.name, "action": "resize_to_fit", "follow_outer_box": True,
+                     "target_component": box.name, "preserve_shape": True}
+                    for c in components if any(t in c.name.lower() for t in ("tray", "insert", "内托"))]
+        emit("R02", box, "reduce_volume", "high", changes,
+             f"Target approximately {round((1-scale)*100, 1)}% less outer volume by reducing voids; retain fit, product dimensions and transport protection.")
 
-    opportunities: list[OptimizationOpportunity] = []
-    decorative = [
-        check.target
-        for check in checks
-        if FUNCTION_DECORATION in check.functions
-        and FUNCTION_PROTECTION not in check.functions
-        and FUNCTION_BARRIER not in check.functions
-    ]
-    if (layers is not None and layers > 2) or decorative or "excess" in issue_text:
-        target = ", ".join(decorative) or "secondary packaging layers"
-        opportunities.append(
-            _opportunity(
-                "R01",
-                target,
-                "reduce_layers",
-                "Remove or combine one non-essential secondary/decorative layer while retaining all protective and barrier functions.",
-                "Multiple or decorative layers may duplicate non-protective functions.",
-                "Fewer components and less material use; magnitude remains unquantified.",
-                "medium",
-                "medium",
-                0.78 if layers is not None else 0.55,
-                True,
-                "Layer redundancy is inferred and must be confirmed with a component/function audit.",
-            )
-        )
+    for component in components:
+        check = checks_by_name[component.name]
+        if not _is_plastic(component):
+            continue
+        name = component.name.lower()
+        if any(t in name for t in ("film", "wrap", "薄膜")):
+            removable = check.potentially_redundant and not check.barrier
+            action = "remove_plastic_film" if removable else "lightweight_plastic_film"
+            emit("R03", component, action, "medium" if removable else "low",
+                 [{"component": component.name, "action": "remove" if removable else "lightweight",
+                   **({} if removable else {"scale": .7, "scale_basis": "film_mass_ratio", "preserve_shape": True})}],
+                 "Remove only non-functional decorative plastic film." if removable else "Retain film coverage, seal and barrier function; trial lower gauge only after validation.")
+        elif any(t in name for t in ("tray", "insert", "内托")) and not check.potentially_redundant:
+            # Sensitive categories/barriers require suitability evidence beyond an
+            # image. Do not approve a material replacement by default.
+            sensitive = constraint_ids & {"HC_FOOD_SAFETY", "HC_ELECTRONICS_PROTECTION"}
+            if not sensitive and not check.barrier:
+                emit("R03", component, "replace_inner_tray", "high",
+                     [{"component": component.name, "action": "replace_material", "from": component.material,
+                       "to": "Molded pulp", "preserve_shape": True}],
+                     "Replace this plastic tray with molded pulp while preserving its protective geometry; validate cushioning, abrasion and fit.")
 
-    if (utilization is not None and utilization < 75) or "space" in issue_text or "oversize" in issue_text:
-        opportunities.append(
-            _opportunity(
-                "R02",
-                "outer box and internal layout",
-                "reduce_volume",
-                "Evaluate a 15–25% outer-volume reduction and tighter layout, subject to transport-protection validation.",
-                "Low visible space utilization indicates avoidable void volume.",
-                "Lower material and transport-volume demand; percentage is a design target, not a measured outcome.",
-                "low",
-                "medium",
-                0.82 if utilization is not None else 0.5,
-                True,
-                "Volume reduction is estimated from visible/analysed utilization; dimensional data are unavailable.",
-            )
-        )
+    paper_boxes = [c for c in outer_boxes if any(t in c.material.lower() for t in FIBER_TERMS)]
+    if paper_boxes:
+        target = paper_boxes[0]
+        for component in components:
+            check = checks_by_name[component.name]
+            if _is_plastic(component) and check.potentially_redundant and "film" not in component.name.lower() and component.confidence >= .65:
+                emit("R04", component, "simplify_materials", "medium",
+                     [{"component": component.name, "action": "integrate_into", "target_component": target.name,
+                       "method": "printed/embossed paper feature", "from": component.material, "to": target.material}],
+                     "Integrate the non-protective plastic decoration into the existing paperboard box's print/embossing, eliminating a separate component.")
 
-    film_components = [component for component in components if "film" in component.text or "wrap" in component.text]
-    plastic_trays = [
-        component
-        for component in components
-        if "tray" in component.name.lower() and any(term in component.material.lower() for term in PLASTIC_TERMS)
-    ]
-    food_constraint = any(item.constraint_id == "HC_FOOD_SAFETY" for item in constraints)
-    for component in film_components:
-        film_functions = next((check.functions for check in checks if check.target == component.name), [])
-        functional_barrier = any(
-            function in film_functions
-            for function in (FUNCTION_SEALING, FUNCTION_MOISTURE, FUNCTION_BARRIER)
-        )
-        if functional_barrier or food_constraint:
-            change = "Lightweight or simplify the film only after seal, barrier and product-safety validation; do not remove it by default."
-            action = "lightweight_plastic_film"
-        else:
-            change = "Remove the non-functional outer plastic film."
-            action = "remove_plastic_film"
-        opportunities.append(
-            _opportunity(
-                "R03",
-                component.name,
-                action,
-                change,
-                "Visible plastic film is a plastic-reduction candidate, but its function must be preserved.",
-                "Potential plastic reduction; no unsupported mass or carbon value is claimed.",
-                "medium" if functional_barrier else "low",
-                "medium",
-                component.confidence,
-                functional_barrier or food_constraint,
-                "Film necessity is inferred from appearance; seal/barrier specifications were not supplied.",
-            )
-        )
-    for component in plastic_trays:
-        opportunities.append(
-            _opportunity(
-                "R03",
-                component.name,
-                "replace_inner_tray",
-                f"Replace the {component.material} tray with molded pulp only if drop, abrasion, moisture and fit tests pass.",
-                "A fiber-based tray may retain cushioning while reducing virgin plastic complexity.",
-                "Potential plastic reduction and easier fiber-stream separation; outcome is unquantified.",
-                "medium",
-                "medium",
-                component.confidence,
-                True,
-                "Molded pulp suitability is a hypothesis pending performance and supplier trials.",
-            )
-        )
-
-    unique_materials = {component.material.lower() for component in components if component.material.lower() != "unknown"}
-    if len(unique_materials) > 2 or "mixed material" in issue_text:
-        opportunities.append(
-            _opportunity(
-                "R04",
-                "multi-material packaging system",
-                "simplify_materials",
-                "Consolidate compatible non-contact components into fewer, readily separable material families without removing required barriers.",
-                "Fewer material families can improve sorting and simplify procurement/assembly.",
-                "Potentially better recyclability and easier separation; no precise uplift is asserted.",
-                "medium",
-                "medium",
-                0.76 if len(unique_materials) > 2 else 0.52,
-                True,
-                "Material identities and recycling compatibility require specification-level confirmation.",
-            )
-        )
-
-    fiber_components = [component for component in components if any(term in component.material.lower() for term in FIBER_TERMS)]
-    if fiber_components:
-        target = fiber_components[0]
-        opportunities.append(
-            _opportunity(
-                "R05",
-                target.name,
-                "increase_recycled_content",
-                f"Evaluate certified recycled-content {target.material} while preserving print, strength and applicable product-contact requirements.",
-                "The existing fiber component may accept recycled content without changing its primary function.",
-                "Potential virgin-material displacement; exact benefit requires supplier and LCA data.",
-                "low",
-                "low",
-                target.confidence,
-                True,
-                "Recycled-content availability, visual quality and strength are not yet verified.",
-            )
-        )
-
+    fiber = [c for c in components if any(t in c.material.lower() for t in FIBER_TERMS)]
+    if fiber:
+        component = next((c for c in paper_boxes if c in fiber), fiber[0])
+        emit("R05", component, "increase_recycled_content", "low",
+             [{"component": component.name, "action": "increase_recycled_content", "from": component.material,
+               "to": component.material, "preserve_shape": True}],
+             "Evaluate certified recycled content in this existing fiber component; retain geometry, strength, brand appearance and applicable contact compliance.")
     return opportunities
 
 
@@ -498,13 +475,27 @@ def violates_hard_constraints(
         for check in checks
         if any(
             function in check.functions
-            for function in (FUNCTION_PROTECTION, FUNCTION_CUSHIONING, FUNCTION_SEALING, FUNCTION_BARRIER)
+            for function in (FUNCTION_PROTECTION, FUNCTION_CUSHIONING, FUNCTION_SEALING, FUNCTION_BARRIER, FUNCTION_MOISTURE, FUNCTION_TRANSPORT)
         )
+        or check.essential or check.brand_critical
     }
+    by_name = {check.target: check for check in checks}
+    constraint_ids = {c.constraint_id for c in constraints}
     for opportunity in selected:
-        removes_component = opportunity.action in {"remove_component", "remove_plastic_film"}
+        removes_component = opportunity.action in {"remove_component", "remove_plastic_film", "reduce_layers", "simplify_materials"}
         if removes_component and opportunity.target in protected_targets:
             return True
+        if removes_component and opportunity.target not in by_name:
+            return True
+        for action in opportunity.component_actions:
+            if action.component not in by_name:
+                return True
+            if action.action in {"remove", "integrate_into"} and action.component in protected_targets:
+                return True
+            if action.action == "integrate_into" and (action.target_component not in by_name or action.target_component == action.component):
+                return True
+            if action.action == "replace_material" and (by_name[action.component].barrier or constraint_ids & {"HC_FOOD_SAFETY", "HC_ELECTRONICS_PROTECTION"}):
+                return True
         if (
             any(item.constraint_id == "HC_FOOD_SAFETY" for item in constraints)
             and opportunity.action == "replace_food_contact_material"

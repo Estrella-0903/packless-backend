@@ -10,6 +10,7 @@ import re
 from copy import deepcopy
 
 from app.services.material_data_service import get_emission_factor
+from app.services.packaging_state import apply_change_plan, build_packaging_state
 
 LIMITS = {"layers": (1, 8), "plastic_weight_g": (0, 500),
           "packaging_weight_g": (10, 2000), "space_utilization": (20, 95), "recyclability": (0, 100)}
@@ -84,9 +85,13 @@ def plastic_parts(analysis):
     return parts
 
 
+def layer_component_names(analysis):
+    return {r["component"] for r in components(analysis)
+            if not contains(r["component"], ("label", "logo", "标签", "印刷"))}
+
+
 def estimate_layers(analysis):
-    rows = [r for r in components(analysis) if not contains(r["component"], ("label", "logo", "标签", "印刷"))]
-    value = len(rows) or number((analysis.get("packaging") or {}).get("layers"))
+    value = len(layer_component_names(analysis)) or number((analysis.get("packaging") or {}).get("layers"))
     return metric(min(8, max(1, round(value))) if value else None, bounds=(1, 8),
                   hypothesis="Visible distinct packaging components approximate layers; overlapping components are not verified nested layers.")
 
@@ -163,13 +168,18 @@ def estimate_co2e(material_weights, material_data=None):
             "hypothesis": "AI estimated material mass × DEFRA primary-material reference factor; not measured carbon or a full lifecycle assessment."}
 
 
-def estimate_packaging(analysis_result, functional_checks=(), opportunities=(), change_plan=None, material_data=None):
+def _estimate_packaging_legacy(analysis_result, functional_checks=(), opportunities=(), change_plan=None, material_data=None):
     analysis = analysis_result.get("data", analysis_result)
     plan = change_plan or {}
     approved = [o.model_dump() if hasattr(o, "model_dump") else o for o in opportunities]
     approved = [o for o in approved if isinstance(o, dict)]
     actions = {o.get("action") for o in approved}
     rules = {o.get("rule_id") for o in approved}
+    concrete = [a for a in plan.get("component_actions", [])
+                if a.get("rule_id") in rules and any(
+                    o.get("rule_id") == a.get("rule_id") and
+                    str(o.get("target", "")).casefold() == str(a.get("component", "")).casefold()
+                    for o in approved)]
     before = {"layers": estimate_layers(analysis), "plastic_weight_g": estimate_plastic_weight(analysis),
               "packaging_weight_g": estimate_packaging_weight(analysis), "space_utilization": estimate_space_utilization(analysis),
               "recyclability": estimate_recyclability(analysis)}
@@ -190,36 +200,39 @@ def estimate_packaging(analysis_result, functional_checks=(), opportunities=(), 
     def improve(key, value, explanation):
         low, high = LIMITS[key]
         after[key] = metric(round(min(high,max(low,value))), "inferred", (low, high), explanation, .5)
-    if "reduce_layers" in actions and before["layers"]["value"] is not None:
-        improve("layers", before["layers"]["value"]-1, "R01 selected: remove one redundant layer, minimum one protective layer remains.")
+    eliminated = {a["component"].casefold() for a in concrete if a["action"] in {"remove", "integrate_into"}}
+    layer_count = len(eliminated & layer_component_names(analysis))
+    if plan.get("reduce_layers") and layer_count and before["layers"]["value"] is not None:
+        improve("layers", before["layers"]["value"]-layer_count, "Named approved components removed/integrated; retain at least one protective layer.")
     parts = plastic_parts(analysis)
     removed = 0
     for part in parts:
         part["after_weight_g"] = part["weight_g"]
         # Selected actions are the authority, not unselected opportunities or rule IDs alone.
-        matched = any(str(o.get("target", "")).casefold() == part["component"] for o in approved if o.get("rule_id") == "R03")
+        matched = next((a for a in concrete if a["rule_id"] == "R03" and a["component"].casefold() == part["component"]), None)
         if matched and part["weight_g"] is not None:
-            if part["kind"] == "film" and "remove_plastic_film" in actions and plan.get("remove_plastic_film"):
+            if matched["action"] == "remove":
                 part["after_weight_g"] = 0
-            elif part["kind"] == "tray" and "replace_inner_tray" in actions and (plan.get("replace_inner_tray") or {}).get("to"):
+            elif matched["action"] == "replace_material" and matched.get("to") == "Molded pulp":
                 part["after_weight_g"] = 0
-            elif part["kind"] == "film" and "lightweight_plastic_film" in actions:
-                part["after_weight_g"] = round(part["weight_g"]*.7)
+            elif matched["action"] == "lightweight":
+                part["after_weight_g"] = round(part["weight_g"]*matched.get("scale", 1))
             removed += part["weight_g"] - part["after_weight_g"]
     plastic = before["plastic_weight_g"]["value"]
     if removed and plastic is not None:
         improve("plastic_weight_g", max(0,plastic-removed), "R03 selected component changes applied to visual plastic estimate; replacement fiber is not plastic.")
     space = before["space_utilization"]["value"]
-    if "reduce_volume" in actions and space is not None:
-        improve("space_utilization", min(95,space+20), "R02 selected: +20 percentage-point utilization scenario, capped at 95%; validate dimensions and fit.")
+    resize = next((a for a in concrete if a["rule_id"] == "R02" and a["action"] == "resize"), None)
+    if resize and (plan.get("resize_spec") or {}).get("enabled") and space is not None:
+        improve("space_utilization", min(95,space/resize["scale"]), "R02 retained outer-volume ratio applied with unchanged product volume; validate fit and dimensions.")
     weight = before["packaging_weight_g"]["value"]
     if weight is not None and actions & {"reduce_layers", "reduce_volume", "remove_plastic_film", "lightweight_plastic_film"}:
-        scale = (0.9 if "reduce_layers" in actions else 1)*(0.9 if "reduce_volume" in actions else 1)
+        scale = (0.9 if after["layers"]["value"] != before["layers"]["value"] else 1)*(0.9 if resize else 1)
         film_saved = sum((p["weight_g"] or 0)-(p["after_weight_g"] or 0) for p in parts if p["kind"] == "film")
         improve("packaging_weight_g", max(after["plastic_weight_g"]["value"] or 0, weight*scale-film_saved), "Selected R01/R02: 10% mass reduction each; subtract selected film savings. Tray replacement does not assume net mass savings.")
     recycle = before["recyclability"]["value"]
     if recycle is not None:
-        increase = (10 if removed else 0)+(12 if "simplify_materials" in actions else 0)+(5 if "R05" in rules else 0)
+        increase = (10 if removed else 0)+(12 if any(a["action"] == "integrate_into" for a in concrete) else 0)+(5 if any(a["rule_id"] == "R05" for a in concrete) else 0)
         if increase:
             improve("recyclability", recycle+increase, RECYCLE_HYPOTHESIS + " Selected R03 +10, R04 +12, R05 +5 where applicable.")
     # A single identified material can use total mass. Mixed unallocated mass stays pending.
@@ -249,3 +262,110 @@ def estimate_packaging(analysis_result, functional_checks=(), opportunities=(), 
                 "estimated": True, "hypothesis": "AI/规则估算；最终以实际测量和工程验证为准。", "estimation_method": "visual_rule_based"}
     return {"before": flatten(before), "after": flatten(after), "estimated": True,
             "estimation_method": "visual_rule_based", "carbon_estimate": {"before": carbon_before, "after": carbon_after}}
+
+
+def estimate_packaging(analysis_result, functional_checks=(), opportunities=(), change_plan=None, material_data=None):
+    """Prefer geometry/material digital-twin estimates; use legacy rules per missing metric."""
+    analysis = analysis_result.get("data", analysis_result)
+    plan = deepcopy(change_plan or {})
+    if opportunities:
+        allowed = set()
+        for opportunity in opportunities:
+            opportunity = opportunity.model_dump() if hasattr(opportunity, "model_dump") else opportunity
+            nested = opportunity.get("component_actions") or []
+            if nested:
+                allowed.update((str(action.get("rule_id") or opportunity.get("rule_id")), str(action.get("component", "")).casefold()) for action in nested)
+            else:
+                allowed.add((str(opportunity.get("rule_id")), str(opportunity.get("target", "")).casefold()))
+        plan["component_actions"] = [action for action in plan.get("component_actions", [])
+                                     if (str(action.get("rule_id")), str(action.get("component", "")).casefold()) in allowed]
+    legacy = _estimate_packaging_legacy(analysis, functional_checks, opportunities, plan, material_data)
+    before_state = build_packaging_state(analysis)
+    after_state = apply_change_plan(before_state, plan)
+
+    state_keys = {
+        "layers": "layer_count", "plastic_weight_g": "plastic_weight_g",
+        "packaging_weight_g": "total_weight_g", "space_utilization": "space_utilization",
+        "recyclability": "recyclability",
+    }
+    measurements = analysis.get("measurements") or analysis.get("measurement") or {}
+    measured_keys = {"layers": "layers", "packaging_weight_g": "total_weight_g",
+                     "plastic_weight_g": "plastic_weight_g", "space_utilization": "space_utilization",
+                     "recyclability": "recyclability"}
+
+    def phase(state, fallback, is_after=False):
+        result, provenance = {}, {}
+        for key, state_key in state_keys.items():
+            value = state.get(state_key)
+            source = "inferred" if is_after else "estimated"
+            confidence = state.get("confidence", .4)
+            hypothesis = "材料属性与包装几何数字模型估算；需要尺寸、称重和工程验证。"
+            measured = measurements.get(measured_keys[key])
+            if isinstance(measured, dict):
+                measured = measured.get("value") if measured.get("source") in {"measured", "user_measured", "user_supplied"} else None
+            legacy_measured = (measurements.get("before") or {}).get(key)
+            if isinstance(legacy_measured, dict) and legacy_measured.get("source") == "measured" and legacy_measured.get("evidence"):
+                measured = legacy_measured.get("value")
+            if not is_after and measured is not None and number(measured) is not None:
+                value, source, confidence = number(measured), "measured", 1
+                hypothesis = "用户提供的测量值；系统未独立验证。"
+            if value is None or (key == "layers" and value == 0):
+                value = fallback.get(key)
+                legacy_meta = (fallback.get("metric_provenance") or {}).get(key, {})
+                source = legacy_meta.get("source", "pending")
+                confidence = legacy_meta.get("confidence", 0)
+                hypothesis = "几何或材料数据不足，使用规则区间回退。" if value is not None else legacy_meta.get("hypothesis", "待实测")
+            value = round(value) if value is not None else None
+            low, high = LIMITS[key]
+            value = min(high, max(low, value)) if value is not None else None
+            result[key] = value
+            provenance[key] = metric(value, source, (low, high), hypothesis, confidence)
+        result.update(metric_provenance=provenance, estimated=True,
+                      hypothesis="AI/规则估算；最终以实际测量和工程验证为准。",
+                      estimation_method="material_geometry_digital_twin",
+                      carbon_kgco2e=state.get("carbon_kgco2e"), packaging_state=state)
+        return result
+
+    before = phase(before_state, legacy["before"])
+    if plan.get("target_layer_count") is not None:
+        after_state["layer_count"] = plan["target_layer_count"]
+    after = phase(after_state, legacy["after"], True)
+    if not plan.get("component_actions"):
+        for key in state_keys:
+            after[key] = before[key]
+            after["metric_provenance"][key] = metric(before[key], "inferred", LIMITS[key],
+                "方案未批准影响此指标的结构动作，沿用优化前数值；优化后仍需验证。", .5)
+    carbon_before = {"estimated_co2e_kg": before_state.get("carbon_kgco2e"), "source": "estimated",
+                     "estimated": True, "requires_validation": True, "materials": before_state.get("components", []),
+                     "hypothesis": "估算材料质量 × 材料属性库中的DEFRA 2024参考因子。"}
+    carbon_after = {**carbon_before, "estimated_co2e_kg": after_state.get("carbon_kgco2e"),
+                    "materials": after_state.get("components", [])}
+    if carbon_before["estimated_co2e_kg"] is None:
+        carbon_before = legacy["carbon_estimate"]["before"]
+    if carbon_after["estimated_co2e_kg"] is None:
+        carbon_after = legacy["carbon_estimate"]["after"]
+    return {"before": before, "after": after, "estimated": True,
+            "estimation_method": "material_geometry_digital_twin",
+            "carbon_estimate": {"before": carbon_before, "after": carbon_after}}
+
+
+def validate_estimation_consistency(estimates, plan):
+    """Fail internally rather than send metrics that contradict the image plan."""
+    before, after = estimates["before"], estimates["after"]
+    actions = plan.get("component_actions", [])
+    rules = {a["rule_id"] for a in actions}
+    def changed(key, direction):
+        return before[key] is not None and after[key] is not None and direction*(after[key]-before[key]) > 0
+    if changed("layers", -1) and not (plan.get("reduce_layers") and
+            (plan.get("remove_components") or plan.get("merge_components")) and
+            any(a["action"] in {"remove", "integrate_into"} for a in actions)):
+        raise ValueError("Layer estimate has no approved component removal/integration")
+    if plan.get("target_layer_count") is not None and after["layers"] != plan["target_layer_count"]:
+        raise ValueError("After layer estimate contradicts target_layer_count")
+    if changed("space_utilization", 1) and not ("R02" in rules and
+            ((plan.get("resize_spec") or {}).get("enabled") or plan.get("layout_compact"))):
+        raise ValueError("Utilization estimate has no approved resize/layout action")
+    if changed("plastic_weight_g", -1) and not ("R03" in rules or any(a["rule_id"] == "R04" and a["action"] == "integrate_into" for a in actions)):
+        raise ValueError("Plastic estimate has no approved plastic removal/replacement action")
+    if changed("recyclability", 1) and not rules & {"R03", "R04", "R05"}:
+        raise ValueError("Recyclability estimate has no supporting rule")

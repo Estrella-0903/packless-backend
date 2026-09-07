@@ -106,6 +106,7 @@ async def redesign_packaging(request: Request) -> RedesignResponse | JSONRespons
         prompt = build_image_generation_prompt(
             analysis_result,
             plan.change_plan.model_dump(by_alias=True),
+            plan.after_render_spec.model_dump(by_alias=True),
         )
         try:
             print("[REDESIGN] calling wan image generator", flush=True)

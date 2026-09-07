@@ -1,0 +1,67 @@
+[
+  {
+    "material": "paperboard",
+    "aliases": ["cardboard", "carton", "纸板", "卡纸"],
+    "density_g_cm3": 0.75,
+    "typical_gsm_range": [250, 450],
+    "typical_thickness_mm": [0.35, 0.7],
+    "recyclability_base": 82,
+    "carbon_factor": 1.19396586,
+    "relative_cost_index": 1.0,
+    "source": "DEFRA 2024 carbon factor; engineering range assumption for geometry",
+    "estimated": true,
+    "verified": false
+  },
+  {
+    "material": "paper",
+    "aliases": ["coated paper", "纸", "纸张"],
+    "density_g_cm3": 0.8,
+    "typical_gsm_range": [80, 250],
+    "typical_thickness_mm": [0.08, 0.3],
+    "recyclability_base": 78,
+    "carbon_factor": 1.33931834,
+    "relative_cost_index": 0.85,
+    "source": "DEFRA 2024 carbon factor; engineering range assumption for geometry",
+    "estimated": true,
+    "verified": false
+  },
+  {
+    "material": "pet_plastic",
+    "aliases": ["pet", "pet tray", "pet plastic", "PET塑料"],
+    "density_g_cm3": 1.38,
+    "typical_gsm_range": [400, 1100],
+    "typical_thickness_mm": [0.3, 0.8],
+    "recyclability_base": 58,
+    "carbon_factor": 3.85491851,
+    "relative_cost_index": 1.15,
+    "source": "DEFRA 2024 primary-material carbon factor; engineering range assumption for geometry",
+    "estimated": true,
+    "verified": false
+  },
+  {
+    "material": "plastic_film",
+    "aliases": ["plastic film", "film", "塑料薄膜", "覆膜"],
+    "density_g_cm3": 0.92,
+    "typical_gsm_range": [18, 80],
+    "typical_thickness_mm": [0.02, 0.08],
+    "recyclability_base": 30,
+    "carbon_factor": 2.91046529,
+    "relative_cost_index": 1.1,
+    "source": "DEFRA 2024 primary-material carbon factor; engineering range assumption for geometry",
+    "estimated": true,
+    "verified": false
+  },
+  {
+    "material": "molded_pulp",
+    "aliases": ["molded pulp", "moulded pulp", "模塑纸浆", "纸浆内托"],
+    "density_g_cm3": 0.35,
+    "typical_gsm_range": [350, 750],
+    "typical_thickness_mm": [1.0, 3.0],
+    "recyclability_base": 85,
+    "carbon_factor": 1.33931834,
+    "relative_cost_index": 1.25,
+    "source": "Paper proxy from DEFRA 2024; engineering range assumption, supplier data required",
+    "estimated": true,
+    "verified": false
+  }
+]

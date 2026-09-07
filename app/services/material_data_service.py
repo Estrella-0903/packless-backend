@@ -141,6 +141,6 @@ def build_carbon_data(analysis: dict) -> dict:
         "requires_weight_measurement": not references or any(r["requires_weight_measurement"] for r in references),
         "requires_complete_bill_of_materials": not complete,
         "requires_validation": True, "estimated": True,
-        "hypothesis": "Material procurement reference estimate only. No inferred weight, full-life-cycle footprint or carbon saving is asserted.",
-        "environment_score_basis": "Existing rule-based score unchanged; DEFRA references supply auditable material evidence, not measured score calibration.",
+        "hypothesis": "材料采购阶段参考估算；不是实测结果或完整生命周期评价。",
+        "environment_score_basis": "当材料质量可估算时，DEFRA参考因子用于前后碳排估算，并进入动态环境评分。",
     }

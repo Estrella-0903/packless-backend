@@ -28,7 +28,7 @@ Return one JSON object with this structure:
   "packaging": {
     "layers": null,
     "materials": [
-      {"component": "", "material": "", "confidence": 0.0, "evidence": ""}
+      {"component": "", "material": "", "confidence": 0.0, "evidence": "", "visual_fraction": null, "size_category": "", "functions": []}
     ],
     "space_utilization": null,
     "recyclability_score": null
@@ -38,6 +38,13 @@ Return one JSON object with this structure:
     "estimated_packaging_weight_g": null,
     "estimated_plastic_weight_g": null,
     "estimated_co2e_g": null
+  },
+  "geometry_estimate": {
+    "outer_package": {"length_mm": null, "width_mm": null, "height_mm": null, "estimated": true, "confidence": 0.0},
+    "product_occupied_ratio": null,
+    "estimated_aspect_ratio": null,
+    "method": "visual_2d_proxy",
+    "confidence": 0.0
   },
   "summary": ""
 }
@@ -62,8 +69,27 @@ def build_analysis_messages(image_data_url: str) -> list[dict[str, Any]]:
     ]
 
 
+def build_visual_change_summary(change_plan: dict[str, Any]) -> str:
+    lines = []
+    for item in change_plan.get("component_actions", []):
+        component, action = item["component"], item["action"]
+        if action == "remove":
+            lines.append(f"REMOVE {component}: this component must no longer appear.")
+        elif action == "resize":
+            lines.append(f"RESIZE {component}: reduce outer volume by approximately {(1-item['scale'])*100:.1f}%; {item.get('layout_strategy', '')}. Keep product size unchanged.")
+        elif action == "resize_to_fit":
+            lines.append(f"Adapt {component} to {item.get('target_component', 'outer box')}; preserve protective fit.")
+        elif action == "replace_material":
+            lines.append(f"REPLACE {component}: {item.get('from', '')} → {item.get('to', '')}; visibly represent the material, preserve protective shape.")
+        elif action == "lightweight":
+            lines.append(f"LIGHTWEIGHT {component}: retain continuous sealing/barrier coverage; reduce gauge conditionally, not remove. The visible difference may be subtle.")
+        elif action == "integrate_into":
+            lines.append(f"SIMPLIFY {component}: remove the separate piece and integrate its decoration into {item['target_component']} as {item['method']}.")
+    return "VISUAL CHANGES REQUIRED:\n" + "\n".join(f"{i}. {line}" for i, line in enumerate(lines, 1)) if lines else ""
+
+
 def build_image_generation_prompt(
-    analysis_result: dict[str, Any], change_plan: dict[str, Any]
+    analysis_result: dict[str, Any], change_plan: dict[str, Any], after_render_spec: dict[str, Any] | None = None
 ) -> str:
     analysis = (
         analysis_result["data"]
@@ -81,7 +107,6 @@ The optimized package must preserve the original image's:
 - camera angle
 - product position
 - composition
-- approximate scale
 - background
 - lighting direction
 - brand colors
@@ -92,11 +117,17 @@ Keep the product itself unchanged and keep the brand immediately recognizable. O
 The following structured plan is the complete set of approved changes:
 {json.dumps(change_plan, ensure_ascii=False)}
 
-Required optimization goals, only when enabled by that structured plan:
-- remove unnecessary plastic film
-- replace a PET/plastic tray with molded pulp when approved and appropriate
-- reduce outer-box volume by about 15% to 25%
-- simplify packaging layers and material complexity
+Authoritative AfterRenderSpec (packaging dimensions must follow this specification):
+{json.dumps(after_render_spec or {}, ensure_ascii=False)}
+
+{build_visual_change_summary(change_plan) or 'LOW VISUAL CHANGE: material sourcing only; retain packaging structure. Do not fabricate a dramatic transformation.'}
+
+DO NOT merely restyle or recolor the original package.
+The After image must visibly implement the approved structural changes.
+Keep the product itself at the same visual scale so packaging reduction is visible.
+Box scale is the retained OUTER VOLUME ratio, not an image scaling factor or a multiplier for every linear dimension.
+Do not shrink the whole image. Reduce empty packaging space, keep product units unchanged, and adapt named trays to fit.
+Preserve named components except for their explicitly approved modifications. REMOVE means the component must no longer appear; REPLACE means the replacement material must be visibly represented; SIMPLIFY means integrate the named feature, not merely recolor it.
 
 Apply only actions explicitly enabled in the plan. Treat disabled actions and empty replacements as prohibited. Never invent an unapproved material substitution. Preserve required protection, sealing and barrier functions. Keep the result realistic and commercially manufacturable.
 

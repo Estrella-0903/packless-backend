@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -34,6 +34,11 @@ class PackagingMaterial(APIModel):
     material: str
     confidence: float = Field(ge=0, le=1)
     evidence: str
+    visual_fraction: float | None = Field(default=None, ge=0, le=1)
+    size_category: str = ""
+    functions: list[str] = Field(default_factory=list)
+    essential: bool = False
+    brand_critical: bool = False
 
 
 class ProductInfo(APIModel):
@@ -46,6 +51,23 @@ class PackagingInfo(APIModel):
     materials: list[PackagingMaterial]
     space_utilization: int | None = Field(default=None, ge=0, le=100)
     recyclability_score: int | None = Field(default=None, ge=0, le=100)
+
+
+class Dimensions(APIModel):
+    length_mm: float | None = Field(default=None, gt=0)
+    width_mm: float | None = Field(default=None, gt=0)
+    height_mm: float | None = Field(default=None, gt=0)
+    estimated: bool = True
+    confidence: float = Field(default=0, ge=0, le=1)
+    source: str = "ai_visual_estimate"
+
+
+class GeometryEstimate(APIModel):
+    outer_package: Dimensions = Field(default_factory=Dimensions)
+    product_occupied_ratio: float | None = Field(default=None, ge=0, le=1)
+    estimated_aspect_ratio: float | None = Field(default=None, gt=0)
+    method: str = "visual_2d_proxy"
+    confidence: float = Field(default=0, ge=0, le=1)
 
 
 class Diagnosis(APIModel):
@@ -68,6 +90,8 @@ class AnalysisData(APIModel):
     packaging: PackagingInfo
     diagnosis: Diagnosis
     environmental_impact: EnvironmentalImpact
+    geometry_estimate: GeometryEstimate = Field(default_factory=GeometryEstimate)
+    measurements: dict[str, Any] = Field(default_factory=dict)
     summary: str
 
 
@@ -92,9 +116,18 @@ class RedesignOption(APIModel):
     requires_validation: bool
     estimated: bool
     hypothesis: str
+    estimated_cost_change_percent: float | None = None
+    score_breakdown: dict[str, Any] = Field(default_factory=dict)
 
 
 class FunctionalCheck(APIModel):
+    material: str = "unknown"
+    essential: bool = True
+    potentially_redundant: bool = False
+    decorative: bool = False
+    protective: bool = True
+    barrier: bool = False
+    brand_critical: bool = False
     target: str
     functions: list[str]
     confidence: float = Field(ge=0, le=1)
@@ -122,7 +155,41 @@ class RiskAssessment(APIModel):
     transport_protection: str
 
 
+class ComponentAction(APIModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    component: str
+    action: Literal["remove", "resize", "resize_to_fit", "replace_material", "lightweight", "integrate_into", "increase_recycled_content"]
+    rule_id: str
+    reason: str = ""
+    confidence: float = Field(default=0.5, ge=0, le=1)
+    requires_validation: bool = True
+    estimated: bool = True
+    hypothesis: str = "Validate functionality, manufacturing and material suitability before implementation."
+    scale: float | None = Field(default=None, gt=0, le=1)
+    scale_basis: str = "outer_volume_ratio"
+    resize_axis: str = "overall"
+    layout_strategy: str = ""
+    follow_outer_box: bool = False
+    target_component: str = ""
+    method: str = ""
+    from_: str = Field(default="", alias="from", serialization_alias="from")
+    to: str = ""
+    preserve_shape: bool = False
+
+
+class ResizeSpec(APIModel):
+    enabled: bool = False
+    component: str = ""
+    scale: float = Field(default=1, gt=0, le=1)
+    scale_basis: str = "outer_volume_ratio"
+    estimated_reduction_percent: float = Field(default=0, ge=0, le=100)
+    resize_axis: str = "overall"
+    layout_strategy: str = ""
+
+
 class OptimizationOpportunity(APIModel):
+    visual_impact: Literal["high", "medium", "low"] = "low"
+    component_actions: list[ComponentAction] = Field(default_factory=list)
     rule_id: str
     target: str
     action: str
@@ -140,7 +207,7 @@ class OptimizationOpportunity(APIModel):
 
 class RedesignMetrics(APIModel):
     metric_provenance: dict[str, Any] = Field(default_factory=dict)
-    estimation_method: str = "visual_rule_based"
+    estimation_method: str = "material_geometry_digital_twin"
     layers: int | None = Field(default=None, ge=0)
     packaging_weight_g: int | None = Field(default=None, ge=0)
     plastic_weight_g: int | None = Field(default=None, ge=0)
@@ -148,6 +215,8 @@ class RedesignMetrics(APIModel):
     recyclability: int | None = Field(default=None, ge=0, le=100)
     estimated: bool
     hypothesis: str
+    carbon_kgco2e: float | None = Field(default=None, ge=0)
+    packaging_state: dict[str, Any] = Field(default_factory=dict)
 
 
 class TrayReplacement(APIModel):
@@ -156,6 +225,16 @@ class TrayReplacement(APIModel):
 
 
 class ChangePlan(APIModel):
+    reduce_layers: bool = False
+    target_layer_count: int | None = Field(default=None, ge=1, le=8)
+    remove_components: list[str] = Field(default_factory=list)
+    merge_components: list[ComponentAction] = Field(default_factory=list)
+    component_actions: list[ComponentAction] = Field(default_factory=list)
+    preserve_components: list[str] = Field(default_factory=list)
+    resize_spec: ResizeSpec = Field(default_factory=ResizeSpec)
+    visual_change_strength: Literal["high", "medium", "low"] = "low"
+    visual_change_summary: str = ""
+    visual_change_note: str = ""
     remove_plastic_film: bool
     replace_inner_tray: TrayReplacement
     resize_outer_box: str
@@ -165,6 +244,13 @@ class ChangePlan(APIModel):
 
 
 class AfterRenderSpec(APIModel):
+    target_layer_count: int | None = None
+    remove_components: list[str] = Field(default_factory=list)
+    component_actions: list[ComponentAction] = Field(default_factory=list)
+    preserve_components: list[str] = Field(default_factory=list)
+    void_reduction: str = "none"
+    scale_basis: str = "outer_volume_ratio"
+    brand_preservation: str = "Preserve product identity, logos, brand colors and mandatory information."
     box_scale: float = Field(gt=0, le=1)
     remove_plastic_film: bool
     tray_material: str
@@ -174,7 +260,7 @@ class AfterRenderSpec(APIModel):
 
 class RedesignData(APIModel):
     estimated: bool = True
-    estimation_method: str = "visual_rule_based"
+    estimation_method: str = "material_geometry_digital_twin"
     image_task_id: str = ""
     image_generation_status: str = "FAILED"
     carbon_data: dict[str, Any] | None = None
