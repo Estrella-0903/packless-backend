@@ -219,6 +219,7 @@
     .comparison-failure{background:rgba(243,239,228,.96)}.comparison-failure p{max-width:260px;margin:0;font-size:10px;line-height:1.6;color:var(--muted)}.regenerate-button{border:1px solid var(--accent);background:var(--accent);color:var(--paper);padding:11px 14px;font-size:9px;font-weight:850;letter-spacing:.1em;cursor:pointer;pointer-events:auto}.regenerate-button:disabled{opacity:.55;cursor:wait}
     .comparison-note{display:flex;justify-content:flex-end;padding:10px 12px;border:1px solid var(--ink);border-top:0;background:rgba(243,239,228,.78);font-size:8px;color:var(--muted);line-height:1.5;pointer-events:none}
     .change-actions{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--ink);border-top:0}.change-actions div{min-height:88px;padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid var(--line)}.change-actions div:last-child{border:0}.change-actions b{color:var(--warning);font-size:8px;letter-spacing:.15em}.change-actions span{font-size:13px;font-weight:700}.change-actions div.is-inactive{opacity:.42}.metric-value-missing{font-size:15px!important;letter-spacing:.03em!important}
+    .upload-required-modal{position:fixed;z-index:300;inset:0;display:grid;place-items:center;padding:22px;background:rgba(23,25,20,.48)}.upload-required-modal[hidden]{display:none}.upload-required-dialog{width:min(420px,100%);border:1px solid var(--ink);background:var(--paper);padding:34px;color:var(--ink)}.upload-required-dialog small{display:block;color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}.upload-required-dialog h2{margin:14px 0 12px;font-size:34px;line-height:1;letter-spacing:-.045em}.upload-required-dialog p{margin:0;color:var(--muted);font-size:11px;line-height:1.7}.upload-required-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:28px}.modal-button{min-height:40px;border:1px solid var(--ink);background:transparent;color:var(--ink);padding:10px 15px;font:inherit;font-size:9px;font-weight:850;letter-spacing:.08em;cursor:pointer}.modal-button-primary{border-color:var(--accent);background:var(--accent);color:var(--paper)}.modal-button:hover{border-color:var(--accent);color:var(--accent)}.modal-button-primary:hover{background:var(--ink);border-color:var(--ink);color:var(--paper)}
     @media(max-width:720px){.comparison-slider{height:520px}.comparison-label{top:12px;font-size:7px;padding:7px}.before-label{left:10px}.after-label{right:10px}.ai-concept-badge{display:block;margin:3px 0 0;padding:0;border:0;font-size:6px}.comparison-handle{width:52px;height:52px;font-size:12px}.comparison-status{width:52%;padding:18px}.comparison-status strong{font-size:16px}.generation-steps{font-size:8px}.change-actions{grid-template-columns:1fr 1fr}.change-actions div{min-height:70px}.change-actions div:nth-child(2){border-right:0}.change-actions div:nth-child(-n+2){border-bottom:1px solid var(--line)}.change-actions span{font-size:11px}.comparison-note{font-size:7px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.carton-top,.carton-side,.carton-front,.carton-bottom{transform:none!important}}
   </style>
@@ -352,6 +353,14 @@
       </div>
     </div>
   </main>
+  <div class="upload-required-modal" id="uploadRequiredModal" hidden>
+    <section class="upload-required-dialog" role="dialog" aria-modal="true" aria-labelledby="uploadRequiredTitle" aria-describedby="uploadRequiredDescription">
+      <small>步骤尚未解锁</small>
+      <h2 id="uploadRequiredTitle">请先上传包装</h2>
+      <p id="uploadRequiredDescription">完成包装上传与AI识别后，即可进入重设计与影响评估。</p>
+      <div class="upload-required-actions"><button class="modal-button" id="dismissUploadRequired" type="button">知道了</button><button class="modal-button modal-button-primary" id="goToUpload" type="button">去上传包装</button></div>
+    </section>
+  </div>
   <noscript><div class="noscript">请在浏览器中启用 JavaScript，以体验包装展开与模拟分析。</div></noscript>
 
   <script>
@@ -376,7 +385,11 @@
       const net=document.getElementById("heroNet");
       const heroSteps=[...document.querySelectorAll(".hero-step")];
       const replay=document.getElementById("heroReplay");
+      const uploadRequiredModal=document.getElementById("uploadRequiredModal");
+      const goToUpload=document.getElementById("goToUpload");
+      const dismissUploadRequired=document.getElementById("dismissUploadRequired");
       let heroTimer=0;
+      let modalReturnFocus=null;
 
       function setHeroReady(ready){
         hero.classList.toggle("is-ready",ready);
@@ -483,6 +496,43 @@
       let journeyObserver;
       let activeAnalysis=JSON.parse(JSON.stringify(demoAnalysis));
       let isPlaying=false;
+
+      function canAccessAdvancedSteps(){
+        return Boolean(sourceMode==="upload"&&pendingFile&&latestAnalysisResult?.success===true&&latestAnalysisResult?.data);
+      }
+
+      function closeUploadRequiredModal(){
+        if(uploadRequiredModal.hidden)return;
+        uploadRequiredModal.hidden=true;
+        if(modalReturnFocus?.isConnected)modalReturnFocus.focus();
+        modalReturnFocus=null;
+      }
+
+      function openUploadRequiredModal(trigger){
+        modalReturnFocus=trigger||document.activeElement;
+        uploadRequiredModal.hidden=false;
+        goToUpload.focus();
+      }
+
+      function guardAdvancedStep(event,link){
+        if(canAccessAdvancedSteps())return true;
+        event.preventDefault();
+        event.stopPropagation();
+        openUploadRequiredModal(link);
+        return false;
+      }
+
+      dismissUploadRequired.addEventListener("click",closeUploadRequiredModal);
+      goToUpload.addEventListener("click",()=>{
+        closeUploadRequiredModal();
+        document.getElementById("checkup").scrollIntoView({behavior:scrollBehavior,block:"start"});
+      });
+      uploadRequiredModal.addEventListener("click",event=>{
+        if(event.target===uploadRequiredModal)closeUploadRequiredModal();
+      });
+      document.addEventListener("keydown",event=>{
+        if(event.key==="Escape"&&!uploadRequiredModal.hidden)closeUploadRequiredModal();
+      });
 
       function makeDemoPackage(){
         const packageElement=document.createElement("div");
@@ -1004,6 +1054,10 @@
       fileInput.addEventListener("change",event=>{
         const file=event.target.files&&event.target.files[0];
         if(!file)return;
+        latestAnalysisResult=null;
+        window.latestAnalysisResult=null;
+        latestRedesignResult=null;
+        window.latestRedesignResult=null;
         if(!file.type.startsWith("image/")){pendingFile=null;fileInput.value="";return}
         if(pendingImage.startsWith("blob:"))URL.revokeObjectURL(pendingImage);
         pendingFile=file;
@@ -1051,10 +1105,17 @@
         if(!net.classList.contains("ready")){event.preventDefault();return}
         const selector=link.getAttribute("href");
         if(selector==="#checkup")return;
+        const advanced=selector==="#prescription"||selector==="#impact";
+        if(advanced&&!guardAdvancedStep(event,link))return;
         event.preventDefault();
         const target=document.querySelector(selector);
         const complete=results.classList.contains("active")&&!resultFlow.hidden;
         if(complete){target.scrollIntoView({behavior:scrollBehavior,block:"start"});return}
+        if(advanced){
+          startAnalysis();
+          schedule(()=>target.scrollIntoView({behavior:scrollBehavior,block:"start"}),reduced?120:4250);
+          return;
+        }
         setSource("demo");
         startAnalysis();
         if(selector!=="#analysis")schedule(()=>target.scrollIntoView({behavior:scrollBehavior,block:"start"}),reduced?120:4250);

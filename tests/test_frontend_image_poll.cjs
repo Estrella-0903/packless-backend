@@ -5,6 +5,12 @@ const assert=require('node:assert/strict');
 const html=fs.readFileSync(require('node:path').join(__dirname,'../frontend/index.html'),'utf8');
 for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);
 const poll=html.slice(html.indexOf('async function pollImageTask('),html.indexOf('async function requestRedesign('));
+const accessGuard=html.slice(html.indexOf('function canAccessAdvancedSteps()'),html.indexOf('function closeUploadRequiredModal()'));
+function canAccess({sourceMode='upload',pendingFile=null,latestAnalysisResult=null}={}){
+  const context=vm.createContext({sourceMode,pendingFile,latestAnalysisResult,Boolean});
+  vm.runInContext(accessGuard,context);
+  return vm.runInContext('canAccessAdvancedSteps()',context);
+}
 async function run(states){
   const calls=[];
   const context=vm.createContext({
@@ -29,6 +35,11 @@ async function run(states){
   await assert.rejects(result.promise,/未返回优化图片/);
   const replay=html.slice(html.indexOf('function startAnalysis()'),html.indexOf('fileInput.addEventListener'));
   assert(!replay.includes('requestRedesign('),'replay must never resubmit Wan');
+  assert(!canAccess(),'first visit must remain locked');
+  assert(!canAccess({pendingFile:{name:'package.png'}}),'selected file without analysis must remain locked');
+  assert(!canAccess({pendingFile:{name:'package.png'},latestAnalysisResult:{success:false}}),'failed analysis must remain locked');
+  assert(canAccess({pendingFile:{name:'package.png'},latestAnalysisResult:{success:true,data:{analysis_id:'test'}}}),'successful upload analysis must unlock advanced steps');
+  assert(!replay.includes('latestAnalysisResult=null'),'replay must preserve advanced-step access');
   assert(html.includes('animateComparison(100,50)'));
-  console.log('Frontend polling: success, failure, timeout, missing URL, replay and syntax checks passed.');
+  console.log('Frontend polling and step guard: success, failure, timeout, access states, replay and syntax checks passed.');
 })().catch(error=>{console.error(error);process.exitCode=1});

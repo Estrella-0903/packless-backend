@@ -63,3 +63,17 @@ def test_score_breakdown_uses_structured_product_ui():
     assert "待实测 → 待实测" not in HTML
     assert "暂无法估算" in HTML
     assert "carbon-values" in HTML
+
+
+def test_advanced_home_steps_require_a_successful_upload_analysis():
+    assert 'id="uploadRequiredModal"' in HTML
+    assert "请先上传包装" in HTML
+    assert "完成包装上传与AI识别后，即可进入重设计与影响评估。" in HTML
+    assert "function canAccessAdvancedSteps()" in HTML
+    assert 'sourceMode==="upload"&&pendingFile&&latestAnalysisResult?.success===true&&latestAnalysisResult?.data' in HTML
+    assert 'selector==="#prescription"||selector==="#impact"' in HTML
+    assert "event.preventDefault();\n        event.stopPropagation();" in HTML
+    assert 'document.getElementById("checkup").scrollIntoView({behavior:scrollBehavior,block:"start"})' in HTML
+    assert 'event.key==="Escape"&&!uploadRequiredModal.hidden' in HTML
+    assert 'if(event.target===uploadRequiredModal)closeUploadRequiredModal()' in HTML
+    assert "latestAnalysisResult=null;\n        window.latestAnalysisResult=null;" in HTML
