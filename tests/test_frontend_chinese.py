@@ -39,3 +39,14 @@ def test_backend_display_translation_layer_is_present():
     assert "function localizeBackendText" in HTML
     for machine_value in ("plastic_film", "paperboard", "replace_material", "low_risk", "PENDING"):
         assert machine_value in HTML
+
+
+def test_impact_cards_keep_values_compact_and_explain_no_change():
+    assert "grid-template-columns:repeat(4,minmax(0,1fr))" in HTML
+    assert 'id="impactWeightReason"' in HTML
+    assert 'id="impactPlasticReason"' in HTML
+    assert 'id="impactSpaceReason"' in HTML
+    assert 'id="impactRecycleReason"' in HTML
+    assert 'setImpact("Plastic","0克 → 0克"' in HTML
+    assert "当前推荐方案没有批准会降低包装质量的结构动作" in HTML
+    assert "当前推荐方案未批准外盒缩容" in HTML
