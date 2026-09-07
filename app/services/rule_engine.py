@@ -89,7 +89,10 @@ class Component:
     evidence: str
     declared_functions: tuple[str, ...] = ()
     essential: bool = False
+    essential_declared: bool | None = None
     brand_critical: bool = False
+    protective_declared: bool | None = None
+    barrier_declared: bool | None = None
 
     @property
     def text(self) -> str:
@@ -124,7 +127,10 @@ def _components(analysis: dict[str, Any]) -> list[Component]:
                     evidence=str(item.get("evidence") or ""),
                     declared_functions=tuple(item.get("functions") or ()),
                     essential=item.get("essential") is True,
+                    essential_declared=item.get("essential") if isinstance(item.get("essential"), bool) else None,
                     brand_critical=item.get("brand_critical") is True,
+                    protective_declared=item.get("protective") if isinstance(item.get("protective"), bool) else None,
+                    barrier_declared=item.get("barrier") if isinstance(item.get("barrier"), bool) else None,
                 )
             )
         elif isinstance(item, str):
@@ -160,6 +166,14 @@ def _component_functions(component: Component) -> list[str]:
     if any(term in evidence for term in ("sealed", "sealing", "barrier", "密封", "屏障")):
         functions.append(FUNCTION_BARRIER)
     functions = list(dict.fromkeys(functions + list(component.declared_functions)))
+    # Explicit visual-analysis flags may rule out generic name heuristics. They do
+    # not prove removability; low-confidence candidates remain validation-only.
+    if component.protective_declared is False:
+        functions = [f for f in functions if f not in (FUNCTION_PROTECTION, FUNCTION_CUSHIONING, FUNCTION_TRANSPORT)]
+    if component.barrier_declared is False:
+        functions = [f for f in functions if f not in (FUNCTION_BARRIER, FUNCTION_MOISTURE, FUNCTION_SEALING)]
+    if not functions and component.protective_declared is False and component.barrier_declared is False:
+        return [FUNCTION_DISPLAY]
     return functions or [FUNCTION_PROTECTION]
 
 
@@ -342,28 +356,47 @@ def optimization_rules(analysis, checks, constraints) -> list[OptimizationOpport
         check = checks_by_name[component.name]
         # No generic 'secondary layers' target. Plastic decorative inserts belong
         # to R04 and plastic films to R03, avoiding conflicting duplicate actions.
-        if check.potentially_redundant and component.confidence >= .65 and component.evidence and not _is_plastic(component) and any(c.protective for c in checks):
+        candidate = ((check.potentially_redundant and component.confidence >= .65) or (
+            component.essential_declared is False
+            and component.protective_declared is False
+            and component.barrier_declared is False
+            and not check.essential and not check.protective and not check.barrier
+            and not check.brand_critical and component.confidence >= .4
+        ))
+        if candidate and component.evidence and not _is_plastic(component) and any(c.protective for c in checks):
             emit("R01", component, "reduce_layers", "high",
                  [{"component": component.name, "action": "remove"}],
-                 f"Remove the non-essential decorative component {component.name}; retain protection, barriers and essential brand information.")
+                 f"Evaluate removing or integrating the non-essential component {component.name}; retain protection, barriers and essential brand information.")
 
     try:
         utilization = float(packaging.get("space_utilization"))
     except (TypeError, ValueError):
         utilization = None
-    boxes = [c for c in components if any(t in c.name.lower() for t in ("box", "carton", "盒", "箱"))]
+    boxes = [c for c in components if any(t in c.name.lower() for t in ("box", "carton", "package", "outer lid", "盒", "箱", "外盖"))]
     outer_boxes = [c for c in boxes if any(t in c.name.lower() for t in ("outer", "rigid", "外"))] or boxes
     # A generic medium prior is not strong geometric evidence for a resize.
     space_meta = (packaging.get("metric_provenance") or {}).get("space_utilization", {})
     prior_only = "medium is a conservative prior" in str(space_meta.get("hypothesis", "")) and "band=medium" in str(space_meta.get("hypothesis", ""))
     geometry_only_fallback = packaging.get("geometry_source") == "rule_fallback" and packaging.get("space_utilization") == 65
-    if outer_boxes and utilization is not None and math.isfinite(utilization) and 20 <= utilization < 70 and not prior_only and not geometry_only_fallback:
+    try:
+        geometry_confidence = float(packaging.get("geometry_confidence", .55))
+    except (TypeError, ValueError):
+        geometry_confidence = 0
+    try:
+        data_scale = float(packaging.get("recommended_outer_volume_ratio"))
+    except (TypeError, ValueError):
+        data_scale = None
+    has_resize_evidence = (
+        geometry_confidence >= .55 and data_scale is not None
+        and .7 <= data_scale <= .92 and not geometry_only_fallback
+    )
+    legacy_space_evidence = (
+        packaging.get("geometry_confidence") is None
+        and utilization is not None and math.isfinite(utilization)
+        and 20 <= utilization < 70 and not prior_only and not geometry_only_fallback
+    )
+    if outer_boxes and (has_resize_evidence or legacy_space_evidence):
         box = outer_boxes[0]
-        data_scale = packaging.get("recommended_outer_volume_ratio")
-        try:
-            data_scale = float(data_scale)
-        except (TypeError, ValueError):
-            data_scale = None
         scale = round(data_scale, 3) if data_scale is not None and .7 <= data_scale < 1 else (.78 if utilization < 45 else .825 if utilization < 60 else .885)
         changes = [{"component": box.name, "action": "resize", "scale": scale,
                     "scale_basis": "outer_volume_ratio", "resize_axis": "overall",

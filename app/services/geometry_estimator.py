@@ -52,6 +52,11 @@ def estimate_geometry(analysis: dict[str, Any]) -> dict[str, Any]:
     else:
         utilization = _number((analysis.get("packaging") or {}).get("space_utilization"))
         ratio = utilization / 100 if utilization and 20 <= utilization <= 95 else None
+        if ratio is not None:
+            # A bounded visual utilization supplied by the analyzer is sufficient
+            # evidence for a conditional resize candidate, even when absolute
+            # package dimensions still use a category fallback.
+            confidence = max(confidence, .55)
     occupied = measurements.get("product_occupied_volume_mm3")
     if isinstance(occupied, dict):
         occupied = occupied.get("value")

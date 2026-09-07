@@ -24,7 +24,9 @@ def test_scenario_a_little_optimization_space_scores_conservatively():
     selected = option(result, "low_risk")
     assert 45 <= selected.environment_score <= 60
     assert 80 <= selected.business_score <= 95
-    assert selected.supply_chain_score >= 90
+    # R05 is now a real low-risk option rather than an empty no-change plan;
+    # recycled-content availability/qualification keeps supply risk visible.
+    assert 80 <= selected.supply_chain_score <= 90
 
 
 def test_scenario_b_overpack_has_strong_but_feasible_improvement():
@@ -97,3 +99,15 @@ def test_meaningful_balanced_option_beats_no_change_low_risk_option():
     assert chosen.score_breakdown["environment"]["items"]
     assert chosen.score_breakdown["business"]["items"]
     assert chosen.score_breakdown["supply_chain"]["items"]
+
+
+def test_no_change_environment_score_and_overall_are_penalized():
+    result = create_redesign_plan(fixture(row("outer box"), space=85))
+    low_risk = option(result, "low_risk")
+    assert low_risk.meaningful_improvement is False
+    assert low_risk.score_breakdown["environment"]["no_improvement_penalty"] == 15
+    assert low_risk.overall_score < (
+        .4 * low_risk.environment_score
+        + .3 * low_risk.business_score
+        + .3 * low_risk.supply_chain_score
+    )

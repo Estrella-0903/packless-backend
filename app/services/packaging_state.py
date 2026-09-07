@@ -156,10 +156,13 @@ def _component_weight(row: dict[str, Any], geometry: dict[str, Any]) -> tuple[fl
     explicit = _number(row.get("estimated_weight_g"))
     if explicit is not None:
         return explicit, "ai_visual_estimate", float(row.get("confidence") or .45), "视觉模型提供的组件质量估计"
+    name = str(row.get("component") or "").casefold()
+    if (any(word in name for word in ("lining", "liner", "内衬", "衬层"))
+            and row.get("_material_inference_source") in {"dominant_material_proxy", "unresolved"}):
+        return 7.0, "component_type_fallback", .35, "内衬典型质量范围4–12g的保守中值"
     prop = material_property(row.get("material", ""))
     if not prop:
         return None, "pending", 0, "材料属性库无对应材料"
-    name = str(row.get("component") or "").casefold()
     area = _surface_area_m2(geometry["outer_dimensions"])
     gsm_low, gsm_high = prop["typical_gsm_range"]
     gsm = (gsm_low + gsm_high) / 2
@@ -226,6 +229,7 @@ def build_packaging_state(analysis: dict[str, Any]) -> dict[str, Any]:
             continue
         inferred_material, material_source, material_confidence = _infer_material(row, analysis)
         working_row = {**row, "material": inferred_material,
+                       "_material_inference_source": material_source,
                        "confidence": min(float(row.get("confidence") or .5), material_confidence or float(row.get("confidence") or .5))}
         prop = material_property(inferred_material)
         weight, source, confidence, method = _component_weight(working_row, geometry)
@@ -246,11 +250,20 @@ def build_packaging_state(analysis: dict[str, Any]) -> dict[str, Any]:
             "relative_cost_index": prop.get("relative_cost_index", 1.0) if prop else 1.0,
             "material_property_source": factor_reference.get("source") or (prop.get("source") if prop else None),
         })
+    fallback_sources = {"component_type_fallback", "pending", "rule_fallback"}
+    known_weight_g = round(sum(item["estimated_weight_g"] for item in components
+                               if item.get("estimated_weight_g") is not None
+                               and item.get("weight_source") not in fallback_sources), 1)
+    unknown_component_count = sum(item.get("weight_source") in fallback_sources for item in components)
     allocation = allocate_material_weights(analysis, components, geometry)
     for item in components:
         factor, weight = item.get("carbon_factor_kgco2e_per_kg"), item.get("estimated_weight_g")
+        if item.get("material_inference_source") not in {"ai_identified", "ai_identified_unmapped"} and factor is not None:
+            item["carbon_factor_inferred"] = True
+            item["material_property_source"] = f"材料类别推断代理；{item.get('material_property_source') or '参考材料因子'}"
         item["estimated_carbon_kgco2e"] = round(weight / 1000 * factor, 4) if weight is not None and factor is not None else None
     state = {"components": components, "material_weight_allocation": allocation,
+             "known_weight_g": known_weight_g, "unknown_component_count": unknown_component_count,
              "outer_dimensions": geometry["outer_dimensions"],
              "outer_volume_mm3": geometry["outer_volume_mm3"], "space_utilization": geometry["space_utilization"],
              "geometry": geometry, "estimated": geometry["estimated"], "confidence": geometry["confidence"]}
@@ -269,6 +282,14 @@ def build_packaging_state(analysis: dict[str, Any]) -> dict[str, Any]:
         state["total_weight_source"] = "user_measured"
     else:
         state["total_weight_source"] = "component_sum" if state["total_weight_g"] is not None else "pending"
+    total = state.get("total_weight_g")
+    if total:
+        state["total_weight_confidence"] = round(sum(
+            item["estimated_weight_g"] * item.get("confidence", 0) for item in state["components"]
+        ) / total, 2)
+    else:
+        state["total_weight_confidence"] = 0
+    state["requires_validation"] = any(item.get("weight_source") != "user_measured" for item in state["components"])
     return state
 
 

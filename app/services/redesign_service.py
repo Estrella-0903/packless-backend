@@ -67,9 +67,10 @@ def _select_opportunities(
     return [
         item
         for item in ranked
-        if item.commercial_risk == "low"
-        and item.supply_chain_risk == "low"
-        and item.confidence >= 0.65
+        if (
+            item.rule_id == "R05"
+            or (item.commercial_risk == "low" and item.supply_chain_risk == "low")
+        ) and item.confidence >= 0.65
     ][:2]
 
 
@@ -183,6 +184,8 @@ def create_redesign_plan(payload: dict[str, Any]) -> RedesignData:
     engine_analysis = {**analysis, "packaging": {**packaging,
         "layers": baseline["layers"], "space_utilization": baseline["space_utilization"],
         "recommended_outer_volume_ratio": geometry["recommended_outer_volume_ratio"],
+        "minimum_safe_dimensions": geometry["minimum_safe_dimensions"],
+        "geometry_confidence": geometry["confidence"],
         "geometry_source": geometry["source"],
         "metric_provenance": baseline["metric_provenance"]}}
     engine = run_rule_engine(engine_analysis)
@@ -218,6 +221,18 @@ def create_redesign_plan(payload: dict[str, Any]) -> RedesignData:
     carbon_data = build_carbon_data(analysis)
     estimates = estimates_by_profile[recommended.id]
     carbon_data["visual_estimate"] = estimates["carbon_estimate"]
+    before_state = estimates["before"]["packaging_state"]
+    estimated_weight = before_state.get("total_weight_g")
+    estimated_carbon = before_state.get("carbon_kgco2e")
+    carbon_data.update({
+        "weight_kg": round(estimated_weight / 1000, 4) if estimated_weight is not None else None,
+        "estimated_material_co2e_kg": estimated_carbon,
+        "estimated_total_co2e_kg": estimated_carbon,
+        "requires_weight_measurement": True,
+        "requires_complete_bill_of_materials": True,
+        "digital_twin_materials": before_state.get("components", []),
+        "weight_source": before_state.get("total_weight_source"),
+    })
 
     return RedesignData.model_validate(
         {

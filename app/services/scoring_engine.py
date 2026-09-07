@@ -72,7 +72,12 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
     usable = [(score, weight) for score, weight in dimensions.values() if score is not None]
     available_weight = sum(weight for _, weight in usable)
     weighted = sum(score*weight for score, weight in usable) / available_weight if usable else 0
-    environment = round(max(45, min(100, weighted)))
+    has_environment_change = any(value > 0 for value in (
+        weight_reduction or 0, plastic_reduction or 0, carbon_reduction or 0,
+        recycle_delta or 0, space_delta or 0,
+    ))
+    environment_floor = 45 if has_environment_change else 25
+    environment = round(max(environment_floor, min(100, weighted)))
 
     cost_change = _estimated_cost(before, after)
     actions = [action for item in selected for action in item.get("component_actions", [])]
@@ -80,6 +85,12 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
     removed_steps = sum(action.get("action") in {"remove", "integrate_into"} for action in actions)
     new_supplier = any(action.get("action") == "replace_material" for action in actions)
     new_tooling = any(action.get("action") in {"resize", "resize_to_fit", "replace_material"} for action in actions)
+    speculative_structural_penalty = min(25, round(sum(
+        max(0, .5 - float(item.get("confidence") or 0)) * 200
+        for item in selected
+        if any(action.get("action") in {"remove", "integrate_into"}
+               for action in item.get("component_actions", []))
+    )))
     complexity = max(0, len(actions)-1)
     process_change_rank = max([_risk_rank(item.get("risk_assessment", {}).get("process_compatibility", "high")) for item in selected] or [0])
     brand_rank = max([_risk_rank(item.get("risk_assessment", {}).get("brand_experience", "high")) for item in selected] or [0])
@@ -92,7 +103,8 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
                                     - (15 if "replace_material" in kinds else 0) - complexity*4)
     business_dimensions = ((cost_score, .25), (process_score, .20), (brand_score, .20),
                            (consumer_score, .15), (implementation_score, .20))
-    business = round(sum(score*weight for score, weight in business_dimensions))
+    business = round(max(0, sum(score*weight for score, weight in business_dimensions)
+                         - speculative_structural_penalty))
 
     availability_rank = max([_risk_rank(item.get("risk_assessment", {}).get("material_availability", "high")) for item in selected] or [0])
     transport_rank = max([_risk_rank(item.get("risk_assessment", {}).get("transport_protection", "high")) for item in selected] or [0])
@@ -103,7 +115,8 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
     transport_score = _bounded(95 - transport_rank*25)
     supply_dimensions = ((availability_score, .25), (supplier_score, .20),
                          (compatibility_score, .20), (tooling_score, .15), (transport_score, .20))
-    supply = round(sum(score*weight for score, weight in supply_dimensions))
+    supply = round(max(0, sum(score*weight for score, weight in supply_dimensions)
+                       - speculative_structural_penalty))
     improvement_values = [value for value in (
         None if weight_reduction is None else weight_reduction*100,
         None if plastic_reduction is None else plastic_reduction*100,
@@ -111,7 +124,8 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
         recycle_delta, space_delta) if value is not None]
     meaningful_score = round(max([0, *improvement_values]), 1)
     meaningful = meaningful_score > 5
-    overall = round(.4*environment + .3*business + .3*supply, 1)
+    no_improvement_penalty = 0 if meaningful else 15
+    overall = round(max(0, .4*environment + .3*business + .3*supply - no_improvement_penalty), 1)
     return {
         "environment_score": environment, "business_score": business,
         "supply_chain_score": supply, "overall_score": overall,
@@ -127,6 +141,7 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
                 "space_improvement": space_delta,
                 **{key: score for key, (score, _) in dimensions.items()},
                 "weights_redistributed": any(score is None for score, _ in dimensions.values()),
+                "no_improvement_penalty": no_improvement_penalty,
                 "items": [
                     _item("weight", "包装减量", dimensions["weight_reduction_score"][0], .25,
                           f"包装重量预计减少 {round((weight_reduction or 0)*100, 1)}%。", "AI估算"),
@@ -142,6 +157,7 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
                 "baseline_adjustment": round(max(0, 45-weighted), 1),
             },
             "business": {
+                "speculative_structural_penalty": speculative_structural_penalty,
                 "estimated_material_cost_change_percent": cost_change,
                 "process_steps_removed": removed_steps,
                 "process_change_risk": ("low", "medium", "high")[process_change_rank],
@@ -158,6 +174,7 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
                 ],
             },
             "supply_chain": {
+                "speculative_structural_penalty": speculative_structural_penalty,
                 "new_supplier_required": new_supplier,
                 "new_tooling_required": new_tooling,
                 "production_line_compatibility": ("high", "medium", "low")[process_change_rank],

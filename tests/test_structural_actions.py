@@ -124,6 +124,60 @@ def current_gift_analysis():
         ]}, "diagnosis": {"issue_tags": ["excessive layers", "mixed-material assembly", "ornamental complexity"]}}
 
 
+def latest_geometry_case():
+    return {
+        "product": {"category": "gift", "product_name": "three-piece gift set"},
+        "geometry_estimate": {
+            "outer_package": {
+                "length_mm": 220, "width_mm": 140, "height_mm": 45,
+                "confidence": .7,
+            },
+            "confidence": .7,
+        },
+        "packaging": {"space_utilization": 65, "materials": [
+            {"component": "outer lid", "material": "paperboard", "confidence": .9,
+             "evidence": "visible rigid printed outer lid", "estimated_weight_g": 16.4},
+            {"component": "inner tray/base", "material": "paperboard", "confidence": .8,
+             "evidence": "visible structural paperboard tray", "estimated_weight_g": 9.2},
+            {"component": "interior lining", "material": "unknown", "confidence": .4,
+             "evidence": "visible secondary lining; exact material uncertain",
+             "essential": False, "protective": False, "barrier": False,
+             "brand_critical": False},
+        ]},
+    }
+
+
+def test_latest_geometry_case_produces_distinct_profiles_and_resize():
+    result = service.create_redesign_plan(latest_geometry_case())
+    opportunities = {item.rule_id for item in result.opportunities}
+    assert {"R01", "R02", "R05"} <= opportunities
+    assert next(o for o in result.options if o.id == "aggressive").selected_rule_ids == ["R01", "R02", "R05"]
+    assert next(o for o in result.options if o.id == "balanced").selected_rule_ids == ["R02", "R05"]
+    assert next(o for o in result.options if o.id == "low_risk").selected_rule_ids == ["R05"]
+    assert result.recommended_option == "balanced"
+    assert result.change_plan.resize_spec.enabled
+    assert result.change_plan.resize_spec.scale == pytest.approx(.855, abs=.001)
+    assert result.change_plan.layout_compact
+    assert result.before.packaging_weight_g > result.after.packaging_weight_g
+    assert result.before.carbon_kgco2e > result.after.carbon_kgco2e
+    assert result.after.space_utilization > result.before.space_utilization
+
+
+def test_unknown_lining_uses_disclosed_component_fallback():
+    result = service.create_redesign_plan(latest_geometry_case())
+    state = result.before.packaging_state
+    lining = next(item for item in state["components"] if item["name"] == "interior lining")
+    assert lining["estimated_weight_g"] == 7
+    assert lining["weight_source"] == "component_type_fallback"
+    assert lining["confidence"] == .35
+    assert lining["carbon_factor_inferred"] is True
+    assert state["known_weight_g"] == pytest.approx(25.6)
+    assert state["unknown_component_count"] == 1
+    assert state["total_weight_g"] == pytest.approx(32.6)
+    assert result.carbon_data["weight_kg"] == pytest.approx(.0326)
+    assert result.carbon_data["estimated_total_co2e_kg"] is not None
+
+
 def test_current_gift_does_not_remove_ambiguous_brand_sheet_or_barrier():
     plan = service.create_redesign_plan(current_gift_analysis())
     assert not plan.change_plan.remove_components
