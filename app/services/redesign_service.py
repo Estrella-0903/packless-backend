@@ -101,12 +101,15 @@ def _score(profile: str, selected: list[OptimizationOpportunity], estimates: dic
             "评分来自前后包装数字模型、材料属性、DEFRA参考因子与规则风险；不是实测成本、销量或认证环境结论。"
         ),
         estimated_cost_change_percent=scores["estimated_cost_change_percent"],
+        meaningful_improvement=scores["meaningful_improvement"],
+        meaningful_improvement_score=scores["meaningful_improvement_score"],
         score_breakdown=scores["score_breakdown"],
     )
 
 
 def _recommended_option(options: list[RedesignOption]) -> RedesignOption:
-    ranked = sorted(options, key=lambda item: item.overall_score, reverse=True)
+    meaningful = [item for item in options if item.meaningful_improvement]
+    ranked = sorted(meaningful or options, key=lambda item: item.overall_score, reverse=True)
     if len(ranked) == 1:
         return ranked[0]
     if ranked[0].overall_score - ranked[1].overall_score < 3:

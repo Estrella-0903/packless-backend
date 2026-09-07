@@ -119,8 +119,33 @@ def test_mixed_carbon_allocates_total_only_once():
     assert carbon["estimated_co2e_kg"] == result["before"]["carbon_kgco2e"]
 
 
-def test_unknown_mass_or_composition_does_not_generate_carbon():
+def test_secondary_unknown_material_uses_disclosed_factor_proxy():
     fixture = gift_fixture()
     fixture["packaging"]["materials"].append({"component": "metal clasp", "material": "metal"})
+    result = estimate_packaging(fixture)
+    assert result["carbon_estimate"]["before"]["estimated_co2e_kg"] is not None
+    clasp = next(item for item in result["before"]["packaging_state"]["components"] if item["name"] == "metal clasp")
+    assert clasp["carbon_factor_inferred"] is True
+    assert clasp["material_property_source"] == "已识别主要材料的加权排放因子代理"
+
+
+def test_multimaterial_before_and_after_carbon_are_both_estimated():
+    fixture = gift_fixture()
+    plan = {"component_actions": [
+        {"rule_id": "R03", "component": "inner tray", "action": "replace_material", "to": "Molded pulp"},
+        {"rule_id": "R03", "component": "outer film", "action": "remove"},
+    ]}
+    rules = [{"rule_id": "R03", "target": "inner tray", "component_actions": plan["component_actions"]}]
+    result = estimate_packaging(fixture, [], rules, plan)
+    assert result["carbon_estimate"]["before"]["estimated_co2e_kg"] is not None
+    assert result["carbon_estimate"]["after"]["estimated_co2e_kg"] is not None
+    assert result["carbon_estimate"]["after"]["estimated_co2e_kg"] < result["carbon_estimate"]["before"]["estimated_co2e_kg"]
+    assert result["before"]["packaging_state"]["material_weight_allocation"]["by_material_g"]
+
+
+def test_all_unknown_materials_keep_carbon_unavailable():
+    fixture = {"product": {"category": "unknown"}, "packaging": {"materials": [
+        {"component": "unclassified component", "material": "unknown", "confidence": .2}
+    ]}}
     result = estimate_packaging(fixture)
     assert result["carbon_estimate"]["before"]["estimated_co2e_kg"] is None

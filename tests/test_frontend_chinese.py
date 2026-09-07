@@ -50,3 +50,16 @@ def test_impact_cards_keep_values_compact_and_explain_no_change():
     assert 'setImpact("Plastic","0克 → 0克"' in HTML
     assert "当前推荐方案没有批准会降低包装质量的结构动作" in HTML
     assert "当前推荐方案未批准外盒缩容" in HTML
+
+
+def test_score_breakdown_uses_structured_product_ui():
+    assert "score-summary" in HTML
+    assert "score-factor" in HTML
+    assert "factor-meter" in HTML
+    assert "factor-tags" in HTML
+    assert "建议工程验证" in HTML
+    assert "材料成本变化约" not in HTML
+    assert "待实测 %" not in HTML
+    assert "待实测 → 待实测" not in HTML
+    assert "暂无法估算" in HTML
+    assert "carbon-values" in HTML

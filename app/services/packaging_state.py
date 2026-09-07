@@ -47,6 +47,108 @@ def _surface_area_m2(dimensions: dict[str, float]) -> float:
     return 2 * (length * width + length * height + width * height)
 
 
+def _infer_material(row: dict[str, Any], analysis: dict[str, Any]) -> tuple[str, str, float]:
+    """Conservative component-shape inference used only when material is unknown."""
+    original = str(row.get("material") or "unknown")
+    if material_property(original):
+        return original, "ai_identified", float(row.get("confidence") or .5)
+    if original.casefold().strip() not in {"", "unknown", "uncertain", "未知", "不确定"}:
+        return original, "ai_identified_unmapped", min(float(row.get("confidence") or .4), .4)
+    text = " ".join(str(row.get(key) or "") for key in ("component", "evidence")).casefold()
+    known = " ".join(str(item.get("material") or "") for item in
+                     ((analysis.get("packaging") or {}).get("materials") or []) if isinstance(item, dict)).casefold()
+    if any(word in text for word in ("film", "wrap", "薄膜", "覆膜", "window film")):
+        return "plastic_film", "component_shape_inference", .35
+    if any(word in text for word in ("box", "carton", "盒", "箱")):
+        return "paperboard", "component_shape_inference", .4
+    if any(word in text for word in ("sleeve", "label", "sheet", "套", "标签", "纸张")):
+        return "paper", "component_shape_inference", .35
+    if any(word in known for word in ("paper", "cardboard", "carton", "纸")):
+        return "paperboard", "dominant_material_proxy", .25
+    return original, "unresolved", 0
+
+
+def _role_share(name: str) -> float:
+    name = name.casefold()
+    if any(word in name for word in ("box", "carton", "盒", "箱")):
+        return .68
+    if any(word in name for word in ("tray", "insert", "内托")):
+        return .22
+    if any(word in name for word in ("film", "wrap", "薄膜", "覆膜")):
+        return .05
+    if any(word in name for word in ("sleeve", "label", "套", "标签")):
+        return .08
+    return .12
+
+
+def _fallback_total_weight(analysis: dict[str, Any], geometry: dict[str, Any], known_sum: float) -> float:
+    impact = analysis.get("environmental_impact") or {}
+    supplied = _number(impact.get("estimated_packaging_weight_g"))
+    if supplied and 10 <= supplied <= 2000:
+        return supplied
+    text = " ".join((str((analysis.get("product") or {}).get("category") or ""),
+                     str((analysis.get("product") or {}).get("product_name") or ""),
+                     *[str(item.get("component") or "") for item in
+                       ((analysis.get("packaging") or {}).get("materials") or []) if isinstance(item, dict)])).casefold()
+    if any(word in text for word in ("large rigid", "大型硬质", "大型礼盒")):
+        category_midpoint = 420
+    elif any(word in text for word in ("gift", "礼盒", "mooncake", "月饼")):
+        category_midpoint = 180
+    elif any(word in text for word in ("small", "小型")):
+        category_midpoint = 70
+    else:
+        category_midpoint = 120
+    geometry_box = _surface_area_m2(geometry["outer_dimensions"]) * 350 * 1.15
+    return round(max(known_sum * 1.08, min(category_midpoint, geometry_box * 1.8)), 1)
+
+
+def allocate_material_weights(analysis: dict[str, Any], components: list[dict[str, Any]],
+                              geometry: dict[str, Any]) -> dict[str, Any]:
+    """Fill missing component masses using visual share/role allocation after direct estimates."""
+    missing = [item for item in components if item.get("estimated_weight_g") is None]
+    known_sum = sum(float(item["estimated_weight_g"]) for item in components
+                    if item.get("estimated_weight_g") is not None)
+    method = "component_estimates"
+    if missing:
+        total = _fallback_total_weight(analysis, geometry, known_sum)
+        remaining = max(total-known_sum, max(4.0, known_sum*.08))
+        raw_rows = {str(item.get("component") or "").casefold(): item for item in
+                    ((analysis.get("packaging") or {}).get("materials") or []) if isinstance(item, dict)}
+        shares = []
+        for item in missing:
+            raw = raw_rows.get(item["name"].casefold(), {})
+            visual = _number(raw.get("visual_fraction"))
+            shares.append(visual if visual is not None and 0 < visual <= 1 else _role_share(item["name"]))
+        share_total = sum(shares) or len(missing)
+        for item, share in zip(missing, shares):
+            item["estimated_weight_g"] = round(remaining * share/share_total, 1)
+            item["weight_source"] = "visual_fraction_allocation" if _number(
+                raw_rows.get(item["name"].casefold(), {}).get("visual_fraction")) else "category_role_allocation"
+            item["confidence"] = min(item.get("confidence") or .3, .35)
+            item["estimation_method"] = "总质量估计 × 视觉占比/组件类型权重"
+        method = "proportional_allocation"
+
+    # If only a secondary component lacks a factor, use the weighted factor of
+    # recognized components instead of discarding the entire package estimate.
+    known_factor_rows = [item for item in components if item.get("carbon_factor_kgco2e_per_kg") is not None]
+    factor_weight = sum(item["estimated_weight_g"] for item in known_factor_rows if item.get("estimated_weight_g") is not None)
+    weighted_factor = (sum(item["estimated_weight_g"] * item["carbon_factor_kgco2e_per_kg"]
+                           for item in known_factor_rows if item.get("estimated_weight_g") is not None) / factor_weight
+                       if factor_weight else None)
+    for item in components:
+        if item.get("carbon_factor_kgco2e_per_kg") is None and weighted_factor is not None:
+            item["carbon_factor_kgco2e_per_kg"] = round(weighted_factor, 8)
+            item["material_property_source"] = "已识别主要材料的加权排放因子代理"
+            item["carbon_factor_inferred"] = True
+            item["confidence"] = min(item.get("confidence") or .25, .25)
+    allocation: dict[str, float] = {}
+    for item in components:
+        if item.get("estimated_weight_g") is not None:
+            allocation[item["material"]] = round(allocation.get(item["material"], 0) + item["estimated_weight_g"], 1)
+    return {"by_material_g": allocation, "method": method, "estimated": True,
+            "requires_validation": True}
+
+
 def _component_weight(row: dict[str, Any], geometry: dict[str, Any]) -> tuple[float | None, str, float, str]:
     explicit = _number(row.get("weight_g"))
     if explicit is not None and row.get("weight_source") in {"measured", "user_measured", "user_supplied"}:
@@ -79,7 +181,7 @@ def _component_weight(row: dict[str, Any], geometry: dict[str, Any]) -> tuple[fl
     else:
         fraction = _number(row.get("visual_fraction"))
         if fraction is None or fraction > 1:
-            return None, "rule_fallback", .2, "缺少可用几何形态，保留待实测"
+            return None, "rule_fallback", .2, "缺少可用几何形态，暂无法估算"
         weight, method = area * gsm * fraction, "视觉面积占比 × 表面积 × 材料克重"
     confidence = min(float(row.get("confidence") or .5), geometry["confidence"], .7)
     return round(weight, 1), "material_geometry_estimate", confidence, method
@@ -103,6 +205,13 @@ def _totals(state: dict[str, Any]) -> dict[str, Any]:
             recycle = max(0, recycle - 8)
     else:
         recycle = None
+    allocation: dict[str, float] = {}
+    for item in components:
+        if item.get("estimated_weight_g") is not None:
+            allocation[item["material"]] = round(allocation.get(item["material"], 0) + item["estimated_weight_g"], 1)
+    allocation_meta = state.get("material_weight_allocation") or {}
+    state["material_weight_allocation"] = {**allocation_meta, "by_material_g": allocation,
+                                           "estimated": True, "requires_validation": True}
     state.update(total_weight_g=total, plastic_weight_g=plastic, carbon_kgco2e=carbon,
                  recyclability=recycle, layer_count=len([x for x in components
                     if not any(word in x["name"].casefold() for word in ("label", "logo", "标签", "标识"))]))
@@ -115,15 +224,19 @@ def build_packaging_state(analysis: dict[str, Any]) -> dict[str, Any]:
     for index, row in enumerate((analysis.get("packaging") or {}).get("materials") or []):
         if not isinstance(row, dict):
             continue
-        prop = material_property(row.get("material", ""))
-        weight, source, confidence, method = _component_weight(row, geometry)
+        inferred_material, material_source, material_confidence = _infer_material(row, analysis)
+        working_row = {**row, "material": inferred_material,
+                       "confidence": min(float(row.get("confidence") or .5), material_confidence or float(row.get("confidence") or .5))}
+        prop = material_property(inferred_material)
+        weight, source, confidence, method = _component_weight(working_row, geometry)
         material = prop["material"] if prop else str(row.get("material") or "unknown")
-        factor_reference = get_emission_factor(str(row.get("material") or ""))
+        factor_reference = get_emission_factor(inferred_material)
         carbon_factor = (factor_reference.get("factor_kgco2e_per_kg")
                          if factor_reference.get("factor_available") else prop.get("carbon_factor") if prop else None)
         components.append({
             "name": str(row.get("component") or f"组件{index + 1}"), "material": material,
             "original_material": str(row.get("material") or "unknown"),
+            "material_inference_source": material_source,
             "material_family": "plastic" if material in {"pet_plastic", "plastic_film", "hdpe", "ldpe_lldpe", "pp", "ps", "pvc"} else "fiber" if material in {"paperboard", "paper", "molded_pulp"} else "other",
             "estimated_weight_g": weight, "weight_source": source, "confidence": round(confidence, 2),
             "estimation_method": method, "carbon_factor_kgco2e_per_kg": carbon_factor,
@@ -133,7 +246,12 @@ def build_packaging_state(analysis: dict[str, Any]) -> dict[str, Any]:
             "relative_cost_index": prop.get("relative_cost_index", 1.0) if prop else 1.0,
             "material_property_source": factor_reference.get("source") or (prop.get("source") if prop else None),
         })
-    state = {"components": components, "outer_dimensions": geometry["outer_dimensions"],
+    allocation = allocate_material_weights(analysis, components, geometry)
+    for item in components:
+        factor, weight = item.get("carbon_factor_kgco2e_per_kg"), item.get("estimated_weight_g")
+        item["estimated_carbon_kgco2e"] = round(weight / 1000 * factor, 4) if weight is not None and factor is not None else None
+    state = {"components": components, "material_weight_allocation": allocation,
+             "outer_dimensions": geometry["outer_dimensions"],
              "outer_volume_mm3": geometry["outer_volume_mm3"], "space_utilization": geometry["space_utilization"],
              "geometry": geometry, "estimated": geometry["estimated"], "confidence": geometry["confidence"]}
     state = _totals(state)

@@ -117,6 +117,8 @@ class RedesignOption(APIModel):
     estimated: bool
     hypothesis: str
     estimated_cost_change_percent: float | None = None
+    meaningful_improvement: bool = False
+    meaningful_improvement_score: float = Field(default=0, ge=0, le=100)
     score_breakdown: dict[str, Any] = Field(default_factory=dict)
 
 

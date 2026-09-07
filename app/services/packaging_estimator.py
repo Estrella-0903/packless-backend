@@ -314,7 +314,7 @@ def estimate_packaging(analysis_result, functional_checks=(), opportunities=(), 
                 legacy_meta = (fallback.get("metric_provenance") or {}).get(key, {})
                 source = legacy_meta.get("source", "pending")
                 confidence = legacy_meta.get("confidence", 0)
-                hypothesis = "几何或材料数据不足，使用规则区间回退。" if value is not None else legacy_meta.get("hypothesis", "待实测")
+                hypothesis = "几何或材料数据不足，使用规则区间回退。" if value is not None else legacy_meta.get("hypothesis", "暂无法估算")
             value = round(value) if value is not None else None
             low, high = LIMITS[key]
             value = min(high, max(low, value)) if value is not None else None

@@ -81,3 +81,19 @@ def test_no_evidence_keeps_space_pending_instead_of_inventing_precision():
     geometry = estimate_geometry({"product": {}, "packaging": {"materials": []}})
     assert geometry["space_utilization"] is None
     assert geometry["method"] == "pending"
+
+
+def test_meaningful_balanced_option_beats_no_change_low_risk_option():
+    result = create_redesign_plan(fixture(
+        row("decorative outer sleeve", evidence="non-protective decoration only"),
+        row("outer box"), row("decorative film", "PET", "non-functional decoration only"),
+        space=45,
+    ))
+    chosen = option(result, result.recommended_option)
+    unchanged = option(result, "low_risk")
+    assert chosen.id == "balanced"
+    assert chosen.meaningful_improvement is True
+    assert unchanged.meaningful_improvement is False
+    assert chosen.score_breakdown["environment"]["items"]
+    assert chosen.score_breakdown["business"]["items"]
+    assert chosen.score_breakdown["supply_chain"]["items"]

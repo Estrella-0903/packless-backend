@@ -71,7 +71,8 @@ def test_recommendation_uses_weighted_score_and_tie_break() -> None:
         + 0.3 * recommended.supply_chain_score,
         1,
     )
-    ranked = sorted(plan.options, key=lambda item: item.overall_score, reverse=True)
+    eligible = [item for item in plan.options if item.meaningful_improvement] or list(plan.options)
+    ranked = sorted(eligible, key=lambda item: item.overall_score, reverse=True)
     if len(ranked) > 1 and ranked[0].overall_score - ranked[1].overall_score < 3:
         assert recommended.supply_chain_score == max(
             ranked[0].supply_chain_score, ranked[1].supply_chain_score
