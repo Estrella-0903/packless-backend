@@ -87,7 +87,7 @@ def plastic_parts(analysis):
 
 def layer_component_names(analysis):
     return {r["component"] for r in components(analysis)
-            if not contains(r["component"], ("label", "logo", "标签", "印刷"))}
+            if not contains(r["component"], ("logo", "印刷", "标识"))}
 
 
 def estimate_layers(analysis):
@@ -365,7 +365,7 @@ def validate_estimation_consistency(estimates, plan):
     if changed("space_utilization", 1) and not ("R02" in rules and
             ((plan.get("resize_spec") or {}).get("enabled") or plan.get("layout_compact"))):
         raise ValueError("Utilization estimate has no approved resize/layout action")
-    if changed("plastic_weight_g", -1) and not ("R03" in rules or any(a["rule_id"] == "R04" and a["action"] == "integrate_into" for a in actions)):
+    if changed("plastic_weight_g", -1) and not (rules & {"R01", "R03"} or any(a["rule_id"] == "R04" and a["action"] == "integrate_into" for a in actions)):
         raise ValueError("Plastic estimate has no approved plastic removal/replacement action")
-    if changed("recyclability", 1) and not rules & {"R03", "R04", "R05"}:
+    if changed("recyclability", 1) and not rules & {"R01", "R03", "R04", "R05"}:
         raise ValueError("Recyclability estimate has no supporting rule")

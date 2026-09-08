@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from app.schemas.models import FunctionalCheck, HardConstraint, OptimizationOpportunity
+from app.services.redesign_config import demo_strong_redesign_enabled
 
 
 FUNCTION_PROTECTION = "protection"
@@ -340,17 +341,28 @@ def optimization_rules(analysis, checks, constraints) -> list[OptimizationOpport
     checks_by_name = {c.target: c for c in checks}
     opportunities = []
     constraint_ids = {c.constraint_id for c in constraints}
+    demo_mode = demo_strong_redesign_enabled()
+    try:
+        visible_layer_count = int(packaging.get("layers") or len(components))
+    except (TypeError, ValueError):
+        visible_layer_count = len(components)
 
-    def emit(rule, component, action, visual, changes, reason):
+    def emit(rule, component, action, visual, changes, reason, *, demo_assumption=False):
         opportunity = _opportunity(rule, component.name, action, reason, reason,
             "Potential resource reduction; quantified results remain estimates.",
             "medium", "medium", component.confidence, True,
             "Conditional concept action; verify component functions, material suitability and engineering performance.")
         for change in changes:
             change.update(rule_id=rule, reason=reason, confidence=component.confidence,
-                          requires_validation=True, estimated=True)
+                          requires_validation=True, estimated=True,
+                          demo_assumption=demo_assumption)
         opportunities.append(OptimizationOpportunity.model_validate({
-            **opportunity.model_dump(), "visual_impact": visual, "component_actions": changes}))
+            **opportunity.model_dump(), "visual_impact": visual,
+            "component_actions": changes, "demo_assumption": demo_assumption,
+            "hypothesis": (
+                "Demo-mode visual hypothesis based on visible packaging cues; validate functions, dimensions, materials and transport performance before implementation."
+                if demo_assumption else opportunity.hypothesis
+            )}))
 
     for component in components:
         check = checks_by_name[component.name]
@@ -363,10 +375,38 @@ def optimization_rules(analysis, checks, constraints) -> list[OptimizationOpport
             and not check.essential and not check.protective and not check.barrier
             and not check.brand_critical and component.confidence >= .4
         ))
-        if candidate and component.evidence and not _is_plastic(component) and any(c.protective for c in checks):
+        text = component.text
+        primary_contact_candidate = bool(constraint_ids & {"HC_FOOD_SAFETY"}) and any(
+            term in component.name.casefold() for term in ("inner sleeve", "wrapper", "label", "内包装", "内袋")
+        )
+        if primary_contact_candidate:
+            candidate = False
+        demo_candidate = (
+            demo_mode and component.confidence >= .35 and component.evidence
+            and visible_layer_count >= 3
+            and not check.brand_critical
+            and not primary_contact_candidate
+            and any(term in text for term in (
+                "lining", "liner", "sleeve", "overlay", "window", "decorat",
+                "inner sheet", "内衬", "衬层", "套", "装饰", "覆层",
+            ))
+        )
+        if (candidate or demo_candidate) and component.evidence and not _is_plastic(component) and any(c.protective for c in checks):
+            action = "integrate_into" if demo_mode and any(term in text for term in (
+                "lining", "liner", "sleeve", "overlay", "window", "decorat", "内衬", "装饰"
+            )) else "remove"
+            targets = [c for c in components if c.name != component.name and any(
+                term in c.name.casefold() for term in ("outer box", "box", "carton", "盒")
+            )]
+            changes = ([{"component": component.name, "action": "integrate_into",
+                         "target_component": targets[0].name,
+                         "method": "print, embossing or structural fold"}]
+                       if action == "integrate_into" and targets
+                       else [{"component": component.name, "action": "remove"}])
             emit("R01", component, "reduce_layers", "high",
-                 [{"component": component.name, "action": "remove"}],
-                 f"Evaluate removing or integrating the non-essential component {component.name}; retain protection, barriers and essential brand information.")
+                 changes,
+                 f"Evaluate removing or integrating the non-critical layer {component.name}; retain protection, barriers and essential brand information.",
+                 demo_assumption=bool(demo_mode and action == "integrate_into"))
 
     try:
         utilization = float(packaging.get("space_utilization"))
@@ -395,9 +435,13 @@ def optimization_rules(analysis, checks, constraints) -> list[OptimizationOpport
         and utilization is not None and math.isfinite(utilization)
         and 20 <= utilization < 70 and not prior_only and not geometry_only_fallback
     )
-    if outer_boxes and (has_resize_evidence or legacy_space_evidence):
+    demo_resize = demo_mode and utilization is not None and 20 <= utilization < 80
+    if outer_boxes and (has_resize_evidence or legacy_space_evidence or demo_resize):
         box = outer_boxes[0]
-        scale = round(data_scale, 3) if data_scale is not None and .7 <= data_scale < 1 else (.78 if utilization < 45 else .825 if utilization < 60 else .885)
+        if demo_resize:
+            scale = .75 if utilization < 50 else .80 if utilization < 65 else .85 if utilization < 75 else .90
+        else:
+            scale = round(data_scale, 3) if data_scale is not None and .7 <= data_scale < 1 else (.78 if utilization < 45 else .825 if utilization < 60 else .885)
         changes = [{"component": box.name, "action": "resize", "scale": scale,
                     "scale_basis": "outer_volume_ratio", "resize_axis": "overall",
                     "layout_strategy": "reduce void space around products; keep product size unchanged"}]
@@ -405,29 +449,42 @@ def optimization_rules(analysis, checks, constraints) -> list[OptimizationOpport
                      "target_component": box.name, "preserve_shape": True}
                     for c in components if any(t in c.name.lower() for t in ("tray", "insert", "内托"))]
         emit("R02", box, "reduce_volume", "high", changes,
-             f"Target approximately {round((1-scale)*100, 1)}% less outer volume by reducing voids; retain fit, product dimensions and transport protection.")
+             f"Target approximately {round((1-scale)*100, 1)}% less outer volume by reducing voids; retain fit, product dimensions and transport protection.",
+             demo_assumption=demo_resize and not (has_resize_evidence or legacy_space_evidence))
 
     for component in components:
         check = checks_by_name[component.name]
-        if not _is_plastic(component):
+        component_text = component.text
+        material_unknown = component.material.casefold().strip() in {"", "unknown", "uncertain", "未知", "不确定"}
+        demo_plastic_candidate = demo_mode and material_unknown and any(t in component_text for t in (
+            "film", "wrap", "tray", "insert", "lining", "liner", "薄膜", "内托", "内衬"
+        ))
+        if not _is_plastic(component) and not demo_plastic_candidate:
             continue
         name = component.name.lower()
         if any(t in name for t in ("film", "wrap", "薄膜")):
             removable = check.potentially_redundant and not check.barrier
-            action = "remove_plastic_film" if removable else "lightweight_plastic_film"
-            emit("R03", component, action, "medium" if removable else "low",
-                 [{"component": component.name, "action": "remove" if removable else "lightweight",
-                   **({} if removable else {"scale": .7, "scale_basis": "film_mass_ratio", "preserve_shape": True})}],
-                 "Remove only non-functional decorative plastic film." if removable else "Retain film coverage, seal and barrier function; trial lower gauge only after validation.")
+            demo_replace = demo_mode and not removable
+            action = "remove_plastic_film" if removable else "simplify_or_replace_film" if demo_replace else "lightweight_plastic_film"
+            emit("R03", component, action, "medium" if removable else "high" if demo_replace else "low",
+                 ([{"component": component.name, "action": "replace_material", "from": component.material,
+                    "to": "paper", "preserve_shape": True}]
+                  if demo_replace else [{"component": component.name, "action": "remove" if removable else "lightweight",
+                    **({} if removable else {"scale": .7, "scale_basis": "film_mass_ratio", "preserve_shape": True})}]),
+                 "Remove only non-functional decorative plastic film." if removable else
+                 "Replace or simplify the visible film as a demo hypothesis while preserving any required barrier function." if demo_replace else
+                 "Retain film coverage, seal and barrier function; trial lower gauge only after validation.",
+                 demo_assumption=demo_replace)
         elif any(t in name for t in ("tray", "insert", "内托")) and not check.potentially_redundant:
             # Sensitive categories/barriers require suitability evidence beyond an
             # image. Do not approve a material replacement by default.
             sensitive = constraint_ids & {"HC_FOOD_SAFETY", "HC_ELECTRONICS_PROTECTION"}
-            if not sensitive and not check.barrier:
+            if (not sensitive and not check.barrier) or demo_mode:
                 emit("R03", component, "replace_inner_tray", "high",
                      [{"component": component.name, "action": "replace_material", "from": component.material,
                        "to": "Molded pulp", "preserve_shape": True}],
-                     "Replace this plastic tray with molded pulp while preserving its protective geometry; validate cushioning, abrasion and fit.")
+                     "Replace this plastic tray with molded pulp while preserving its protective geometry; validate cushioning, abrasion and fit.",
+                     demo_assumption=bool(sensitive or check.barrier))
 
     paper_boxes = [c for c in outer_boxes if any(t in c.material.lower() for t in FIBER_TERMS)]
     if paper_boxes:
@@ -439,6 +496,20 @@ def optimization_rules(analysis, checks, constraints) -> list[OptimizationOpport
                      [{"component": component.name, "action": "integrate_into", "target_component": target.name,
                        "method": "printed/embossed paper feature", "from": component.material, "to": target.material}],
                      "Integrate the non-protective plastic decoration into the existing paperboard box's print/embossing, eliminating a separate component.")
+        if demo_mode and len({c.material.casefold() for c in components}) >= 2:
+            target = paper_boxes[0]
+            candidates = [c for c in components if c.name != target.name and any(
+                term in c.text for term in ("lining", "liner", "overlay", "decorat", "window", "内衬", "装饰")
+            )]
+            if candidates and not any(o.rule_id == "R04" for o in opportunities):
+                component = candidates[0]
+                emit("R04", component, "simplify_materials", "medium",
+                     [{"component": component.name, "action": "integrate_into",
+                       "target_component": target.name,
+                       "method": "direct print, embossing or paper structural feature",
+                       "from": component.material, "to": target.material}],
+                     "Merge the separate decorative/lining function into the primary paperboard structure to reduce material types.",
+                     demo_assumption=True)
 
     fiber = [c for c in components if any(t in c.material.lower() for t in FIBER_TERMS)]
     if fiber:
@@ -503,6 +574,7 @@ def violates_hard_constraints(
     checks: list[FunctionalCheck],
     constraints: list[HardConstraint],
 ) -> bool:
+    demo_mode = demo_strong_redesign_enabled()
     protected_targets = {
         check.target
         for check in checks
@@ -516,18 +588,24 @@ def violates_hard_constraints(
     constraint_ids = {c.constraint_id for c in constraints}
     for opportunity in selected:
         removes_component = opportunity.action in {"remove_component", "remove_plastic_film", "reduce_layers", "simplify_materials"}
-        if removes_component and opportunity.target in protected_targets:
+        target_check = by_name.get(opportunity.target)
+        demo_conditional = demo_mode and opportunity.demo_assumption and target_check is not None
+        if removes_component and opportunity.target in protected_targets and not demo_conditional:
             return True
         if removes_component and opportunity.target not in by_name:
             return True
         for action in opportunity.component_actions:
             if action.component not in by_name:
                 return True
-            if action.action in {"remove", "integrate_into"} and action.component in protected_targets:
+            if action.action in {"remove", "integrate_into"} and action.component in protected_targets and not (
+                demo_mode and action.demo_assumption and not by_name[action.component].brand_critical
+            ):
                 return True
             if action.action == "integrate_into" and (action.target_component not in by_name or action.target_component == action.component):
                 return True
-            if action.action == "replace_material" and (by_name[action.component].barrier or constraint_ids & {"HC_FOOD_SAFETY", "HC_ELECTRONICS_PROTECTION"}):
+            if action.action == "replace_material" and (by_name[action.component].barrier or constraint_ids & {"HC_FOOD_SAFETY", "HC_ELECTRONICS_PROTECTION"}) and not (
+                demo_mode and action.demo_assumption
+            ):
                 return True
         if (
             any(item.constraint_id == "HC_FOOD_SAFETY" for item in constraints)

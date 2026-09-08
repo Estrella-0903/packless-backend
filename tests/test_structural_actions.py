@@ -182,7 +182,7 @@ def test_current_gift_does_not_remove_ambiguous_brand_sheet_or_barrier():
     plan = service.create_redesign_plan(current_gift_analysis())
     assert not plan.change_plan.remove_components
     assert plan.change_plan.visual_change_strength == "low"
-    assert plan.before.layers == plan.after.layers == 3
+    assert plan.before.layers == plan.after.layers == 4
     assert plan.before.space_utilization == plan.after.space_utilization == 65
 
 

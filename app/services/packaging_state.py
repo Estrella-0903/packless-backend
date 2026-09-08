@@ -216,8 +216,8 @@ def _totals(state: dict[str, Any]) -> dict[str, Any]:
     state["material_weight_allocation"] = {**allocation_meta, "by_material_g": allocation,
                                            "estimated": True, "requires_validation": True}
     state.update(total_weight_g=total, plastic_weight_g=plastic, carbon_kgco2e=carbon,
-                 recyclability=recycle, layer_count=len([x for x in components
-                    if not any(word in x["name"].casefold() for word in ("label", "logo", "标签", "标识"))]))
+                  recyclability=recycle, layer_count=len([x for x in components
+                    if not any(word in x["name"].casefold() for word in ("logo", "印刷", "标识"))]))
     return state
 
 
@@ -302,7 +302,18 @@ def apply_change_plan(before: dict[str, Any], plan: dict[str, Any]) -> dict[str,
         if not item:
             continue
         kind = action.get("action")
-        if kind in {"remove", "integrate_into"}:
+        if kind == "integrate_into":
+            # The separate part disappears, but a simplified printed/embossed or
+            # folded feature still consumes a conservative 35% material proxy.
+            recipient = by_name.get(str(action.get("target_component", "")).casefold())
+            if recipient and item.get("estimated_weight_g") is not None:
+                recipient["estimated_weight_g"] = round(
+                    (recipient.get("estimated_weight_g") or 0) + item["estimated_weight_g"] * .35,
+                    1,
+                )
+            after["components"].remove(item)
+            by_name.pop(item["name"].casefold(), None)
+        elif kind == "remove":
             after["components"].remove(item)
             by_name.pop(item["name"].casefold(), None)
         elif kind in {"resize", "resize_to_fit"} and item["estimated_weight_g"] is not None and not (kind == "resize_to_fit" and item["material_family"] == "plastic"):

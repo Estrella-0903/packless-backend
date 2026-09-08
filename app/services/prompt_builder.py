@@ -124,6 +124,12 @@ Authoritative AfterRenderSpec (packaging dimensions must follow this specificati
 
 DO NOT merely restyle or recolor the original package.
 The After image must visibly implement the approved structural changes.
+The optimized package must look visibly smaller, simpler and more material-efficient at first glance.
+Make the approved size reduction obvious while preserving the product and camera framing.
+Compress the product layout and remove visible empty packaging volume.
+Remove or integrate every approved decorative/secondary layer instead of leaving a look-alike layer in place.
+If a plastic tray replacement is approved, render a visibly fibrous molded-pulp tray, never clear or glossy plastic.
+This is an image-editing task: transform the supplied package rather than generating an unrelated package concept.
 Keep the product itself at the same visual scale so packaging reduction is visible.
 Box scale is the retained OUTER VOLUME ratio, not an image scaling factor or a multiplier for every linear dimension.
 Do not shrink the whole image. Reduce empty packaging space, keep product units unchanged, and adapt named trays to fit.

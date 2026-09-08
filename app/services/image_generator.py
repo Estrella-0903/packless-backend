@@ -36,6 +36,8 @@ MAX_DIMENSION = 8000
 SUBMIT_CONNECT_TIMEOUT_SECONDS = 10
 SUBMIT_READ_TIMEOUT_SECONDS = 30
 SUBMIT_DEADLINE_SECONDS = 45
+MIN_VISUAL_CHANGE_SCORE = 0.6
+MAX_VISUAL_RETRIES = 1
 
 
 class ImageGeneratorError(RuntimeError):
@@ -226,7 +228,45 @@ MAX_CACHED_TASKS = 1024
 def _task_view(task_id: str, entry: dict) -> dict:
     return {"task_id": task_id, "status": entry["status"],
             "optimized_image_url": entry.get("local_image_url", ""),
-            "error": entry.get("error", "")}
+            "error": entry.get("error", ""),
+            "visual_change_score": entry.get("visual_change_score"),
+            "regeneration_attempted": bool(entry.get("retry_count", 0))}
+
+
+def _visual_change_score(reference_data_url: str, local_url: str) -> float | None:
+    """Small aligned-image proxy: 0 is identical and 1 is clearly changed."""
+    try:
+        encoded = reference_data_url.split(",", 1)[1]
+        reference_bytes = base64.b64decode(encoded, validate=True)
+        filename = Path(urlsplit(local_url).path).name
+        generated_path = GENERATED_DIR / filename
+        with Image.open(io.BytesIO(reference_bytes)) as before_source, Image.open(generated_path) as after_source:
+            before = before_source.convert("RGB").resize((96, 96), Image.Resampling.LANCZOS)
+            after = after_source.convert("RGB").resize((96, 96), Image.Resampling.LANCZOS)
+            differences = [abs(a-b) for a, b in zip(before.tobytes(), after.tobytes())]
+        mean_difference = sum(differences) / len(differences)
+        changed_ratio = sum(value >= 20 for value in differences) / len(differences)
+        raw_score = mean_difference / 45 * .7 + changed_ratio * .3
+        # A 20% sensitivity calibration reflects that an aligned package edit
+        # intentionally preserves most pixels (brand, product and background).
+        # Identical images still score 0; subtle restyles remain far below 0.6.
+        return round(min(1, raw_score * 1.2), 3)
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _remove_generated_file(local_url: str) -> None:
+    filename = Path(urlsplit(local_url).path).name
+    target = (GENERATED_DIR / filename).resolve()
+    if target.parent == GENERATED_DIR.resolve() and target.exists():
+        target.unlink()
+
+
+def _retry_prompt(prompt: str) -> str:
+    return prompt + """
+
+REGENERATION REQUIREMENT: the previous result was too visually similar to the reference.
+Make the already-approved structural changes substantially clearer. The outer package must be visibly smaller, the layout visibly more compact, and every approved removed or merged layer must be absent as a separate piece. Preserve the same product, brand, camera angle, background and lighting. Do not solve this by recoloring or changing the whole scene."""
 
 
 async def submit_optimized_image_task(image_bytes: bytes, prompt: str) -> dict:
@@ -245,9 +285,10 @@ async def submit_optimized_image_task(image_bytes: bytes, prompt: str) -> dict:
             raise ImageGeneratorError("Image task capacity reached. Please try later.")
         async def submit():
             data_url = await asyncio.to_thread(_normalized_data_url, image_bytes)
-            return await asyncio.to_thread(_submit_task, data_url, prompt, api_key)
+            response = await asyncio.to_thread(_submit_task, data_url, prompt, api_key)
+            return response, data_url
         # Bounds the HTTP wait; never polls or downloads on this request.
-        response = await asyncio.wait_for(submit(), timeout=SUBMIT_DEADLINE_SECONDS)
+        response, data_url = await asyncio.wait_for(submit(), timeout=SUBMIT_DEADLINE_SECONDS)
         if _value(response, "status_code") != HTTPStatus.OK:
             print(f"[WAN SUBMIT] provider_error status_code={_value(response, 'status_code')} "
                   f"elapsed={time.monotonic()-started:.1f}s detail="
@@ -257,7 +298,10 @@ async def submit_optimized_image_task(image_bytes: bytes, prompt: str) -> dict:
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", task_id):
             raise ImageGeneratorError("Wan task submission returned no valid task_id.")
         IMAGE_TASK_CACHE[task_id] = {"status": "PENDING", "created": time.monotonic(),
-                                    "local_image_url": "", "error": "", "work": None}
+                                    "local_image_url": "", "error": "", "work": None,
+                                    "provider_task_id": task_id, "reference_data_url": data_url,
+                                    "prompt": prompt, "retry_count": 0,
+                                    "visual_change_score": None}
         print(f"[WAN] submitted task_id={task_id}", flush=True)
         print(f"[WAN SUBMIT] success task_id={task_id} elapsed={time.monotonic()-started:.1f}s", flush=True)
         return {"success": True, "task_id": task_id, "status": "PENDING"}
@@ -280,8 +324,37 @@ async def finalize_optimized_image(task_id: str) -> dict:
             return _task_view(task_id, entry)
         entry["status"] = "RUNNING"
         local_url = await asyncio.wait_for(_download_result(entry["provider_url"]), timeout=35)
+        score = _visual_change_score(entry.get("reference_data_url", ""), local_url)
+        entry["visual_change_score"] = score
+        print(f"[WAN VISUAL] task_id={task_id} score={score}", flush=True)
+        if score is not None and score < MIN_VISUAL_CHANGE_SCORE:
+            if entry.get("retry_count", 0) < MAX_VISUAL_RETRIES:
+                _remove_generated_file(local_url)
+                api_key = os.getenv("DASHSCOPE_API_KEY", "")
+                retry_response = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        _submit_task,
+                        entry["reference_data_url"],
+                        _retry_prompt(entry["prompt"]),
+                        api_key,
+                    ),
+                    timeout=SUBMIT_DEADLINE_SECONDS,
+                )
+                if _value(retry_response, "status_code") != HTTPStatus.OK:
+                    raise ImageGeneratorError("AI image regeneration was rejected by the provider.")
+                retry_task_id = str(_output_value(retry_response, "task_id") or "")
+                if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", retry_task_id):
+                    raise ImageGeneratorError("AI image regeneration returned no valid task_id.")
+                entry.update(status="PENDING", provider_task_id=retry_task_id,
+                             retry_count=entry.get("retry_count", 0) + 1,
+                             provider_url="", local_image_url="")
+                print(f"[WAN VISUAL] retry submitted public_task_id={task_id} attempt=1", flush=True)
+                return _task_view(task_id, entry)
+            _remove_generated_file(local_url)
+            raise ImageGeneratorError("Generated image did not meet the minimum visible-change threshold.")
         entry.update(status="SUCCEEDED", local_image_url=local_url, error="")
-        entry.pop("provider_url", None)
+        for key in ("provider_url", "reference_data_url", "prompt"):
+            entry.pop(key, None)
         print(f"[WAN DOWNLOAD] task_id={task_id} local_url={local_url}", flush=True)
         return _task_view(task_id, entry)
 
@@ -294,7 +367,8 @@ async def _refresh_image_task(task_id: str) -> None:
             raise ImageGeneratorError("DASHSCOPE_API_KEY is not configured.")
         # Fetch is synchronous in the installed SDK. Run outside the event loop;
         # status HTTP requests return cached state while this operation is pending.
-        response = await asyncio.wait_for(asyncio.to_thread(ImageGeneration.fetch, task_id, api_key=api_key), timeout=8)
+        provider_task_id = entry.get("provider_task_id", task_id)
+        response = await asyncio.wait_for(asyncio.to_thread(ImageGeneration.fetch, provider_task_id, api_key=api_key), timeout=8)
         if _value(response, "status_code") != HTTPStatus.OK:
             raise ImageGeneratorError(_safe_error(_value(response, "message") or _value(response, "code"), api_key))
         status = str(_output_value(response, "task_status", "UNKNOWN")).upper()

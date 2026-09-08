@@ -343,7 +343,7 @@
               <div class="comparison-label before-label">优化前</div>
               <div class="comparison-label after-label">AI减量后 <span class="ai-concept-badge">AI概念示意</span></div>
             </div>
-            <div class="comparison-note">该图片由AI根据减量方案生成，用于方案可视化；最终包装结构需经过工程验证。</div>
+            <div class="comparison-note">当前为AI概念优化模式，优先展示可行减量方向；最终方案需工程验证。</div>
             <div class="change-actions" id="changeActions" aria-label="包装减量操作"><div data-change="remove"><b>移除</b><span>待分析</span></div><div data-change="replace"><b>替换</b><span>待分析</span></div><div data-change="resize"><b>缩容</b><span>待分析</span></div><div data-change="simplify"><b>简化</b><span>待分析</span></div></div>
             <div class="optimization-dashboard" id="optimizationDashboard" aria-live="polite"><div class="change-metrics"><div class="change-metric"><small>包装层数</small><div class="metric-values"><b data-before-metric="layers">待分析</b><i>→</i><strong data-after-metric="layers">待分析</strong><em>层</em></div></div><div class="change-metric"><small>塑料使用</small><div class="metric-values"><b data-before-metric="plasticWeight">待分析</b><i>→</i><strong data-after-metric="plasticWeight">待分析</strong><em>克</em></div></div><div class="change-metric"><small>空间利用率</small><div class="metric-values"><b data-before-metric="spaceUtilization">待分析</b><i>→</i><strong data-after-metric="spaceUtilization">待分析</strong><em>%</em></div></div><div class="change-metric"><small>可回收评分</small><div class="metric-values"><b data-before-metric="recyclability">待分析</b><i>→</i><strong data-after-metric="recyclability">待分析</strong><em>/100</em></div></div></div><div class="decision-row"><div class="decision-score" data-score-card="environment"><span>环境表现</span><strong><b data-score="environment">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="decision-score" data-score-card="business"><span>商业可行性</span><strong><b data-score="business">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="decision-score" data-score-card="supplyChain"><span>供应链可实施性</span><strong><b data-score="supplyChain">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="balanced-solution"><span>推荐方案</span><strong id="recommendedTitle">等待分析</strong></div><div class="score-details" id="scoreDetails"></div></div></div>
           </section>
@@ -435,6 +435,7 @@
           .replace(/paperboard/gi,"纸板").replace(/estimated/gi,"AI估算")
           .replace(/AI image task submission timed out\.?/gi,"AI概念图任务提交超时，请重新生成。")
           .replace(/AI image generation failed\.?/gi,"AI概念图生成失败，请重新生成。")
+          .replace(/Generated image did not meet the minimum visible-change threshold\.?/gi,"AI概念图结构变化不足，已自动重试；请再次生成。")
           .replace(/Original image was not provided or generation has not started\.?/gi,"未提供原始图片，或图片生成尚未开始。");
       }
       const packageMarkup='<div class="layer film"><small>塑料薄膜</small></div><div class="layer outer-box"><b>示例品牌</b><small>护肤套装 / 30 毫升</small></div><div class="layer tray"><small>PET塑料</small></div><div class="layer bottle">产品</div>';

@@ -177,6 +177,7 @@ class ComponentAction(APIModel):
     from_: str = Field(default="", alias="from", serialization_alias="from")
     to: str = ""
     preserve_shape: bool = False
+    demo_assumption: bool = False
 
 
 class ResizeSpec(APIModel):
@@ -205,6 +206,7 @@ class OptimizationOpportunity(APIModel):
     requires_validation: bool
     estimated: bool
     hypothesis: str
+    demo_assumption: bool = False
 
 
 class RedesignMetrics(APIModel):
@@ -243,6 +245,8 @@ class ChangePlan(APIModel):
     reduce_material_types: bool
     keep_brand_style: bool
     layout_compact: bool
+    demo_mode: bool = False
+    visual_change_score: float = Field(default=0, ge=0, le=1)
 
 
 class AfterRenderSpec(APIModel):

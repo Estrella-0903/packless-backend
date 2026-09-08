@@ -9,6 +9,7 @@ from app.services.material_data_service import build_carbon_data
 from app.services.packaging_estimator import estimate_packaging, components, layer_component_names, validate_estimation_consistency
 from app.services.prompt_builder import build_visual_change_summary
 from app.services.scoring_engine import score_redesign
+from app.services.redesign_config import demo_strong_redesign_enabled
 
 
 ENVIRONMENT_VALUE = {
@@ -23,6 +24,8 @@ OPTION_TITLES = {
     "balanced": "平衡优化方案",
     "low_risk": "低风险改良方案",
 }
+DEMO_PRIORITY = {"R02": 0, "R01": 1, "R03": 2, "R04": 3, "R05": 4}
+DEMO_VISUAL_BONUS = {"R01": 8, "R02": 10, "R03": 8, "R04": 5, "R05": 0}
 
 
 def _extract_analysis(payload: dict[str, Any]) -> dict[str, Any]:
@@ -38,6 +41,37 @@ def _risk_rank(value: str) -> int:
 def _select_opportunities(
     profile: str, opportunities: list[OptimizationOpportunity]
 ) -> list[OptimizationOpportunity]:
+    if demo_strong_redesign_enabled():
+        ranked = sorted(
+            opportunities,
+            key=lambda item: (
+                DEMO_PRIORITY.get(item.rule_id, 99),
+                -int(item.visual_impact == "high"),
+                -item.confidence,
+            ),
+        )
+        # One concrete action per rule keeps the visual plan legible and avoids
+        # stacking competing changes on several ambiguous components.
+        best_by_rule: list[OptimizationOpportunity] = []
+        seen_rules: set[str] = set()
+        for item in ranked:
+            if item.rule_id not in seen_rules:
+                best_by_rule.append(item)
+                seen_rules.add(item.rule_id)
+        if profile == "aggressive":
+            structural = [item for item in best_by_rule if item.rule_id in {"R01", "R02", "R03", "R04"}]
+            selected = structural[:4]
+            if len(selected) < 4:
+                selected.extend(item for item in best_by_rule if item.rule_id == "R05")
+            return selected[:4]
+        if profile == "balanced":
+            structural = [item for item in best_by_rule if item.rule_id in {"R01", "R02", "R03", "R04"}]
+            selected = structural[:2]
+            if len(selected) < 3:
+                selected.extend(item for item in best_by_rule if item.rule_id == "R05")
+            return selected[:3]
+        return [item for item in best_by_rule if item.rule_id == "R05"][:1]
+
     if profile == "aggressive":
         return list(opportunities)
 
@@ -79,6 +113,17 @@ def _score(profile: str, selected: list[OptimizationOpportunity], estimates: dic
         estimates["before"]["packaging_state"], estimates["after"]["packaging_state"], selected, plan
     )
     rule_ids = list(dict.fromkeys(item.rule_id for item in selected))
+    if demo_strong_redesign_enabled():
+        # Bonuses affect only recommendation ranking. Keep underlying environment,
+        # business and supply-chain scores fully auditable and unchanged.
+        visual_bonus = max((DEMO_VISUAL_BONUS.get(rule_id, 0) for rule_id in rule_ids), default=0)
+        meaningful_bonus = 10 if scores["meaningful_improvement"] else 0
+        scores["overall_score"] = round(min(100, scores["overall_score"] + visual_bonus + meaningful_bonus), 1)
+        scores["score_breakdown"]["demo_recommendation_bonus"] = {
+            "visual_effect": visual_bonus,
+            "meaningful_change": meaningful_bonus,
+            "mode": "demo_strong",
+        }
     if rule_ids:
         summary = (
             f"按{OPTION_TITLES[profile]}的风险偏好采用规则 "
@@ -109,6 +154,10 @@ def _score(profile: str, selected: list[OptimizationOpportunity], estimates: dic
 
 
 def _recommended_option(options: list[RedesignOption]) -> RedesignOption:
+    if demo_strong_redesign_enabled():
+        structural = [item for item in options if set(item.selected_rule_ids) & {"R01", "R02", "R03", "R04"}]
+        if structural:
+            options = structural
     meaningful = [item for item in options if item.meaningful_improvement]
     ranked = sorted(meaningful or options, key=lambda item: item.overall_score, reverse=True)
     if len(ranked) == 1:
@@ -155,6 +204,10 @@ def _change_plan(analysis, selected):
     reduce_layers = bool(removed_layers and layers is not None and target_layers < layers)
     scale = resize["scale"] if resize else 1
     strength = "high" if any(o.visual_impact == "high" for o in selected) else "medium" if any(o.visual_impact == "medium" for o in selected) else "low"
+    structural_rules = {o.rule_id for o in selected} & {"R01", "R02", "R03", "R04"}
+    visual_change_score = min(0.95, max(({"R01": .72, "R02": .82, "R03": .76, "R04": .64}.get(rule, 0)
+                                        for rule in structural_rules), default=.15)
+                              + max(0, len(structural_rules)-1) * .06)
     result = {
         "component_actions": component_actions, "remove_components": remove,
         "merge_components": merge, "reduce_layers": reduce_layers, "target_layer_count": target_layers,
@@ -169,6 +222,8 @@ def _change_plan(analysis, selected):
         "reduce_material_types": bool(merge), "keep_brand_style": True, "layout_compact": bool(resize),
         "visual_change_strength": strength,
         "visual_change_note": "本方案以材料来源优化为主，结构变化较小。" if strength == "low" else "",
+        "demo_mode": demo_strong_redesign_enabled(),
+        "visual_change_score": round(visual_change_score, 2),
     }
     result["visual_change_summary"] = build_visual_change_summary(result)
     return result
@@ -197,6 +252,15 @@ def create_redesign_plan(payload: dict[str, Any]) -> RedesignData:
     safe_opportunities = [o for o in engine.opportunities if not violates_hard_constraints([o], engine.functional_checks, engine.hard_constraints)]
     for profile in ("aggressive", "balanced", "low_risk"):
         selected = _compatible_opportunities(_select_opportunities(profile, safe_opportunities))
+        if demo_strong_redesign_enabled() and profile == "aggressive" and len(selected) < 3:
+            for candidate in sorted(safe_opportunities, key=lambda item: DEMO_PRIORITY.get(item.rule_id, 99)):
+                if candidate.rule_id in {item.rule_id for item in selected}:
+                    continue
+                expanded = _compatible_opportunities([*selected, candidate])
+                if len(expanded) > len(selected):
+                    selected = expanded
+                if len(selected) >= 3:
+                    break
         selected_by_profile[profile] = selected
         candidate_plan = _change_plan(analysis, selected)
         candidate_estimates = estimate_packaging(analysis, engine.functional_checks, selected, candidate_plan)
