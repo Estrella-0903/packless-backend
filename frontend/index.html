@@ -1118,11 +1118,11 @@
       });
 
       heroSteps.forEach(link=>link.addEventListener("click",event=>{
-        if(!net.classList.contains("ready")){event.preventDefault();return}
         const selector=link.getAttribute("href");
-        if(selector==="#checkup")return;
         const advanced=selector==="#prescription"||selector==="#impact";
         if(advanced&&!guardAdvancedStep(event,link))return;
+        if(!net.classList.contains("ready")){event.preventDefault();return}
+        if(selector==="#checkup")return;
         event.preventDefault();
         const target=document.querySelector(selector);
         const complete=results.classList.contains("active")&&!resultFlow.hidden;

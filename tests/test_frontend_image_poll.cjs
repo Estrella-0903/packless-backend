@@ -52,6 +52,8 @@ async function run(states){
   assert(!canAccess({pendingFile:{name:'package.png'},latestAnalysisResult:{success:false}}),'failed analysis must remain locked');
   assert(canAccess({pendingFile:{name:'package.png'},latestAnalysisResult:{success:true,data:{analysis_id:'test'}}}),'successful upload analysis must unlock advanced steps');
   assert(!replay.includes('latestAnalysisResult=null'),'replay must preserve advanced-step access');
+  const heroClick=html.slice(html.indexOf('heroSteps.forEach(link=>link.addEventListener'),html.indexOf('document.getElementById("restartButton")'));
+  assert(heroClick.indexOf('guardAdvancedStep(event,link)')<heroClick.indexOf('!net.classList.contains("ready")'),'03/04 guard must run even while the opening animation is active');
   assert(html.includes('animateComparison(100,50)'));
   const environment=renderScoreFixture('environment',{
     no_improvement_penalty:15,baseline_adjustment:4.5,
