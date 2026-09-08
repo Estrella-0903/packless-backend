@@ -11,6 +11,18 @@ function canAccess({sourceMode='upload',pendingFile=null,latestAnalysisResult=nu
   vm.runInContext(accessGuard,context);
   return vm.runInContext('canAccessAdvancedSteps()',context);
 }
+function renderScoreFixture(kind,data,score){
+  const panel={innerHTML:''};
+  const context=vm.createContext({
+    document:{getElementById(id){assert.equal(id,'scoreDetails');return panel}},
+    activeAnalysis:{scores:{[kind]:score},scoreBreakdown:{[kind]:data}},
+    Number,String,Array,Math
+  });
+  const source=html.slice(html.indexOf('function renderScoreBreakdown('),html.indexOf('function animateNumber('));
+  vm.runInContext(source,context);
+  vm.runInContext(`renderScoreBreakdown(${JSON.stringify(kind)})`,context);
+  return panel.innerHTML;
+}
 async function run(states){
   const calls=[];
   const context=vm.createContext({
@@ -41,5 +53,16 @@ async function run(states){
   assert(canAccess({pendingFile:{name:'package.png'},latestAnalysisResult:{success:true,data:{analysis_id:'test'}}}),'successful upload analysis must unlock advanced steps');
   assert(!replay.includes('latestAnalysisResult=null'),'replay must preserve advanced-step access');
   assert(html.includes('animateComparison(100,50)'));
-  console.log('Frontend polling and step guard: success, failure, timeout, access states, replay and syntax checks passed.');
+  const environment=renderScoreFixture('environment',{
+    no_improvement_penalty:15,baseline_adjustment:4.5,
+    items:[{title:'碳排改善',score:50,weight_percent:30,points:15,max_points:30,explanation:'参考碳排预计减少 5%。',source:'DEFRA 2024',requires_validation:true}]
+  },45);
+  assert.match(environment,/有效改善校正/);
+  assert.match(environment,/−15/);
+  assert.match(environment,/保守展示基线/);
+  assert.match(environment,/建议工程验证/);
+  const business=renderScoreFixture('business',{speculative_structural_penalty:12,items:[]},70);
+  assert.match(business,/低置信度结构动作/);
+  assert.match(business,/−12/);
+  console.log('Frontend polling, step guard, score breakdown, replay and syntax checks passed.');
 })().catch(error=>{console.error(error);process.exitCode=1});

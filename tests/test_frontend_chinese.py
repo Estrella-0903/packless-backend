@@ -63,6 +63,23 @@ def test_score_breakdown_uses_structured_product_ui():
     assert "待实测 → 待实测" not in HTML
     assert "暂无法估算" in HTML
     assert "carbon-values" in HTML
+    assert "score-adjustments" in HTML
+    assert "有效改善校正" in HTML
+    assert "低置信度结构动作" in HTML
+    assert "保守展示基线" in HTML
+    assert "该校正不是额外环境收益" in HTML
+    assert "包装减量25% · 塑料减量20% · 碳排改善30%" in HTML
+
+
+def test_carbon_display_discloses_proxy_method_and_validation():
+    assert "activeAnalysis.carbonData=data.carbon_data||null" in HTML
+    assert "estimated_total_co2e_kg" in HTML
+    assert "AI材料质量估算" in HTML
+    assert "DEFRA 2024参考因子" in HTML
+    assert "材料质量（千克）× 对应排放因子" in HTML
+    assert "不是实测碳排或完整生命周期评价" in HTML
+    assert "不展示未经依据的减排百分比" in HTML
+    assert "需工程验证" in HTML
 
 
 def test_advanced_home_steps_require_a_successful_upload_analysis():
