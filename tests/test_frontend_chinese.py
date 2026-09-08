@@ -94,3 +94,26 @@ def test_advanced_home_steps_require_a_successful_upload_analysis():
     assert 'event.key==="Escape"&&!uploadRequiredModal.hidden' in HTML
     assert 'if(event.target===uploadRequiredModal)closeUploadRequiredModal()' in HTML
     assert "latestAnalysisResult=null;\n        window.latestAnalysisResult=null;" in HTML
+
+
+def test_scanner_uses_staged_eight_second_diagnostic_timeline():
+    for marker in (
+        'schedule(()=>workbenchCanvas.classList.add("scan-locate","timeline-scan"),500)',
+        '"scan-outline-active"',
+        '"scan-components-active"',
+        'showMaterialClue(0)},2600)',
+        'schedule(()=>showMaterialClue(1),3000)',
+        'schedule(()=>showMaterialClue(2),3400)',
+        'schedule(()=>scanner.classList.add("uncertainty-intro"),5300)',
+        'schedule(()=>scanner.classList.add("confidence-visible"),6000)',
+        '},8200)',
+        '},8600)',
+    ):
+        assert marker in HTML
+    assert "stroke-dasharray" in HTML
+    assert "outlineDraw" in HTML
+    assert "designerScan 2.5s linear" in HTML
+    assert "analysisProgress 8.2s" in HTML
+    assert "cubic-bezier(.22,1,.36,1)" in HTML
+    assert 'id="analysisReplayButton"' in HTML
+    assert "查看诊断结果" in HTML

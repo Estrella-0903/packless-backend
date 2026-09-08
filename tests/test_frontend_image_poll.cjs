@@ -47,6 +47,9 @@ async function run(states){
   await assert.rejects(result.promise,/未返回优化图片/);
   const replay=html.slice(html.indexOf('function startAnalysis()'),html.indexOf('fileInput.addEventListener'));
   assert(!replay.includes('requestRedesign('),'replay must never resubmit Wan');
+  assert.match(replay,/analysisReplayButton\.addEventListener\("click",startAnalysis\)/,'scanner replay must use the UI-only timeline');
+  assert.match(replay,/},8200\)/,'scanner must finish at about 8.2 seconds');
+  assert.match(replay,/},8600\)/,'view-result interaction must become available before 9 seconds');
   assert(!canAccess(),'first visit must remain locked');
   assert(!canAccess({pendingFile:{name:'package.png'}}),'selected file without analysis must remain locked');
   assert(!canAccess({pendingFile:{name:'package.png'},latestAnalysisResult:{success:false}}),'failed analysis must remain locked');

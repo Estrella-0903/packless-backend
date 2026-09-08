@@ -112,7 +112,7 @@
     .scan-corner{position:absolute;font-size:7px;font-weight:850;letter-spacing:.12em}.scan-corner.tl{left:18px;top:17px}.scan-corner.br{right:18px;bottom:17px}
     .annotation{position:absolute;z-index:12;display:flex;align-items:flex-start;opacity:0;transform:scale(.92);transition:.35s}.annotation .line{width:95px;border-top:1px solid var(--accent);margin-top:7px;position:relative}.annotation .line:before{content:"";position:absolute;width:7px;height:7px;border:1px solid var(--accent);border-radius:50%;left:-4px;top:-4px;background:var(--paper)}.annotation .label{border-left:3px solid var(--accent);background:var(--paper);padding:7px 10px;display:grid;min-width:120px;box-shadow:2px 3px 0 rgba(23,25,20,.12)}.annotation strong{font-size:11px}.annotation span{font-size:8px;color:var(--muted)}.annotation small{font-size:7px;margin-top:4px}.a1{left:17%;top:17%}.a2{right:7%;top:26%;flex-direction:row-reverse}.a3{left:11%;bottom:23%}.a4{right:8%;bottom:16%;flex-direction:row-reverse}.a2 .label,.a4 .label{border-left:0;border-right:3px solid var(--accent);text-align:right}
     .scan-done .scan-line{opacity:0}.scan-done .status i{animation:none}.scan-done .annotation{opacity:1;transform:scale(1)}.scan-done .a2{transition-delay:.12s}.scan-done .a3{transition-delay:.24s}.scan-done .a4{transition-delay:.36s}
-    .uncertainty{padding:85px 32px 28px;background:var(--paper);position:relative}.sticker{position:absolute;top:22px;left:68px;background:var(--accent);padding:9px 19px;font-size:7px;font-weight:850;letter-spacing:.14em;transform:rotate(-2deg)}.uncertainty h3{font-size:32px;line-height:1.07;letter-spacing:-.06em;margin:30px 0 17px}.uncertainty p{font-size:12px;line-height:1.65;color:var(--muted)}.confidence{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;margin-top:70px;font-size:7px;font-weight:850}.confidence i{height:6px;background:linear-gradient(90deg,var(--accent),var(--paper-2))}.uncertainty .tiny{border-top:1px solid var(--line);padding-top:13px;margin-top:17px;font-size:9px}
+    .uncertainty{padding:85px 32px 28px;background:var(--paper);position:relative}.sticker{position:absolute;top:22px;left:68px;background:var(--accent);padding:9px 19px;font-size:7px;font-weight:850;letter-spacing:.14em;transform:rotate(-2deg)}.uncertainty h3{font-size:32px;line-height:1.07;letter-spacing:-.06em;margin:30px 0 17px}.uncertainty p{font-size:12px;line-height:1.65;color:var(--muted)}.confidence{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;margin-top:70px;font-size:7px;font-weight:850}.confidence i{position:relative;height:1px;background:var(--line);overflow:visible}.confidence i b{position:absolute;inset:0;border:0;background:none;transform:translateX(-100%)}.confidence i b:after{content:"";position:absolute;right:-3px;top:-3px;width:7px;height:7px;border:1px solid var(--accent);border-radius:50%;background:var(--paper)}.uncertainty .tiny{border-top:1px solid var(--line);padding-top:13px;margin-top:17px;font-size:9px}
 
     /* Diagnosis */
     .report{border:1px solid var(--ink);background:rgba(243,239,228,.95)}.report-line{height:58px;padding:0 20px;border-bottom:1px solid;display:grid;grid-template-columns:1fr 1fr auto;align-items:center;font-size:7px;font-weight:850;letter-spacing:.12em}.stamp{border:2px solid var(--accent);color:var(--accent);padding:5px 10px;transform:rotate(-4deg);font-size:10px}
@@ -160,14 +160,15 @@
     .workbench-canvas:after{content:"";position:absolute;inset:9%;border:1px dashed var(--line);border-radius:48%;pointer-events:none}.workbench-canvas>.original-visual{position:absolute;inset:5%;z-index:2;transition:opacity .5s,transform .65s}.workbench-canvas .package{position:absolute;left:50%;top:50%;translate:-50% -50%;transform:scale(.92)}
     .original-visual{display:grid;place-items:center;min-width:0;min-height:0}.original-visual>.package{margin:auto}.user-photo{position:relative;width:min(90%,560px);height:min(88%,580px);display:grid;place-items:center;background:#d6ddd5;border:1px solid var(--ink);padding:12px;box-shadow:14px 15px 0 rgba(23,53,40,.12)}.user-photo img{display:block;width:100%;height:100%;object-fit:contain}.user-photo span{position:absolute;left:18px;bottom:17px;background:var(--paper);padding:7px 9px;font-size:7px;font-weight:850;letter-spacing:.13em}.user-photo:after{content:"";position:absolute;inset:21px;border:1px dashed rgba(243,240,230,.65);pointer-events:none}
     .prototype-diagnosis{position:absolute;z-index:12;left:16px;bottom:14px;background:var(--ink);color:var(--paper);padding:7px 9px;font-size:7px;font-weight:850;letter-spacing:.12em}
-    .contour-frame{position:absolute;z-index:8;inset:14%;opacity:0;transition:opacity .35s}.contour-frame i{position:absolute;width:36px;height:36px;border-color:var(--accent)}.contour-frame i:nth-child(1){left:0;top:0;border-left:2px solid;border-top:2px solid}.contour-frame i:nth-child(2){right:0;top:0;border-right:2px solid;border-top:2px solid}.contour-frame i:nth-child(3){right:0;bottom:0;border-right:2px solid;border-bottom:2px solid}.contour-frame i:nth-child(4){left:0;bottom:0;border-left:2px solid;border-bottom:2px solid}.phase-structure .contour-frame,.phase-material .contour-frame,.phase-reduction .contour-frame,.phase-complete .contour-frame{opacity:1}
-    .workbench-scan-line{position:absolute;z-index:9;left:8%;right:8%;top:12%;height:1px;background:var(--accent);box-shadow:0 0 9px rgba(40,115,74,.32);opacity:0}.phase-structure .workbench-scan-line,.phase-material .workbench-scan-line,.phase-reduction .workbench-scan-line{opacity:1;animation:designerScan 1.7s infinite ease-in-out}@keyframes designerScan{50%{top:86%}}
-    .material-clues{position:absolute;z-index:11;inset:0;pointer-events:none}.material-clues span{position:absolute;background:var(--paper);border-left:3px solid var(--accent);padding:8px 10px;font-size:9px;font-weight:740;opacity:0;transform:translateY(8px);transition:.3s}.material-clues b{color:var(--accent);margin-left:7px}.material-clues span:nth-child(1){left:8%;top:18%}.material-clues span:nth-child(2){right:7%;top:40%}.material-clues span:nth-child(3){left:12%;bottom:17%}.phase-material .material-clues span,.phase-reduction .material-clues span,.phase-complete .material-clues span{opacity:1;transform:none}.phase-material .material-clues span:nth-child(2){transition-delay:.2s}.phase-material .material-clues span:nth-child(3){transition-delay:.4s}
-    .workbench-problems{position:absolute;z-index:10;inset:0;opacity:0;transition:opacity .35s}.phase-reduction .workbench-problems,.phase-complete .workbench-problems,.workbench-canvas[data-stage="diagnosis"] .workbench-problems{opacity:1}.wb-circle{position:absolute;border:2px solid var(--warning);border-radius:50%;transform:rotate(-8deg)}.wc1{width:42%;height:51%;left:29%;top:21%}.wc2{width:50%;height:15%;left:25%;bottom:12%}.wb-note{position:absolute;background:var(--warning);color:var(--paper);padding:7px 9px;font-size:7px;font-weight:850;letter-spacing:.11em}.wn1{right:7%;bottom:17%;transform:rotate(-3deg)}.wn2{left:7%;top:18%;transform:rotate(2deg)}
+    .contour-frame{position:absolute;z-index:8;inset:14%;opacity:0;transition:opacity .55s cubic-bezier(.22,1,.36,1)}.contour-frame i{position:absolute;width:36px;height:36px;border-color:var(--accent);opacity:0;transition:opacity .45s cubic-bezier(.22,1,.36,1),transform .65s cubic-bezier(.22,1,.36,1)}.contour-frame i:nth-child(1){left:0;top:0;border-left:2px solid;border-top:2px solid;transform:translate(-4px,-4px)}.contour-frame i:nth-child(2){right:0;top:0;border-right:2px solid;border-top:2px solid;transform:translate(4px,-4px)}.contour-frame i:nth-child(3){right:0;bottom:0;border-right:2px solid;border-bottom:2px solid;transform:translate(4px,4px)}.contour-frame i:nth-child(4){left:0;bottom:0;border-left:2px solid;border-bottom:2px solid;transform:translate(-4px,4px)}.scan-locate .contour-frame{opacity:1}.scan-locate .contour-frame i{opacity:1;transform:none}
+    .scan-outline{position:absolute;z-index:7;inset:12%;width:76%;height:76%;pointer-events:none;fill:none;stroke:var(--accent);stroke-width:1.2;vector-effect:non-scaling-stroke}.scan-outline path,.scan-outline rect{stroke-dasharray:420;stroke-dashoffset:420}.scan-outline .outline-outer{stroke-dasharray:760;stroke-dashoffset:760}.scan-outline .outline-tray{stroke-dasharray:520;stroke-dashoffset:520}.scan-outline .outline-component{stroke-dasharray:360;stroke-dashoffset:360}.scan-outline-active .outline-outer{animation:outlineDraw 1.15s cubic-bezier(.22,1,.36,1) forwards}.scan-components-active .outline-tray{animation:outlineDraw .95s cubic-bezier(.22,1,.36,1) forwards}.scan-components-active .outline-component{animation:outlineDraw .75s .32s cubic-bezier(.22,1,.36,1) forwards}@keyframes outlineDraw{to{stroke-dashoffset:0}}
+    .workbench-scan-line{position:absolute;z-index:9;left:8%;right:8%;top:12%;bottom:12%;height:auto;opacity:0;pointer-events:none;border-top:1px solid var(--accent);will-change:transform}.timeline-scan .workbench-scan-line{opacity:.82;animation:designerScan 2.5s linear infinite}@keyframes designerScan{0%{transform:translateY(0)}88%,100%{transform:translateY(100%)}}
+    .material-clues{position:absolute;z-index:11;inset:0;pointer-events:none}.material-clue{position:absolute;min-width:150px;background:var(--paper);border-left:3px solid var(--accent);padding:8px 10px;display:grid;grid-template-columns:1fr auto;gap:2px 9px;opacity:0;transform:translateY(6px);transition:opacity .38s cubic-bezier(.22,1,.36,1),transform .38s cubic-bezier(.22,1,.36,1)}.material-clue:nth-child(1){left:8%;top:18%}.material-clue:nth-child(2){right:7%;top:40%}.material-clue:nth-child(3){left:12%;bottom:17%}.material-clue.is-visible{opacity:1;transform:none}.material-clue em{grid-column:1/-1;font-size:6px;font-style:normal;color:var(--muted);letter-spacing:.08em}.material-clue strong{font-size:9px;opacity:.42}.material-clue b{color:var(--accent);font-size:10px}.material-clue small{grid-column:1/-1;font-size:6px;color:var(--muted);opacity:0}.material-clue .uncertain-mark{font-style:normal;opacity:0;transition:opacity .15s}.material-clue.is-preliminary strong{opacity:.72}.material-clue.is-final strong,.material-clue.is-final small,.material-clue.is-final .uncertain-mark{opacity:1}.material-clue.is-final em{display:none}
+    .workbench-problems{position:absolute;z-index:10;inset:0;opacity:0;transition:opacity .5s cubic-bezier(.22,1,.36,1)}.timeline-issues .workbench-problems,.phase-complete .workbench-problems,.workbench-canvas[data-stage="diagnosis"] .workbench-problems{opacity:1}.wb-circle{position:absolute;border:2px solid var(--warning);border-radius:50%;transform:rotate(-8deg) scale(.94);transition:transform .55s cubic-bezier(.22,1,.36,1)}.timeline-issues .wb-circle{transform:rotate(-8deg) scale(1)}.wc1{width:42%;height:51%;left:29%;top:21%}.wc2{width:50%;height:15%;left:25%;bottom:12%}.wb-note{position:absolute;background:var(--warning);color:var(--paper);padding:7px 9px;font-size:7px;font-weight:850;letter-spacing:.11em}.wn1{right:7%;bottom:17%;transform:rotate(-3deg)}.wn2{left:7%;top:18%;transform:rotate(2deg)}
     .workbench-redesign{position:absolute;z-index:15;inset:0;display:grid;place-items:center;background:rgba(221,233,213,.93);opacity:0;pointer-events:none;transition:opacity .55s}.workbench-canvas[data-stage="redesign"] .workbench-redesign{opacity:1}.workbench-redesign .package{transform:scale(.82)}.concept-label{font-size:7px!important;font-weight:850!important;letter-spacing:.12em!important;text-transform:uppercase}.workbench-redesign>.concept-label{position:absolute;left:15px;top:14px;background:var(--accent);color:var(--paper);padding:7px 9px}
-    .scan-stages{list-style:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}.scan-stages li{display:grid;grid-template-columns:25px 1fr;gap:5px;padding:13px 8px 0;opacity:.35;transition:opacity .2s,color .2s}.scan-stages li+li{border-left:1px solid var(--hair)}.scan-stages li.active{opacity:1;color:var(--accent)}.scan-stages li.done{opacity:.8;color:var(--accent)}.scan-stages b{font:14px Georgia,serif}.scan-stages span{font-size:7px;font-weight:850;letter-spacing:.11em}.scan-stages small{display:block;color:var(--muted);font-size:7px;line-height:1.35;letter-spacing:0;margin-top:4px}
+    .scan-stages{list-style:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}.scan-stages li{display:grid;grid-template-columns:30px 1fr;gap:5px;padding:13px 8px 0;opacity:.35;transition:opacity .35s cubic-bezier(.22,1,.36,1),color .35s cubic-bezier(.22,1,.36,1)}.scan-stages li+li{border-left:1px solid var(--hair)}.scan-stages li.active{opacity:1;color:var(--accent)}.scan-stages li.done{opacity:.82;color:var(--accent)}.scan-stages b{font:14px Georgia,serif}.scan-stages span{font-size:7px;font-weight:850;letter-spacing:.11em}.scan-stages small{display:block;color:var(--muted);font-size:7px;line-height:1.35;letter-spacing:0;margin-top:4px}
     .workbench-content{min-width:0;background:var(--paper)}.workbench-content>.section,.workbench-content #resultFlow>.section{width:100%;padding:105px 4vw;border-bottom:1px solid var(--line)}.workbench-content .section-heading{margin-bottom:38px}.workbench-content .section-heading h2{font-size:clamp(48px,5vw,66px)}
-    .workbench-content .scan-view{display:none}.workbench-content .scanner-layout{display:block;min-height:0;border:0;background:transparent}.workbench-content .uncertainty{padding:70px 0 0;background:transparent}.workbench-content .sticker{left:0;top:12px;background:var(--sage);color:var(--ink)}.workbench-content .uncertainty h3{font-size:34px}.workbench-content .confidence{margin-top:38px}.confidence-notes{display:grid;margin-top:17px;border-top:1px solid var(--line)}.confidence-notes span{padding:9px 0;border-bottom:1px solid var(--hair);font-size:8px;color:var(--muted)}.confidence-notes b{display:inline-block;min-width:116px;color:var(--accent);font-size:7px;letter-spacing:.1em}.confidence-notes span:last-child b{color:var(--warning)}
+    .workbench-content .scan-view{display:none}.workbench-content .scanner-layout{display:block;min-height:0;border:0;background:transparent}.workbench-content .uncertainty{padding:70px 0 0;background:transparent}.workbench-content .sticker{left:0;top:12px;background:var(--sage);color:var(--ink)}.workbench-content .uncertainty h3{font-size:34px}.workbench-content .confidence{margin-top:38px}.uncertainty .sticker,.uncertainty h3,.uncertainty>p:not(.tiny),.uncertainty .confidence,.uncertainty .confidence-notes,.uncertainty .tiny{opacity:0;transform:translateY(7px);transition:opacity .45s cubic-bezier(.22,1,.36,1),transform .45s cubic-bezier(.22,1,.36,1)}.uncertainty-intro .sticker,.uncertainty-title .sticker,.uncertainty-copy .sticker,.confidence-visible .sticker{opacity:1;transform:rotate(-2deg)}.uncertainty-title h3,.uncertainty-copy h3,.confidence-visible h3{opacity:1;transform:none}.uncertainty-copy .uncertainty>p:not(.tiny),.confidence-visible .uncertainty>p:not(.tiny){opacity:1;transform:none}.confidence-visible .confidence,.confidence-visible .confidence-notes,.confidence-visible .tiny{opacity:1;transform:none}.confidence-visible .confidence i b{animation:confidenceProbe .8s cubic-bezier(.22,1,.36,1) forwards}@keyframes confidenceProbe{from{transform:translateX(-100%)}to{transform:translateX(-78%)}}.confidence-notes{display:grid;margin-top:17px;border-top:1px solid var(--line)}.confidence-notes span{padding:9px 0;border-bottom:1px solid var(--hair);font-size:8px;color:var(--muted);opacity:0;transform:translateY(6px);transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .35s cubic-bezier(.22,1,.36,1)}.confidence-visible .confidence-notes span{opacity:1;transform:none}.confidence-visible .confidence-notes span:nth-child(2){transition-delay:.18s}.confidence-visible .confidence-notes span:nth-child(3){transition-delay:.36s}.confidence-notes b{display:inline-block;min-width:116px;color:var(--accent);font-size:7px;letter-spacing:.1em}.confidence-notes span:last-child b{color:var(--warning)}
     .workbench-content .report{border:0;background:transparent}.workbench-content .report-line{grid-template-columns:1fr auto;height:50px;padding:0;border-top:1px solid}.workbench-content .report-line span:nth-child(2){display:none}.workbench-content .metrics{grid-template-columns:1fr 1fr;border:1px solid}.workbench-content .metric{min-height:170px}.workbench-content .metric:nth-child(even){border-right:0}.workbench-content .metric:nth-child(-n+2){border-bottom:1px solid}.workbench-content .metric strong{font-size:clamp(38px,4vw,58px)}.workbench-content .report-body{display:block}.workbench-content .critique{display:none}.workbench-content .findings{padding:42px 0 0}
     .workbench-content .surgery{min-height:610px;background:transparent}.workbench-content .surgery-layers{display:block;left:52%;top:35%;width:44%;height:150px;transform:none;border:1px dashed var(--line);overflow:hidden}.workbench-content .surgery-layers:before{content:"优化前";position:absolute;z-index:8;left:9px;top:8px;background:var(--paper);padding:5px 7px;font-size:6px;font-weight:850;letter-spacing:.11em}.workbench-content .surgery-layers .original-visual{width:100%;height:100%}.workbench-content .surgery-layers .package{left:50%;top:50%;translate:-50% -50%;transform:scale(.34)}.workbench-content .surgery-layers .user-photo{width:100%;height:100%;border:0;box-shadow:none;padding:6px}.workbench-content .surgery-layers .user-photo span{display:none}.workbench-content .operation{width:42%}.workbench-content .op-remove{left:6%;top:18%}.workbench-content .op-resize{left:52%;top:18%}.workbench-content .op-replace{left:6%;top:42%;bottom:auto}.workbench-content .surgery-result{width:44%;height:235px;right:4%;top:auto;bottom:7%;translate:0}.workbench-content .surgery-result .package{transform:scale(.4)}.workbench-content .surgery.in-view .surgery-result .package{transform:scale(.44)}.op-remove b,.finding b,.circle,.hand{color:var(--warning)}.op-remove b{color:var(--warning)}.op-remove{border-color:var(--warning)}.circle{border-color:var(--warning)}.hand{color:var(--warning)}.stamp{border-color:var(--warning);color:var(--warning)}
     .upload-mode .demo-before-net{display:none}
@@ -176,7 +177,7 @@
     .edu button:hover{background:var(--sage);border-color:var(--accent);transform:translateY(-2px) scale(1.025)}.edu button:active{transform:scale(.98)}.method-toggle:hover{color:#80c99b;padding-left:4px;padding-right:4px}.method-toggle:active{transform:scale(.99)}
 
     /* Version 0.3 — automated packaging surgery */
-    .analysis-controls{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:18px}.analysis-progress{height:3px;background:var(--hair);overflow:hidden}.analysis-progress i{display:block;width:100%;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform 8.8s linear}.analysis-controls.playing .analysis-progress i{transform:scaleX(1)}.analysis-play{min-width:148px;min-height:44px}.analysis-play:disabled{cursor:progress;opacity:.72;transform:none;box-shadow:none}.analysis-hint{grid-column:1/-1;margin:0;color:var(--muted);font-size:7px;letter-spacing:.08em;text-align:right}
+    .analysis-controls{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:18px}.analysis-progress{height:3px;background:var(--hair);overflow:hidden}.analysis-progress i{display:block;width:100%;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}.analysis-controls.playing .analysis-progress i{animation:analysisProgress 8.2s forwards}@keyframes analysisProgress{0%,4%{transform:scaleX(0);animation-timing-function:cubic-bezier(.22,1,.36,1)}34%{transform:scaleX(.35)}36%{transform:scaleX(.35);animation-timing-function:cubic-bezier(.22,1,.36,1)}68%{transform:scaleX(.7)}70%{transform:scaleX(.7);animation-timing-function:cubic-bezier(.22,1,.36,1)}100%{transform:scaleX(1)}}.analysis-actions{display:flex;align-items:center;gap:9px}.analysis-play{min-width:162px;min-height:44px}.analysis-play:disabled{cursor:progress;opacity:.78;transform:none;box-shadow:none}.analysis-running{display:inline-flex;align-items:center;gap:8px}.analysis-running b{font-size:8px;letter-spacing:.1em}.analysis-dots{display:inline-flex;gap:2px}.analysis-dots i{width:3px;height:3px;border-radius:50%;background:currentColor;animation:analysisDot 1.05s infinite}.analysis-dots i:nth-child(2){animation-delay:.16s}.analysis-dots i:nth-child(3){animation-delay:.32s}@keyframes analysisDot{0%,60%,100%{opacity:.24;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}.analysis-replay{border:0;border-bottom:1px solid;background:transparent;padding:7px 0;color:var(--ink);font-size:8px;font-weight:800;cursor:pointer}.analysis-replay[hidden]{display:none}.analysis-hint{grid-column:1/-1;margin:0;color:var(--muted);font-size:7px;letter-spacing:.08em;text-align:right}
     .scan-mode-label{position:absolute;z-index:13;left:16px;top:14px;border-left:3px solid var(--accent);background:var(--paper);padding:7px 10px;font-size:8px;font-weight:850;letter-spacing:.15em;opacity:0;transform:translateY(8px);transition:.3s}.timeline-scan .scan-mode-label,.timeline-identify .scan-mode-label,.timeline-issues .scan-mode-label{opacity:1;transform:none}
     .timeline-enter>.original-visual{animation:packageArrival .55s cubic-bezier(.22,1,.36,1) both}@keyframes packageArrival{from{opacity:0;transform:translateX(-11%) scale(.9)}to{opacity:1;transform:none}}
     .timeline-identify .material-clues span,.timeline-issues .material-clues span{opacity:1;transform:none}.timeline-identify .material-clues span:nth-child(2){transition-delay:.35s}.timeline-identify .material-clues span:nth-child(3){transition-delay:.7s}
@@ -280,9 +281,10 @@
             <div class="workbench-canvas" id="workbenchCanvas" data-stage="scan">
               <div class="original-visual" data-original></div>
               <div class="contour-frame"><i></i><i></i><i></i><i></i></div>
+              <svg class="scan-outline" viewBox="0 0 300 360" aria-hidden="true"><rect class="outline-outer" x="45" y="25" width="210" height="310" rx="5"></rect><rect class="outline-tray" x="72" y="62" width="156" height="235" rx="18"></rect><path class="outline-component" d="M126 119h48v25c13 8 21 24 21 43v70c0 18-10 30-28 30h-34c-18 0-28-12-28-30v-70c0-19 8-35 21-43z"></path></svg>
               <div class="workbench-scan-line"></div>
               <span class="scan-mode-label">AI包装扫描</span>
-              <div class="material-clues"><span>纸板 <b>96%</b></span><span>PET塑料？ <b>82%</b></span><span>塑料薄膜？ <b>89%</b></span></div>
+              <div class="material-clues"><div class="material-clue" data-target="96"><em>正在分析材料…</em><strong>纸板</strong><b>0%</b><small>高置信度</small></div><div class="material-clue" data-target="82"><em>正在分析材料…</em><strong>PET塑料<i class="uncertain-mark">？</i></strong><b>0%</b><small>需确认</small></div><div class="material-clue" data-target="89"><em>正在分析材料…</em><strong>塑料薄膜<i class="uncertain-mark">？</i></strong><b>0%</b><small>需确认</small></div></div>
               <div class="workbench-problems"><i class="wb-circle wc1"></i><i class="wb-circle wc2"></i><div class="issue-stack"><span><b>01</b>包装层级过多</span><span><b>02</b>塑料内托</span><span><b>03</b>空间利用率偏低</span><span><b>04</b>材料种类复杂</span></div></div>
               <div class="workbench-redesign"><div class="package redesign-package" data-package="after"></div><span class="concept-label">AI减量重设计</span></div>
               <span class="prototype-diagnosis" id="prototypeDiagnosis">预设演示诊断</span>
@@ -292,7 +294,7 @@
               <li><b>02</b><span>材料判断<small>正在判断可见材料线索…</small></span></li>
               <li><b>03</b><span>减量分析<small>正在寻找可能的减量空间…</small></span></li>
             </ol>
-            <div class="analysis-controls" id="analysisControls"><div class="analysis-progress" aria-hidden="true"><i></i></div><button class="button button-primary analysis-play" id="analysisPlayButton">开始检测 <span>→</span></button><p class="analysis-hint">约 8.8 秒 · 自动包装减量分析</p></div>
+            <div class="analysis-controls" id="analysisControls"><div class="analysis-progress" aria-hidden="true"><i></i></div><div class="analysis-actions"><button class="button button-primary analysis-play" id="analysisPlayButton">开始检测 <span>→</span></button><button class="analysis-replay" id="analysisReplayButton" type="button" hidden>↻ 重播</button></div><p class="analysis-hint">约 8.6 秒 · 自动包装减量分析</p></div>
           </aside>
           <div class="workbench-content">
         <section class="section scanner-section" id="analysis">
@@ -305,7 +307,7 @@
               <div class="annotation a4"><i class="line"></i><div class="label"><strong>产品容器</strong><span>玻璃或塑料</span><small>需要确认</small></div></div>
               <span class="scan-corner tl">标记–01</span><span class="scan-corner br" id="sampleLabel">演示样本</span>
             </div>
-            <aside class="uncertainty"><span class="sticker">不确定性说明</span><h3>看见，不代表<br>完全确定。</h3><p>照片能告诉我们一部分信息，看不见的材料与结构，需要进一步确认。</p><div class="confidence"><span>高</span><i></i><span>低</span></div><div class="confidence-notes"><span><b>高置信度</b> 纸板</span><span><b>中等置信度</b> PET塑料？</span><span><b>需要确认</b> 产品容器</span></div><p class="tiny">材料判断来自可见特征。置信度不是材料认证。</p></aside>
+            <aside class="uncertainty"><span class="sticker">不确定性说明</span><h3>看见，<br>不代表完全确定。</h3><p>照片能告诉我们一部分信息，看不见的材料与结构，需要进一步确认。</p><div class="confidence"><span>高</span><i><b></b></i><span>低</span></div><div class="confidence-notes"><span><b>高置信度</b> 纸板</span><span><b>中等置信度</b> PET塑料？</span><span><b>需要确认</b> 产品容器</span></div><p class="tiny">材料判断来自可见特征。置信度不是材料认证。</p></aside>
           </div>
         </section>
 
@@ -466,6 +468,7 @@
       const confirmPhotoMarkup=confirmPhoto.innerHTML;
       const analysisControls=document.getElementById("analysisControls");
       const analysisPlayButton=document.getElementById("analysisPlayButton");
+      const analysisReplayButton=document.getElementById("analysisReplayButton");
       const analysisPlayMarkup=analysisPlayButton.innerHTML;
       const optimizationDashboard=document.getElementById("optimizationDashboard");
       const comparison=document.getElementById("comparisonSlider");
@@ -493,6 +496,7 @@
         hasAnimated:false
       };
       let scanTimers=[];
+      let confidenceAnimations=[];
       let journeyObserver;
       let activeAnalysis=JSON.parse(JSON.stringify(demoAnalysis));
       let isPlaying=false;
@@ -573,12 +577,52 @@
 
       function setScanPhase(index,label,phase){
         workbenchCanvas.classList.remove("phase-structure","phase-material","phase-reduction","phase-complete");
-        workbenchCanvas.classList.add(phase);
+        if(phase)workbenchCanvas.classList.add(phase);
         status.querySelector("span").textContent=label;
+        const runningCopy=["正在识别包装轮廓…","正在判断可见材料线索…","正在寻找可能的减量空间…"];
         stageItems.forEach((item,itemIndex)=>{
           item.classList.toggle("active",itemIndex===index);
           item.classList.toggle("done",itemIndex<index||phase==="phase-complete");
+          const done=itemIndex<index||phase==="phase-complete";
+          item.querySelector("b").textContent=`0${itemIndex+1}${done?" ✓":""}`;
+          item.querySelector("small").textContent=done?"已完成":itemIndex===index?runningCopy[itemIndex]:"等待上一阶段完成";
         });
+      }
+
+      function setCanvasPhase(phase){
+        workbenchCanvas.classList.remove("phase-structure","phase-material","phase-reduction","phase-complete");
+        if(phase)workbenchCanvas.classList.add(phase);
+      }
+
+      function animateMaterialConfidence(clue,target,duration=500){
+        const value=clue.querySelector("b");
+        const started=performance.now();
+        const tick=now=>{
+          const progress=clamp((now-started)/duration);
+          const eased=1-Math.pow(1-progress,3);
+          value.textContent=`${Math.round(target*eased)}%`;
+          if(progress<1){
+            const frame=requestAnimationFrame(tick);
+            confidenceAnimations.push(frame);
+          }
+        };
+        const frame=requestAnimationFrame(tick);
+        confidenceAnimations.push(frame);
+      }
+
+      function showMaterialClue(index){
+        const clue=workbenchCanvas.querySelectorAll(".material-clue")[index];
+        if(!clue)return;
+        clue.classList.add("is-visible");
+        schedule(()=>clue.classList.add("is-preliminary"),150);
+        schedule(()=>{
+          clue.classList.add("is-final");
+          animateMaterialConfidence(clue,Number(clue.dataset.target)||0);
+        },300);
+      }
+
+      function setAnalysisButtonStage(stage){
+        analysisPlayButton.innerHTML=`<span class="analysis-running">正在分析 <b>${stage} / 3</b><span class="analysis-dots"><i></i><i></i><i></i></span></span>`;
       }
 
       function schedule(callback,delay){
@@ -935,14 +979,20 @@
         }
       }
 
-      const timelineClasses=["phase-ready","timeline-enter","timeline-scan","timeline-identify","timeline-issues","timeline-redesign","timeline-remove","timeline-replace","timeline-resize","timeline-finished"];
+      const timelineClasses=["phase-ready","timeline-enter","timeline-scan","timeline-identify","timeline-issues","timeline-redesign","timeline-remove","timeline-replace","timeline-resize","timeline-finished","scan-locate","scan-outline-active","scan-components-active"];
       function resetPlaybackUI(){
         scanTimers.forEach(clearTimeout);
         scanTimers=[];
+        confidenceAnimations.forEach(cancelAnimationFrame);
+        confidenceAnimations=[];
         isPlaying=false;
         workbenchCanvas.classList.remove(...timelineClasses,"phase-structure","phase-material","phase-reduction","phase-complete");
         workbenchCanvas.dataset.stage="scan";
-        scanner.classList.remove("scan-done");
+        scanner.classList.remove("scan-done","uncertainty-intro","uncertainty-title","uncertainty-copy","confidence-visible");
+        workbenchCanvas.querySelectorAll(".material-clue").forEach(clue=>{
+          clue.classList.remove("is-visible","is-preliminary","is-final");
+          clue.querySelector("b").textContent="0%";
+        });
         resultFlow.hidden=true;
         postFlow.hidden=true;
         cancelAnimationFrame(comparisonAnimation);
@@ -956,7 +1006,9 @@
         if(redesignTray)redesignTray.textContent="PET塑料";
         analysisControls.classList.remove("playing");
         analysisPlayButton.disabled=false;
+        analysisPlayButton.dataset.action="start";
         analysisPlayButton.innerHTML=analysisPlayMarkup;
+        analysisReplayButton.hidden=true;
         setScanPhase(0,"等待开始检测…","phase-ready");
         renderAnalysisNumbers(false);
       }
@@ -1016,56 +1068,63 @@
         analysisControls.getBoundingClientRect();
         analysisControls.classList.add("playing");
         analysisPlayButton.disabled=true;
-        analysisPlayButton.textContent="正在分析...";
-        workbenchCanvas.classList.add("timeline-enter","timeline-scan");
-        setScanPhase(0,"AI包装扫描","phase-structure");
+        analysisPlayButton.dataset.action="running";
+        setAnalysisButtonStage(1);
+        workbenchCanvas.classList.add("timeline-enter");
+        setScanPhase(0,"AI视觉诊断仪 · 正在定位包装","phase-structure");
         document.getElementById("workbench").scrollIntoView({behavior:scrollBehavior,block:"start"});
-        schedule(()=>{workbenchCanvas.classList.add("timeline-identify");setScanPhase(1,"外包装盒 · 纸板","phase-material")},1200);
-        schedule(()=>{status.querySelector("span").textContent="内托 · PET塑料 / 塑料薄膜"},2100);
-        schedule(()=>{workbenchCanvas.classList.add("timeline-issues");setScanPhase(2,"正在标记四项减量问题…","phase-reduction")},2800);
+        schedule(()=>workbenchCanvas.classList.add("scan-locate","timeline-scan"),500);
+        schedule(()=>{workbenchCanvas.classList.add("scan-outline-active");status.querySelector("span").textContent="正在描绘外包装轮廓"},1000);
+        schedule(()=>{workbenchCanvas.classList.add("scan-components-active");status.querySelector("span").textContent="正在分离内部包装组件"},1800);
+        schedule(()=>{workbenchCanvas.classList.add("timeline-identify");setCanvasPhase("phase-material");showMaterialClue(0)},2600);
+        schedule(()=>showMaterialClue(1),3000);
+        schedule(()=>showMaterialClue(2),3400);
+        schedule(()=>{workbenchCanvas.classList.add("timeline-issues");setCanvasPhase("phase-reduction");status.querySelector("span").textContent="初步判断 · 正在标记减量问题"},3500);
+        schedule(()=>{status.querySelector("span").textContent="识别结果已锁定 · 等待规则诊断"},4500);
+        schedule(()=>scanner.classList.add("uncertainty-intro"),5300);
+        schedule(()=>scanner.classList.add("uncertainty-title"),5500);
+        schedule(()=>scanner.classList.add("uncertainty-copy"),5750);
+        schedule(()=>scanner.classList.add("confidence-visible"),6000);
+        schedule(()=>{setScanPhase(1,"结构识别已完成 · 正在判断材料","phase-reduction");setAnalysisButtonStage(2)},7000);
+        schedule(()=>{setScanPhase(2,"材料判断已完成 · 正在计算减量空间","phase-reduction");setAnalysisButtonStage(3)},7500);
         schedule(()=>{
-          resultFlow.hidden=false;
+          setScanPhase(3,"分析完成 · 诊断结果已生成","phase-complete");
           scanner.classList.add("scan-done");
-          workbenchCanvas.classList.add("timeline-redesign");
-          workbenchCanvas.dataset.stage="redesign";
-          status.querySelector("span").textContent="AI减量重设计 · 生成优化结构";
-          document.getElementById("prescription").scrollIntoView({behavior:scrollBehavior,block:"center"});
-        },3500);
-        schedule(()=>{workbenchCanvas.classList.add("timeline-remove");status.querySelector("span").textContent="移除 · 塑料薄膜"},4000);
-        schedule(()=>{
-          workbenchCanvas.classList.add("timeline-replace");
+          resultFlow.hidden=false;
+          postFlow.hidden=false;
+          workbenchCanvas.classList.add("timeline-finished","timeline-redesign","timeline-remove","timeline-replace","timeline-resize");
           const tray=workbenchCanvas.querySelector(".redesign-package .tray small");
           if(tray)tray.textContent="模塑纸浆";
-          status.querySelector("span").textContent="替换 · PET塑料 → 模塑纸浆";
-        },4800);
-        schedule(()=>{workbenchCanvas.classList.add("timeline-resize");status.querySelector("span").textContent="缩容 · 更紧凑的外包装盒"},5600);
-        schedule(()=>{
-          postFlow.hidden=false;
-          workbenchCanvas.classList.add("timeline-finished");
-          document.getElementById("comparison").scrollIntoView({behavior:scrollBehavior,block:"center"});
           renderComparisonStatus();
           if(comparisonState.afterImageUrl&&!comparisonState.hasAnimated)animateComparison(100,50);
           else if(!comparisonState.afterImageUrl)updateComparison(100);
           observeSections();
-        },6500);
-        schedule(()=>animateImpactMetrics(),7200);
-        schedule(()=>optimizationDashboard.classList.add("scores-visible"),8000);
-        schedule(()=>optimizationDashboard.classList.add("recommendation-visible"),8600);
-        schedule(()=>{
+          animateImpactMetrics();
+          optimizationDashboard.classList.add("scores-visible","recommendation-visible");
           isPlaying=false;
-          const recommended=localizeBackendText(latestRedesignResult?.data?.recommended_option||"规则方案");
-          setScanPhase(3,`优化完成 · ${recommended}`,"phase-complete");
           analysisControls.classList.remove("playing");
-          analysisPlayButton.disabled=false;
-          analysisPlayButton.innerHTML='重新播放 <span>↻</span>';
+          analysisPlayButton.innerHTML='分析完成 <span>✓</span>';
+          analysisReplayButton.hidden=false;
           observeJourney();
-        },8800);
+        },8200);
+        schedule(()=>{
+          analysisPlayButton.disabled=false;
+          analysisPlayButton.dataset.action="view";
+          analysisPlayButton.innerHTML='查看诊断结果 <span>→</span>';
+        },8600);
       }
 
       document.getElementById("demoButton").addEventListener("click",()=>{
         prepareAnalysis("demo");
       });
-      analysisPlayButton.addEventListener("click",startAnalysis);
+      analysisPlayButton.addEventListener("click",()=>{
+        if(analysisPlayButton.dataset.action==="view"){
+          document.getElementById("diagnosis").scrollIntoView({behavior:scrollBehavior,block:"start"});
+          return;
+        }
+        startAnalysis();
+      });
+      analysisReplayButton.addEventListener("click",startAnalysis);
 
       fileInput.addEventListener("change",event=>{
         const file=event.target.files&&event.target.files[0];
