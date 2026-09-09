@@ -247,10 +247,10 @@ def _visual_change_score(reference_data_url: str, local_url: str) -> float | Non
         mean_difference = sum(differences) / len(differences)
         changed_ratio = sum(value >= 20 for value in differences) / len(differences)
         raw_score = mean_difference / 45 * .7 + changed_ratio * .3
-        # A 20% sensitivity calibration reflects that an aligned package edit
+        # A 40% sensitivity calibration reflects that an aligned package edit
         # intentionally preserves most pixels (brand, product and background).
         # Identical images still score 0; subtle restyles remain far below 0.6.
-        return round(min(1, raw_score * 1.2), 3)
+        return round(min(1, raw_score * 1.4), 3)
     except (OSError, ValueError, IndexError):
         return None
 
