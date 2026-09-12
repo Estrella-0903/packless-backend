@@ -29,6 +29,13 @@ def _risk_rank(value: str) -> int:
     return {"low": 0, "medium": 1, "high": 2}.get(value, 2)
 
 
+def _worst_risk(values: list[str], default: str = "low") -> str:
+    """Preserve `unknown` instead of silently treating it as a known high risk."""
+    ranks = {"low": 0, "medium": 1, "unknown": 2, "high": 3}
+    normalized = [value if value in ranks else "unknown" for value in values]
+    return max(normalized or [default], key=ranks.__getitem__)
+
+
 def _estimated_cost(before: dict, after: dict) -> float | None:
     def total(state):
         rows = state.get("components") or []
@@ -42,16 +49,55 @@ def _bounded(value: float) -> float:
     return round(max(0, min(100, value)), 1)
 
 
-def _item(key: str, title: str, score: float | None, weight: float,
-          explanation: str, source: str) -> dict[str, Any]:
+def _item(key: str, title: str, normalized_score: float | None, weight: float,
+          explanation: str, source: str, *, awarded_points: int | None = None,
+          status: str = "AI/规则估算") -> dict[str, Any]:
+    max_score = round(weight * 100)
+    points = (
+        awarded_points
+        if awarded_points is not None
+        else None if normalized_score is None else round(normalized_score * weight)
+    )
     return {
-        "key": key, "title": title, "score": score,
+        "key": key, "title": title, "score": points,
+        "max_score": max_score, "normalized_score": normalized_score,
         "weight_percent": round(weight * 100),
-        "points": None if score is None else round(score * weight, 1),
-        "max_points": round(weight * 100, 1),
+        "points": points, "max_points": max_score,
         "explanation": explanation, "source": source,
+        "status": status,
         "requires_validation": True,
     }
+
+
+def _allocate_integer_points(
+    raw_points: list[float], maxima: list[int], total: int
+) -> list[int]:
+    """Allocate a rounded/penalized total without breaking child-score equality."""
+    target = max(0, min(sum(maxima), int(total)))
+    raw_total = sum(max(0, value) for value in raw_points)
+    scaled = [0.0] * len(raw_points) if raw_total <= 0 else [
+        min(maximum, max(0, value) * target / raw_total)
+        for value, maximum in zip(raw_points, maxima)
+    ]
+    points = [min(maximum, int(value)) for value, maximum in zip(scaled, maxima)]
+    remaining = target - sum(points)
+    order = sorted(
+        range(len(points)),
+        key=lambda index: (scaled[index] - points[index], maxima[index] - points[index]),
+        reverse=True,
+    )
+    while remaining > 0:
+        changed = False
+        for index in order:
+            if points[index] < maxima[index]:
+                points[index] += 1
+                remaining -= 1
+                changed = True
+                if remaining == 0:
+                    break
+        if not changed:
+            break
+    return points
 
 
 def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities: list[Any], change_plan: dict[str, Any]) -> dict[str, Any]:
@@ -105,18 +151,74 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
                            (consumer_score, .15), (implementation_score, .20))
     business = round(max(0, sum(score*weight for score, weight in business_dimensions)
                          - speculative_structural_penalty))
+    business_points = _allocate_integer_points(
+        [score * weight for score, weight in business_dimensions],
+        [25, 20, 20, 15, 20], business,
+    )
 
-    availability_rank = max([_risk_rank(item.get("risk_assessment", {}).get("material_availability", "high")) for item in selected] or [0])
-    transport_rank = max([_risk_rank(item.get("risk_assessment", {}).get("transport_protection", "high")) for item in selected] or [0])
-    availability_score = _bounded(95 - availability_rank*25)
-    supplier_score = 45 if new_supplier else 95
-    compatibility_score = _bounded(95 - process_change_rank*25)
-    tooling_score = 55 if new_tooling else 95
-    transport_score = _bounded(95 - transport_rank*25)
-    supply_dimensions = ((availability_score, .25), (supplier_score, .20),
-                         (compatibility_score, .20), (tooling_score, .15), (transport_score, .20))
-    supply = round(max(0, sum(score*weight for score, weight in supply_dimensions)
-                       - speculative_structural_penalty))
+    availability_risk = _worst_risk([
+        item.get("risk_assessment", {}).get("material_availability", "unknown")
+        for item in selected
+    ])
+    process_risk = _worst_risk([
+        item.get("risk_assessment", {}).get("process_compatibility", "unknown")
+        for item in selected
+    ])
+    transport_risk = _worst_risk([
+        item.get("risk_assessment", {}).get("transport_protection", "unknown")
+        for item in selected
+    ])
+    low_confidence_risk_escalated = speculative_structural_penalty > 0
+    if low_confidence_risk_escalated:
+        # Do not add an invisible sixth deduction to a five-item score. Instead,
+        # disclose low-confidence removal/integration as conservative high risk
+        # in the affected implementation dimensions.
+        availability_risk = "high"
+        process_risk = "high"
+        transport_risk = "high"
+
+    # Fixed points make the public risk matrix auditable. Values sit inside the
+    # ranges shown in the UI and the five awarded point values are the total.
+    availability_points = {"low": 24, "medium": 16, "high": 9, "unknown": 14}[availability_risk]
+    line_points = {"low": 19, "medium": 15, "high": 8, "unknown": 13}[process_risk]
+    transport_points = {"low": 19, "medium": 14, "high": 6, "unknown": 13}[transport_risk]
+    line_compatibility = {
+        "low": "high", "medium": "medium", "high": "low", "unknown": "unknown"
+    }[process_risk]
+
+    explicit_supplier_requirement = [
+        item.get("supplier_change_requirement") for item in selected
+        if item.get("supplier_change_requirement") in {"required", "possible"}
+    ]
+    supplier_requirement = (
+        "required" if "required" in explicit_supplier_requirement
+        else "possible" if new_supplier or "possible" in explicit_supplier_requirement
+        else "none"
+    )
+    supplier_points = {"none": 19, "possible": 14, "required": 8}[supplier_requirement]
+
+    tooling_requirement = (
+        "new_tooling" if "replace_material" in kinds
+        else "die_adjustment" if kinds & {"resize", "resize_to_fit"}
+        else "none"
+    )
+    tooling_points = {"none": 15, "die_adjustment": 12, "new_tooling": 7}[tooling_requirement]
+    supply_points = [
+        availability_points, supplier_points, line_points, tooling_points, transport_points
+    ]
+    supply = sum(supply_points)
+    supplier_status = {
+        "none": "无需新增供应商",
+        "possible": "可能需要新增供应商",
+        "required": "必须更换供应商",
+    }[supplier_requirement]
+    tooling_status = {
+        "none": "无需新模具",
+        "die_adjustment": "仅刀模调整",
+        "new_tooling": "需要新模具",
+    }[tooling_requirement]
+    risk_label = {"low": "低风险", "medium": "中等风险", "high": "高风险", "unknown": "风险待确认"}
+    compatibility_label = {"high": "高兼容", "medium": "中等兼容", "low": "低兼容", "unknown": "兼容性待确认"}
     improvement_values = [value for value in (
         None if weight_reduction is None else weight_reduction*100,
         None if plastic_reduction is None else plastic_reduction*100,
@@ -134,6 +236,7 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
         "meaningful_improvement_score": meaningful_score,
         "score_breakdown": {
             "environment": {
+                "total_score": environment,
                 "weight_reduction_percent": round((weight_reduction or 0)*100, 1),
                 "plastic_reduction_percent": None if plastic_reduction is None else round(plastic_reduction*100, 1),
                 "carbon_reduction_percent": None if carbon_reduction is None else round(carbon_reduction*100, 1),
@@ -157,6 +260,7 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
                 "baseline_adjustment": round(max(0, 45-weighted), 1),
             },
             "business": {
+                "total_score": business,
                 "speculative_structural_penalty": speculative_structural_penalty,
                 "estimated_material_cost_change_percent": cost_change,
                 "process_steps_removed": removed_steps,
@@ -166,26 +270,47 @@ def score_redesign(before: dict[str, Any], after: dict[str, Any], opportunities:
                 "new_tooling_required": new_tooling,
                 "change_complexity_penalty": complexity*4,
                 "items": [
-                    _item("cost", "材料成本方向", cost_score, .25, "预计基本持平。" if cost_change is None else f"材料成本预计变化 {cost_change}%。", "AI/规则估算"),
-                    _item("process", "工序简化", process_score, .20, f"预计减少 {removed_steps} 道独立包装工序。", "规则估算"),
-                    _item("brand", "品牌保持", brand_score, .20, f"品牌体验风险为 {('低','中等','高')[brand_rank]}。", "规则评估"),
-                    _item("consumer", "开箱体验", consumer_score, .15, f"消费者体验风险为 {('低','中等','高')[consumer_rank]}。", "规则评估"),
-                    _item("implementation", "改造投入", implementation_score, .20, "需要新模具或供应商验证。" if new_tooling or new_supplier else "可沿用现有供应与主要工艺。", "规则评估"),
+                    _item("cost", "材料成本", cost_score, .25, "预计基本持平。" if cost_change is None else f"材料成本预计变化 {cost_change}%。", "AI材料质量 + 成本代理", awarded_points=business_points[0]),
+                    _item("process", "工艺改动", process_score, .20, f"预计减少 {removed_steps} 道独立包装工序。", "规则估算", awarded_points=business_points[1]),
+                    _item("brand", "品牌影响", brand_score, .20, f"品牌体验风险为 {('低','中等','高')[brand_rank]}。", "规则评估", awarded_points=business_points[2]),
+                    _item("consumer", "消费者体验", consumer_score, .15, f"消费者体验风险为 {('低','中等','高')[consumer_rank]}。", "规则评估", awarded_points=business_points[3]),
+                    _item("implementation", "一次性投入", implementation_score, .20, "需要新模具或供应商验证。" if new_tooling or new_supplier else "可沿用现有供应与主要工艺。", "规则评估", awarded_points=business_points[4]),
                 ],
             },
             "supply_chain": {
-                "speculative_structural_penalty": speculative_structural_penalty,
-                "new_supplier_required": new_supplier,
-                "new_tooling_required": new_tooling,
-                "production_line_compatibility": ("high", "medium", "low")[process_change_rank],
-                "material_availability_risk": ("low", "medium", "high")[availability_rank],
-                "transport_protection_risk": ("low", "medium", "high")[transport_rank],
+                "material_availability_score": supply_points[0],
+                "supplier_change_score": supply_points[1],
+                "production_line_score": supply_points[2],
+                "tooling_score": supply_points[3],
+                "transport_protection_score": supply_points[4],
+                "total_score": supply,
+                "speculative_structural_penalty": 0,
+                "new_supplier_required": supplier_requirement != "none",
+                "new_tooling_required": tooling_requirement == "new_tooling",
+                "production_line_compatibility": line_compatibility,
+                "material_availability_risk": availability_risk,
+                "transport_protection_risk": transport_risk,
+                "supplier_change_status": supplier_status,
+                "supplier_change_requirement": supplier_requirement,
+                "tooling_status": tooling_status,
+                "tooling_requirement": tooling_requirement,
+                "low_confidence_risk_escalated": low_confidence_risk_escalated,
                 "items": [
-                    _item("availability", "材料可得性", availability_score, .25, f"材料可得性风险为 {('低','中等','高')[availability_rank]}。", "供应链规则"),
-                    _item("supplier", "供应商准备", supplier_score, .20, "可能需要新供应商。" if new_supplier else "预计可沿用现有供应商。", "规则估算"),
-                    _item("line", "产线兼容", compatibility_score, .20, f"产线兼容性为 {('高','中等','低')[process_change_rank]}。", "工艺规则"),
-                    _item("tooling", "模具准备", tooling_score, .15, "需要刀模或模具调整。" if new_tooling else "无需新增主要模具。", "规则估算"),
-                    _item("transport", "运输保护", transport_score, .20, f"运输保护风险为 {('低','中等','高')[transport_rank]}。", "规则评估"),
+                    _item("availability", "材料可得性", None, .25,
+                          "替代或再生材料需要确认供应稳定性与批次一致性。" if availability_risk != "low" else "现有材料体系供应成熟，仍建议确认批次一致性。",
+                          "AI材料识别 + 供应链风险规则", awarded_points=supply_points[0], status=risk_label[availability_risk]),
+                    _item("supplier", "供应商变更", None, .20,
+                          "建议先询价并确认供货周期。" if supplier_requirement != "none" else "预计可沿用现有供应商，需确认新规格供货能力。",
+                          "材料替换动作规则", awarded_points=supply_points[1], status=supplier_status),
+                    _item("line", "产线兼容性", None, .20,
+                          "现有包装线可能需要轻度调整与试机确认。" if line_compatibility == "medium" else "需要评估现有产线适配能力。" if line_compatibility == "low" else "预计可兼容现有主要包装工序。",
+                          "工艺兼容风险规则", awarded_points=supply_points[2], status=compatibility_label[line_compatibility]),
+                    _item("tooling", "模具/刀模", None, .15,
+                          "预计只需修改刀模，无需新增复杂模具。" if tooling_requirement == "die_adjustment" else "需要新模具并以打样验证为准。" if tooling_requirement == "new_tooling" else "无需新增主要模具，仍需首件确认。",
+                          "结构动作规则", awarded_points=supply_points[3], status=tooling_status),
+                    _item("transport", "运输保护", None, .20,
+                          "缩容或结构调整后建议进行跌落、振动与运输测试。" if transport_risk != "low" else "结构风险较低，仍建议进行基础运输验证。",
+                          "运输保护风险规则", awarded_points=supply_points[4], status=risk_label[transport_risk]),
                 ],
             },
             "estimated": True,

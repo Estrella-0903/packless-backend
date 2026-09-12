@@ -13,9 +13,10 @@ function canAccess({sourceMode='upload',pendingFile=null,latestAnalysisResult=nu
 }
 function renderScoreFixture(kind,data,score){
   const panel={innerHTML:''};
+  const backendKind=kind==='supplyChain'?'supply_chain':kind;
   const context=vm.createContext({
     document:{getElementById(id){assert.equal(id,'scoreDetails');return panel}},
-    activeAnalysis:{scores:{[kind]:score},scoreBreakdown:{[kind]:data}},
+    activeAnalysis:{scores:{[kind]:score},scoreBreakdown:{[backendKind]:data}},
     Number,String,Array,Math
   });
   const source=html.slice(html.indexOf('function renderScoreBreakdown('),html.indexOf('function animateNumber('));
@@ -42,11 +43,11 @@ async function run(states){
   await assert.rejects(result.promise,/provider failed/);
   result=await run([]);
   await assert.rejects(result.promise,/等待超时/);
-  assert.equal(result.calls.length,20);
+  assert.equal(result.calls.length,90);
   result=await run([{status:'SUCCEEDED'}]);
   await assert.rejects(result.promise,/未返回优化图片/);
   const replay=html.slice(html.indexOf('function startAnalysis()'),html.indexOf('fileInput.addEventListener'));
-  assert(!replay.includes('requestRedesign('),'replay must never resubmit Wan');
+  assert(!replay.includes('requestRedesign('),'replay must never resubmit image generation');
   assert.match(replay,/analysisReplayButton\.addEventListener\("click",startAnalysis\)/,'scanner replay must use the UI-only timeline');
   assert.match(replay,/},8200\)/,'scanner must finish at about 8.2 seconds');
   assert.match(replay,/},8600\)/,'view-result interaction must become available before 9 seconds');
@@ -69,5 +70,14 @@ async function run(states){
   const business=renderScoreFixture('business',{speculative_structural_penalty:12,items:[]},70);
   assert.match(business,/低置信度结构动作/);
   assert.match(business,/−12/);
+  const supply=renderScoreFixture('supplyChain',{total_score:68,items:[
+    {title:'材料可得性',score:16,max_score:25,weight_percent:25,explanation:'需要确认供应稳定性',source:'供应链规则',status:'中等风险',requires_validation:true},
+    {title:'供应商变更',score:null,max_score:20,weight_percent:20,explanation:'',source:'',status:'',requires_validation:true}
+  ]},68);
+  assert.match(supply,/16 \/ 25/);
+  assert.match(supply,/中等风险/);
+  assert.match(supply,/暂无法估算/);
+  assert.doesNotMatch(supply,/缺少结构化评分拆解/);
+  assert.match(html,/kind==="supplyChain"\?"supply_chain":kind/);
   console.log('Frontend polling, step guard, score breakdown, replay and syntax checks passed.');
 })().catch(error=>{console.error(error);process.exitCode=1});

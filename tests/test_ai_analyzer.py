@@ -1,10 +1,13 @@
 import asyncio
+from http import HTTPStatus
+from types import SimpleNamespace
 
 import pytest
 
 from app.services.ai_analyzer import (
     AIAnalyzerError,
     _parse_analysis,
+    _provider_failure,
     analyze_image,
     clean_model_output,
 )
@@ -98,3 +101,30 @@ def test_missing_api_key_is_clear(monkeypatch) -> None:
     monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
     with pytest.raises(AIAnalyzerError, match="DASHSCOPE_API_KEY is not configured"):
         asyncio.run(analyze_image(b"image", "image/png", "package.png"))
+
+
+def test_provider_arrearage_is_reported_as_actionable_billing_error() -> None:
+    response = SimpleNamespace(
+        status_code=HTTPStatus.BAD_REQUEST,
+        code="Arrearage",
+        message="Access denied due to overdue payment",
+        request_id="request-test",
+    )
+
+    error = _provider_failure(response)
+
+    assert error.code == "AI_BILLING_ERROR"
+    assert "账户余额" in error.message
+
+
+def test_provider_rate_limit_is_classified() -> None:
+    response = SimpleNamespace(
+        status_code=HTTPStatus.TOO_MANY_REQUESTS,
+        code="Throttling.RateQuota",
+        message="Too many requests",
+        request_id="request-test",
+    )
+
+    error = _provider_failure(response)
+
+    assert error.code == "AI_RATE_LIMITED"

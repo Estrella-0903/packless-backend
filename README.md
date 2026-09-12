@@ -1,6 +1,6 @@
 # PackLess AI Backend MVP
 
-FastAPI backend for Qwen vision-powered packaging analysis, rule-guided redesign recommendations, Wan-generated packaging concepts, and a material library. This phase intentionally contains no database.
+FastAPI backend for Qwen vision-powered packaging analysis, rule-guided redesign recommendations, Seedream-generated packaging concepts, and a material library. This phase intentionally contains no database.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ Copy `.env.example` to `.env` and set your Alibaba Cloud Model Studio API key:
 DASHSCOPE_API_KEY=your-api-key-here
 ```
 
-The default vision model is `qwen3-vl-plus`, and the default image model is `wan2.6-image`. They can optionally be overridden with `DASHSCOPE_VISION_MODEL` and `DASHSCOPE_IMAGE_MODEL`.
+The default vision model is `qwen3-vl-plus`. Image editing uses Volcano Ark Seedream 5.0 Pro (`doubao-seedream-5-0-pro-260628`) and requires `ARK_API_KEY`; `SEEDREAM_IMAGE_MODEL`, `SEEDREAM_API_URL`, and `SEEDREAM_IMAGE_SIZE` are optional overrides.
 
 ## Run
 
@@ -64,7 +64,9 @@ curl http://127.0.0.1:8000/api/materials
 pytest -q
 ```
 
-Image analysis is implemented in `app/services/ai_analyzer.py`. The four-layer functional, hard-constraint, optimization, and business/supply-chain decision system lives in `app/services/rule_engine.py`; `app/services/redesign_service.py` selects rules for the three risk profiles and computes the weighted recommendation. Prompt construction is isolated in `app/services/prompt_builder.py`. Wan image editing uses an asynchronous task in `app/services/image_generator.py`: submit, poll every 2.5 seconds for up to 10 attempts, download the successful result, and serve it at `/generated/<filename>`. Render's local filesystem is ephemeral, so generated files survive only while the current instance filesystem remains available.
+Image analysis is implemented in `app/services/ai_analyzer.py`. The four-layer functional, hard-constraint, optimization, and business/supply-chain decision system lives in `app/services/rule_engine.py`; `app/services/redesign_service.py` selects rules for the three risk profiles and computes the weighted recommendation. Prompt construction is isolated in `app/services/prompt_builder.py`. Seedream image editing is adapted to the existing local task contract in `app/services/image_generator.py`: `/api/redesign` creates a task, the frontend polls the unchanged status endpoint, and the synchronous Ark result is downloaded and served at `/generated/<filename>`. Render's local filesystem is ephemeral, so generated files survive only while the current instance filesystem remains available.
+
+The browser requests asynchronous packaging analysis with `Prefer: respond-async`. `POST /api/analyze` then returns `202` with an `analysis_task_id`, and the browser polls `GET /api/analyze/status/<task_id>`. This avoids holding one idle HTTP connection open during variable vision-model latency. API clients that omit the header retain the original synchronous response contract.
 
 ## Deploy to Render
 
@@ -84,6 +86,6 @@ Start command:
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Add `DASHSCOPE_API_KEY` under the Render service's **Environment** settings before deploying. Do not commit a real `.env` file.
+Add both `DASHSCOPE_API_KEY` (image analysis) and `ARK_API_KEY` (Seedream image editing) under the Render service's **Environment** settings before deploying. Do not commit a real `.env` file.
 
 If this project is stored inside a larger repository, set Render's **Root Directory** to `packless-backend`. Otherwise leave Root Directory blank.

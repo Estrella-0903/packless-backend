@@ -49,6 +49,38 @@ def test_redesign_accepts_partial_json() -> None:
     assert response.json()["data"]["analysis_id"] == "custom-id"
 
 
+def test_redesign_returns_renderable_68_point_supply_chain_breakdown() -> None:
+    analysis = {
+        "analysis_id": "analysis_supply_chain_68",
+        "product": {"category": "gift", "product_name": "three-piece gift set"},
+        "geometry_estimate": {
+            "outer_package": {
+                "length_mm": 220, "width_mm": 140, "height_mm": 45,
+                "confidence": .7,
+            },
+            "confidence": .7,
+        },
+        "packaging": {"space_utilization": 65, "materials": [
+            {"component": "outer lid", "material": "paperboard", "confidence": .9,
+             "evidence": "visible rigid printed outer lid", "estimated_weight_g": 16.4},
+            {"component": "inner tray/base", "material": "paperboard", "confidence": .8,
+             "evidence": "visible structural paperboard tray", "estimated_weight_g": 9.2},
+            {"component": "interior lining", "material": "unknown", "confidence": .4,
+             "evidence": "visible secondary lining; exact material uncertain",
+             "essential": False, "protective": False, "barrier": False,
+             "brand_critical": False},
+        ]},
+    }
+    response = client.post("/api/redesign", json={"analysis_result": analysis})
+    assert response.status_code == 200
+    data = response.json()["data"]
+    recommended = next(item for item in data["options"] if item["id"] == data["recommended_option"])
+    supply = recommended["score_breakdown"]["supply_chain"]
+    assert recommended["supply_chain_score"] == supply["total_score"] == 68
+    assert [item["score"] for item in supply["items"]] == [16, 19, 15, 12, 6]
+    assert sum(item["score"] for item in supply["items"]) == 68
+
+
 def test_redesign_multipart_generates_image(monkeypatch) -> None:
     async def fake_generate(image_bytes: bytes, prompt: str) -> dict:
         assert image_bytes == b"valid image placeholder"
@@ -98,7 +130,21 @@ def test_redesign_multipart_generates_image(monkeypatch) -> None:
     option_by_id = {option["id"]: option for option in data["options"]}
     recommended = option_by_id[data["recommended_option"]]
     assert recommended["score_breakdown"]["estimated"] is True
-    assert "environment" in recommended["score_breakdown"]
+    breakdown = recommended["score_breakdown"]
+    assert {"environment", "business", "supply_chain"} <= breakdown.keys()
+    for family in ("environment", "business", "supply_chain"):
+        assert breakdown[family]["items"]
+        assert all(
+            {"score", "max_score", "explanation", "source"} <= item.keys()
+            for item in breakdown[family]["items"]
+        )
+    supply = breakdown["supply_chain"]
+    supply_fields = (
+        "material_availability_score", "supplier_change_score",
+        "production_line_score", "tooling_score", "transport_protection_score",
+    )
+    assert sum(supply[field] for field in supply_fields) == supply["total_score"]
+    assert supply["total_score"] == recommended["supply_chain_score"]
     assert data["estimation_method"] == "material_geometry_digital_twin"
     assert recommended["overall_score"] == round(
         0.4 * recommended["environment_score"]
@@ -206,6 +252,68 @@ def test_analyze_returns_clear_ai_failure(monkeypatch) -> None:
             "message": "AI packaging analysis failed.",
         },
     }
+
+
+def test_analyze_billing_failure_returns_actionable_503(monkeypatch) -> None:
+    async def failed_analyze(*args, **kwargs):
+        raise AIAnalyzerError(
+            "AI_BILLING_ERROR",
+            "AI 分析服务账户余额或计费状态异常，请恢复 DashScope 服务后重试。",
+        )
+
+    monkeypatch.setattr(analyze_router, "analyze_image", failed_analyze)
+    response = client.post(
+        "/api/analyze",
+        files={"image": ("package.jpg", b"mock image bytes", "image/jpeg")},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "AI_BILLING_ERROR"
+    assert "账户余额" in response.json()["error"]["message"]
+
+
+def test_analyze_async_submission_returns_immediately(monkeypatch) -> None:
+    monkeypatch.setattr(
+        analyze_router,
+        "submit_analysis_task",
+        lambda *args: {"analysis_task_id": "analysis-task-test", "status": "PENDING"},
+    )
+    response = client.post(
+        "/api/analyze",
+        headers={"Prefer": "respond-async"},
+        files={"image": ("package.jpg", b"mock image bytes", "image/jpeg")},
+    )
+
+    assert response.status_code == 202
+    assert response.json() == {
+        "success": True,
+        "data": {"analysis_task_id": "analysis-task-test", "status": "PENDING"},
+    }
+
+
+def test_analyze_async_status_returns_completed_contract(monkeypatch) -> None:
+    monkeypatch.setattr(
+        analyze_router,
+        "get_analysis_task",
+        lambda task_id: {
+            "analysis_task_id": task_id,
+            "status": "SUCCEEDED",
+            "result": {
+                "analysis_id": "analysis-task-test",
+                "filename": "package.jpg",
+                "product": {"category": "food", "product_name": "snack"},
+                "packaging": {"materials": []},
+                "diagnosis": {"level": "", "issue_tags": []},
+                "environmental_impact": {},
+                "summary": "done",
+            },
+        },
+    )
+    response = client.get("/api/analyze/status/analysis-task-test")
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    assert response.json()["data"]["analysis_id"] == "analysis-task-test"
 
 
 def test_analyze_rejects_non_image_upload() -> None:

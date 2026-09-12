@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import io
-from types import SimpleNamespace
 
 from PIL import Image
 
@@ -52,27 +51,30 @@ def test_strict_mode_can_be_restored(monkeypatch):
 
 
 def test_low_visual_change_submits_one_regeneration(monkeypatch):
-    monkeypatch.setenv("DASHSCOPE_API_KEY", "test-key")
+    monkeypatch.setenv("ARK_API_KEY", "test-key")
     entry = {
         "status": "RUNNING", "created": 0, "work": None,
         "provider_url": "https://provider.test/first.png",
-        "provider_task_id": "provider-first",
         "reference_data_url": "data:image/jpeg;base64,AA==",
         "prompt": "approved structural prompt", "retry_count": 0,
         "local_image_url": "", "error": "", "visual_change_score": None,
     }
-    monkeypatch.setattr(wan, "_download_result", lambda _: asyncio.sleep(0, result="/generated/first.png"))
-    monkeypatch.setattr(wan, "_visual_change_score", lambda *_: .25)
+    downloads = iter(["/generated/first.png", "/generated/retry.png"])
+    scores = iter([.25, .8])
+    monkeypatch.setattr(wan, "_download_result", lambda _: asyncio.sleep(0, result=next(downloads)))
+    monkeypatch.setattr(wan, "_visual_change_score", lambda *_: next(scores))
     monkeypatch.setattr(wan, "_remove_generated_file", lambda *_: None)
-    monkeypatch.setattr(wan, "_submit_task", lambda *_: SimpleNamespace(
-        status_code=200, output=SimpleNamespace(task_id="provider-retry")))
+    monkeypatch.setattr(wan, "_submit_task", lambda *_: {
+        "status_code": 200,
+        "body": {"data": [{"url": "https://provider.test/retry.png"}]},
+    })
 
     async def scenario():
         wan.IMAGE_TASK_CACHE["public-task"] = entry
         result = await wan.finalize_optimized_image("public-task")
-        assert result["status"] == "PENDING"
+        assert result["status"] == "SUCCEEDED"
+        assert result["optimized_image_url"] == "/generated/retry.png"
         assert result["regeneration_attempted"] is True
-        assert wan.IMAGE_TASK_CACHE["public-task"]["provider_task_id"] == "provider-retry"
         wan.IMAGE_TASK_CACHE.clear()
 
     asyncio.run(scenario())

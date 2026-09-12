@@ -69,6 +69,33 @@ def test_score_breakdown_uses_structured_product_ui():
     assert "保守展示基线" in HTML
     assert "该校正不是额外环境收益" in HTML
     assert "包装减量25% · 塑料减量20% · 碳排改善30%" in HTML
+    assert 'kind==="supplyChain"?"supply_chain":kind' in HTML
+    assert "item.max_score??item.max_points" in HTML
+    assert "暂无法估算，其他已知子项仍正常展示。" in HTML
+
+
+def test_primary_material_metric_is_dynamic_and_chinese():
+    assert "function buildPrimaryMaterialMetric(analysisResult,redesignResult)" in HTML
+    assert 'id="materialMetricLabel"' in HTML
+    assert 'id="materialMetricBefore"' in HTML
+    assert 'id="materialMetricAfter"' in HTML
+    assert 'id="materialMetricUnit"' in HTML
+    for label in ("包装层数", "塑料使用", "材料种类", "材料复杂度", "纸材用量", "材料结构", "空间利用率", "可回收评分"):
+        assert label in HTML
+    assert 'data-before-metric="plasticWeight"' not in HTML
+
+
+def test_analysis_error_preserves_backend_diagnostic_message():
+    assert "const responseText=await response.text()" in HTML
+    assert "result?.error?.message" in HTML
+    assert 'alert(error instanceof Error&&error.message?error.message:' in HTML
+
+
+def test_analysis_uses_short_polling_requests_instead_of_one_idle_connection():
+    assert 'headers:{Prefer:"respond-async"}' in HTML
+    assert "async function pollAnalysisTask(taskId)" in HTML
+    assert "/api/analyze/status/" in HTML
+    assert "response.status===202" in HTML
 
 
 def test_carbon_display_discloses_proxy_method_and_validation():

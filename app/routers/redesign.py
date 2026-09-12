@@ -109,7 +109,7 @@ async def redesign_packaging(request: Request) -> RedesignResponse | JSONRespons
             plan.after_render_spec.model_dump(by_alias=True),
         )
         try:
-            print("[REDESIGN] calling wan image generator", flush=True)
+            print("[REDESIGN] starting Seedream image generation", flush=True)
             generation = await submit_optimized_image_task(image_bytes, prompt)
         except Exception:
             generation = {

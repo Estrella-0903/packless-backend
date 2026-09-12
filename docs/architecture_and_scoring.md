@@ -14,7 +14,7 @@
 |视觉识别|Qwen 识别图片中的产品、组件、材料线索及问题|材料实验室鉴定、精确测量|
 |方案决策|确定性规则、风险过滤、评分与推荐|LLM 自由创造并决定方案|
 |方案说明|规则服务中的自然语言模板|另一次 LLM 解释调用|
-|优化图|Wan 根据原图和已批准动作生成概念图|经工程验证的成品、自动验证了所有动作的图像|
+|优化图|Seedream 5.0 Pro 根据原图和已批准动作生成概念图|经工程验证的成品、完整验证了所有动作的图像|
 |Before / After 指标|统一估算服务，附来源与验证状态|实测改善幅度|
 |材料碳数据|本地材料映射与 DEFRA 参考因子|完整产品碳足迹、认证减排量|
 |材料目录|静态预设目录|实时供应商数据库或自动读取全部 DEFRA 材料|
@@ -40,11 +40,11 @@ flowchart TD
     M --> X
     X --> S[动态评分 / 推荐]
     C --> P[AfterRenderSpec / 图片提示词]
-    P --> W[提交 Wan 异步任务]
+    P --> W[创建 Seedream 本地后台任务]
     W --> T[返回 task_id 与 PENDING]
     T --> F
     F --> G[GET image-status：独立轮询]
-    G --> V[查询 Wan / 下载结果 / 本地托管]
+    G --> V[调用 Seedream / 下载结果 / 本地托管]
     V --> F
     F --> B[真实原图与 AI 图同位滑杆对比]
     D[材料属性库与 DEFRA 因子] --> M
@@ -61,7 +61,7 @@ flowchart TD
 |Web 服务|FastAPI、Uvicorn|路由、静态托管、健康检查、OpenAPI|
 |数据契约|Pydantic 2|分析、规则机会、方案、指标与响应结构|
 |视觉分析|DashScope SDK、Qwen|图片 data URL 输入、JSON 输出|
-|图像生成|DashScope SDK、Wan|提交异步任务、查询状态|
+|图像生成|火山方舟图片生成 API、Seedream 5.0 Pro|参考图编辑、本地后台任务适配|
 |图像处理|Pillow、httpx|图片规范化、下载与保存|
 |配置|python-dotenv、环境变量|读取模型名和密钥|
 |数据层|本地 JSON / CSV / 映射文件|只读参考数据，无数据库|
@@ -88,7 +88,7 @@ packless-backend/
 │   ├── scoring_engine.py                # 环境、商业、供应链动态评分
 │   ├── packaging_estimator.py          # 前后指标与估算一致性
 │   ├── prompt_builder.py              # 分析提示词与获批结构动作提示词
-│   ├── image_generator.py             # Wan 异步任务与结果图片托管
+│   ├── image_generator.py             # Seedream 调用、任务状态与结果图片托管
 │   └── material_data_service.py        # 材料映射与碳参考计算
 ├── app/schemas/models.py               # 响应模型和新增兼容字段
 ├── app/mock/mock_data.py               # 仍供材料目录使用的预设数据
@@ -132,37 +132,35 @@ packless-backend/
 
 模型默认 `qwen3-vl-plus`，由 `DASHSCOPE_VISION_MODEL` 覆盖。数字不确定时可为空；估算服务随后基于组件线索补充受约束的 Demo 估计。
 
-### 3.3 Wan 异步流程
+### 3.3 Seedream 后台任务流程
 
-模型默认 `wan2.6-image`，由 `DASHSCOPE_IMAGE_MODEL` 覆盖。
+模型默认 `doubao-seedream-5-0-pro-260628`，由 `SEEDREAM_IMAGE_MODEL` 覆盖。提供方使用火山方舟同步图片生成接口；服务层将其包装为原有的提交/轮询契约。
 
 ```text
 POST /api/redesign
   → 计算规则与评分
   → 原图 + ChangePlan + AfterRenderSpec 构造提示词
-  → ImageGeneration.async_call 提交任务
-  → 读取 output.task_id
+  → 规范化参考图并创建本地 task_id
   → 返回 image_task_id、image_generation_status=PENDING
 
 浏览器 GET /api/redesign/image-status/{task_id}
-  → 返回缓存状态，并按需触发后台刷新
-  → ImageGeneration.fetch 查询提供方状态
-  → 成功后提取图片 URL、下载并保存
+  → 返回缓存状态，并按需启动后台 Seedream 请求
+  → POST 火山方舟 /api/v3/images/generations
+  → 提取临时图片 URL、下载并保存
   → 本地图片可用才标记 SUCCEEDED
   → 浏览器收到 /generated/... 并预加载 After 图
 ```
 
 |阶段|当前限制|
 |---|---|
-|任务提交 HTTP|连接 10 秒、读取 30 秒；SDK 参数为 `request_timeout=(10,30)`|
-|整个提交操作|异步等待上限 45 秒，包含图像规范化；不等待最终生成|
+|Seedream HTTP|连接 10 秒、读取 180 秒；后台执行|
+|整个后台生成|应用等待上限 210 秒，不阻塞 redesign 与状态请求|
 |前端 redesign 请求|55 秒超时|
-|提供方状态刷新|异步等待上限 8 秒|
-|结果下载阶段|异步等待上限 35 秒|
-|浏览器状态轮询|每次先等 2.5 秒，最多 20 次；单次请求超时 10 秒|
+|结果下载阶段|异步等待上限 95 秒|
+|浏览器状态轮询|每次先等 2.5 秒，最多 90 次；单次请求超时 10 秒|
 |任务缓存|进程内字典，上限 1024 项；新提交时清理超过 3600 秒且无运行工作项的记录|
 
-轮询总时长还包括每次 HTTP 耗时，不应把它宣称为严格 50 秒完成。读取超时可能发生在提供方已创建任务之后，因此提交不盲目自动重试。线程中的同步调用也不会因外层异步超时而被强制终止。
+轮询总时长还包括每次 HTTP 耗时，不应把它宣称为严格 225 秒完成。提供方请求在线程中执行，状态接口只返回缓存快照，不阻塞浏览器请求。
 
 After 使用服务返回的 `optimized_image_url`，成功预加载后赋给 `afterImage.src`。Before 与 After 同位置、同尺寸、`object-fit:contain`，通过裁剪区域和 Pointer Events 实现鼠标/触屏滑杆。失败显示错误和重新生成入口，不把 CSS 包装模型冒充这次生成结果。
 
@@ -329,7 +327,7 @@ AfterRenderSpec 传递组件动作、保留/删除组件、目标层数、外体
 
 提示词要求：保持产品、Logo、品牌色、摄影角度、背景和光线；按批准动作改变包装；不能只重新配色，也不能缩小整张图。图像生成前由 `build_visual_change_summary` 列明可见变化。仅 R05 等低变化方案会显示“本方案以材料来源优化为主，结构变化较小”。
 
-**当前没有生成后自动视觉核验器。** 动作可追溯表示提示词有明确依据，不表示系统已验证 Wan 图像确实执行了每项动作。发布概念图仍需人工审阅。
+生成后使用对齐图片差异代理检查可见变化强度；低于阈值时最多用强化提示词重试一次。该代理只能识别整体视觉变化，不证明 Seedream 正确执行了每项动作，发布概念图仍需人工审阅。
 
 ## 8. 数据接入与碳估算
 
@@ -368,12 +366,15 @@ uvicorn app.main:app --reload
 
 |环境变量|用途|
 |---|---|
-|`DASHSCOPE_API_KEY`|Qwen 与 Wan 当前共同使用；本地 .env 或部署平台环境变量|
+|`DASHSCOPE_API_KEY`|Qwen 视觉分析；本地 .env 或部署平台环境变量|
 |`DASHSCOPE_VISION_MODEL`|可选，默认 qwen3-vl-plus|
-|`DASHSCOPE_IMAGE_MODEL`|可选，默认 wan2.6-image|
+|`ARK_API_KEY`|Seedream 5.0 Pro 的火山方舟 API Key|
+|`SEEDREAM_IMAGE_MODEL`|可选，默认 doubao-seedream-5-0-pro-260628|
+|`SEEDREAM_API_URL`|可选，默认北京地域方舟图片生成接口|
+|`SEEDREAM_IMAGE_SIZE`|可选，默认 2K|
 |`PORT`|部署平台提供给启动命令|
 
-不应提交 .env 或在文档、日志中写入密钥；曾公开粘贴的密钥应轮换。日志有分析阶段、规则请求、Wan 提交、状态和下载标记；模型原始文本调试输出最多约3000字符，仍可能包含产品信息，生产环境需要控制日志访问和保留期。
+不应提交 .env 或在文档、日志中写入密钥；曾公开粘贴的密钥应轮换。日志有分析阶段、规则请求、Seedream 提交、状态和下载标记；模型原始文本调试输出最多约3000字符，仍可能包含产品信息，生产环境需要控制日志访问和保留期。
 
 当前 MVP 边界与待完善项（不是已完成能力）：
 
@@ -409,4 +410,4 @@ python -m pytest -q
 
 ---
 
-一句话总结：**Qwen 提供识别证据，材料与几何服务建立 Before 数字模型，规则引擎只决定可执行动作，After 模拟器执行 ChangePlan，评分引擎消费前后估算差异，Wan 再把获批动作转成概念图；实测与工程验证仍在系统之外。**
+一句话总结：**Qwen 提供识别证据，材料与几何服务建立 Before 数字模型，规则引擎只决定可执行动作，After 模拟器执行 ChangePlan，评分引擎消费前后估算差异，Seedream 5.0 Pro 再把获批动作转成概念图；实测与工程验证仍在系统之外。**

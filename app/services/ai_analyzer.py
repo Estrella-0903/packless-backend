@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import logging
 import os
 import re
 from http import HTTPStatus
@@ -20,6 +21,43 @@ from app.services.prompt_builder import build_analysis_messages
 load_dotenv()
 
 MODEL_NAME = os.getenv("DASHSCOPE_VISION_MODEL", "qwen3-vl-plus")
+logger = logging.getLogger(__name__)
+
+
+def _provider_failure(response: Any) -> "AIAnalyzerError":
+    provider_code = str(getattr(response, "code", "") or "").strip()
+    provider_message = str(getattr(response, "message", "") or "").strip()
+    request_id = str(getattr(response, "request_id", "") or "").strip()
+    logger.error(
+        "[ANALYZE] DashScope rejected request: status=%s code=%s request_id=%s message=%s",
+        getattr(response, "status_code", "unknown"),
+        provider_code or "unknown",
+        request_id or "unknown",
+        provider_message or "unknown",
+    )
+
+    normalized_code = provider_code.lower()
+    normalized_message = provider_message.lower()
+    if normalized_code == "arrearage" or "overdue payment" in normalized_message:
+        return AIAnalyzerError(
+            "AI_BILLING_ERROR",
+            "AI 分析服务账户余额或计费状态异常，请恢复 DashScope 服务后重试。",
+        )
+    if normalized_code in {"invalidapikey", "invalid_api_key", "unauthorized"}:
+        return AIAnalyzerError(
+            "AI_AUTH_ERROR",
+            "AI 分析服务鉴权失败，请检查 DashScope API Key。",
+        )
+    if any(token in normalized_code for token in ("throttl", "ratelimit", "quota")):
+        return AIAnalyzerError(
+            "AI_RATE_LIMITED",
+            "AI 分析服务当前请求过多，请稍后重试。",
+        )
+    return AIAnalyzerError(
+        "AI_ANALYSIS_FAILED",
+        "AI 包装分析服务调用失败，请稍后重试。",
+    )
+
 
 class AIAnalyzerError(RuntimeError):
     """A safe, user-facing failure from the AI analysis integration."""
@@ -151,16 +189,14 @@ def _call_dashscope(
             result_format="message",
         )
     except Exception as exc:
+        logger.exception("[ANALYZE] DashScope request raised an exception")
         raise AIAnalyzerError(
             "AI_ANALYSIS_FAILED",
-            "AI packaging analysis failed.",
+            "AI 包装分析服务连接失败，请稍后重试。",
         ) from exc
 
     if response.status_code != HTTPStatus.OK:
-        raise AIAnalyzerError(
-            "AI_ANALYSIS_FAILED",
-            "AI packaging analysis failed.",
-        )
+        raise _provider_failure(response)
     return _parse_analysis(_extract_text(response), filename)
 
 

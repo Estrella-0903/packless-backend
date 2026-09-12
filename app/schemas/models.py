@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Generic, TypeVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class APIModel(BaseModel):
@@ -103,6 +103,116 @@ class RedesignRequest(APIModel):
     issue_tags: list[str] | None = None
 
 
+class ScoreBreakdownItem(APIModel):
+    key: str
+    title: str
+    score: float | None = Field(default=None, ge=0)
+    max_score: float = Field(gt=0)
+    normalized_score: float | None = Field(default=None, ge=0, le=100)
+    weight_percent: int = Field(ge=0, le=100)
+    points: float | None = Field(default=None, ge=0)
+    max_points: float = Field(gt=0)
+    explanation: str
+    source: str
+    status: str
+    requires_validation: bool
+
+
+class EnvironmentScoreBreakdown(APIModel):
+    total_score: int = Field(ge=0, le=100)
+    weight_reduction_percent: float
+    plastic_reduction_percent: float | None = None
+    carbon_reduction_percent: float | None = None
+    recyclability_improvement: float | None = None
+    space_improvement: float | None = None
+    weight_reduction_score: float | None = Field(default=None, ge=0, le=100)
+    plastic_reduction_score: float | None = Field(default=None, ge=0, le=100)
+    carbon_reduction_score: float | None = Field(default=None, ge=0, le=100)
+    recyclability_score: float | None = Field(default=None, ge=0, le=100)
+    space_efficiency_score: float | None = Field(default=None, ge=0, le=100)
+    weights_redistributed: bool
+    no_improvement_penalty: int = Field(ge=0)
+    baseline_adjustment: float = Field(ge=0)
+    items: list[ScoreBreakdownItem]
+
+
+class BusinessScoreBreakdown(APIModel):
+    total_score: int = Field(ge=0, le=100)
+    speculative_structural_penalty: int = Field(ge=0)
+    estimated_material_cost_change_percent: float | None = None
+    process_steps_removed: int = Field(ge=0)
+    process_change_risk: str
+    brand_risk: str
+    consumer_experience_risk: str
+    new_tooling_required: bool
+    change_complexity_penalty: int = Field(ge=0)
+    items: list[ScoreBreakdownItem]
+
+
+class SupplyChainScoreBreakdown(APIModel):
+    material_availability_score: int = Field(ge=0, le=25)
+    supplier_change_score: int = Field(ge=0, le=20)
+    production_line_score: int = Field(ge=0, le=20)
+    tooling_score: int = Field(ge=0, le=15)
+    transport_protection_score: int = Field(ge=0, le=20)
+    total_score: int = Field(ge=0, le=100)
+    speculative_structural_penalty: int = Field(ge=0)
+    material_availability_risk: str
+    new_supplier_required: bool
+    supplier_change_status: str
+    supplier_change_requirement: str
+    production_line_compatibility: str
+    new_tooling_required: bool
+    tooling_status: str
+    tooling_requirement: str
+    low_confidence_risk_escalated: bool
+    transport_protection_risk: str
+    items: list[ScoreBreakdownItem]
+
+
+    @field_validator("total_score")
+    @classmethod
+    def total_must_equal_children(cls, value: int, info) -> int:
+        values = info.data
+        children = (
+            values.get("material_availability_score"),
+            values.get("supplier_change_score"),
+            values.get("production_line_score"),
+            values.get("tooling_score"),
+            values.get("transport_protection_score"),
+        )
+        if all(child is not None for child in children) and sum(children) != value:
+            raise ValueError("supply-chain total_score must equal its five child scores")
+        return value
+
+    @model_validator(mode="after")
+    def items_must_match_named_scores(self):
+        named_scores = [
+            self.material_availability_score,
+            self.supplier_change_score,
+            self.production_line_score,
+            self.tooling_score,
+            self.transport_protection_score,
+        ]
+        if len(self.items) != 5:
+            raise ValueError("supply-chain breakdown must contain exactly five items")
+        item_scores = [item.score for item in self.items]
+        if any(score is None for score in item_scores) or item_scores != named_scores:
+            raise ValueError("supply-chain item scores must match the named child scores")
+        if [item.max_score for item in self.items] != [25, 20, 20, 15, 20]:
+            raise ValueError("supply-chain item maxima must match the published weights")
+        return self
+
+
+class ScoreBreakdown(APIModel):
+    environment: EnvironmentScoreBreakdown
+    business: BusinessScoreBreakdown
+    supply_chain: SupplyChainScoreBreakdown
+    estimated: bool
+    basis: str
+    demo_recommendation_bonus: dict[str, Any] | None = None
+
+
 class RedesignOption(APIModel):
     id: str
     title: str
@@ -120,6 +230,12 @@ class RedesignOption(APIModel):
     meaningful_improvement: bool = False
     meaningful_improvement_score: float = Field(default=0, ge=0, le=100)
     score_breakdown: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("score_breakdown", mode="before")
+    @classmethod
+    def validate_score_breakdown(cls, value: Any) -> dict[str, Any]:
+        """Validate the public contract while preserving dict access internally."""
+        return ScoreBreakdown.model_validate(value).model_dump(exclude_none=False)
 
 
 class FunctionalCheck(APIModel):

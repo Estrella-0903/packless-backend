@@ -345,7 +345,7 @@
             </div>
             <div class="comparison-note">当前为AI概念优化模式，优先展示可行减量方向；最终方案需工程验证。</div>
             <div class="change-actions" id="changeActions" aria-label="包装减量操作"><div data-change="remove"><b>移除</b><span>待分析</span></div><div data-change="replace"><b>替换</b><span>待分析</span></div><div data-change="resize"><b>缩容</b><span>待分析</span></div><div data-change="simplify"><b>简化</b><span>待分析</span></div></div>
-            <div class="optimization-dashboard" id="optimizationDashboard" aria-live="polite"><div class="change-metrics"><div class="change-metric"><small>包装层数</small><div class="metric-values"><b data-before-metric="layers">待分析</b><i>→</i><strong data-after-metric="layers">待分析</strong><em>层</em></div></div><div class="change-metric"><small>塑料使用</small><div class="metric-values"><b data-before-metric="plasticWeight">待分析</b><i>→</i><strong data-after-metric="plasticWeight">待分析</strong><em>克</em></div></div><div class="change-metric"><small>空间利用率</small><div class="metric-values"><b data-before-metric="spaceUtilization">待分析</b><i>→</i><strong data-after-metric="spaceUtilization">待分析</strong><em>%</em></div></div><div class="change-metric"><small>可回收评分</small><div class="metric-values"><b data-before-metric="recyclability">待分析</b><i>→</i><strong data-after-metric="recyclability">待分析</strong><em>/100</em></div></div></div><div class="decision-row"><div class="decision-score" data-score-card="environment"><span>环境表现</span><strong><b data-score="environment">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="decision-score" data-score-card="business"><span>商业可行性</span><strong><b data-score="business">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="decision-score" data-score-card="supplyChain"><span>供应链可实施性</span><strong><b data-score="supplyChain">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="balanced-solution"><span>推荐方案</span><strong id="recommendedTitle">等待分析</strong></div><div class="score-details" id="scoreDetails"></div></div></div>
+            <div class="optimization-dashboard" id="optimizationDashboard" aria-live="polite"><div class="change-metrics"><div class="change-metric"><small>包装层数</small><div class="metric-values"><b data-before-metric="layers">待分析</b><i>→</i><strong data-after-metric="layers">待分析</strong><em>层</em></div></div><div class="change-metric" id="primaryMaterialMetric"><small id="materialMetricLabel">材料结构</small><div class="metric-values"><b id="materialMetricBefore">待分析</b><i>→</i><strong id="materialMetricAfter">待分析</strong><em id="materialMetricUnit"></em></div></div><div class="change-metric"><small>空间利用率</small><div class="metric-values"><b data-before-metric="spaceUtilization">待分析</b><i>→</i><strong data-after-metric="spaceUtilization">待分析</strong><em>%</em></div></div><div class="change-metric"><small>可回收评分</small><div class="metric-values"><b data-before-metric="recyclability">待分析</b><i>→</i><strong data-after-metric="recyclability">待分析</strong><em>/100</em></div></div></div><div class="decision-row"><div class="decision-score" data-score-card="environment"><span>环境表现</span><strong><b data-score="environment">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="decision-score" data-score-card="business"><span>商业可行性</span><strong><b data-score="business">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="decision-score" data-score-card="supplyChain"><span>供应链可实施性</span><strong><b data-score="supplyChain">待分析</b> / 100</strong><button class="score-explain" type="button">查看评分依据</button></div><div class="balanced-solution"><span>推荐方案</span><strong id="recommendedTitle">等待分析</strong></div><div class="score-details" id="scoreDetails"></div></div></div>
           </section>
 
           <section class="impact" id="impact"><div class="section"><div class="section-heading"><span class="micro">06 / 影响 · AI估算</span><h2>少一点，<br>会发生什么？</h2></div><div class="impact-grid"><div class="impact-stat"><span>包装材料</span><div><strong id="impactWeight">待分析</strong></div><p class="impact-reason" id="impactWeightReason">上传包装图片后显示估算依据。</p><em>AI估算</em></div><div class="impact-stat"><span>塑料</span><div><strong id="impactPlastic">待分析</strong></div><p class="impact-reason" id="impactPlasticReason">上传包装图片后显示材料判断。</p><em>AI估算</em></div><div class="impact-stat"><span>空间利用率</span><div><strong id="impactSpace">待分析</strong></div><p class="impact-reason" id="impactSpaceReason">上传包装图片后显示缩容依据。</p><em>AI估算</em></div><div class="impact-stat"><span>可回收性</span><div><strong id="impactRecycle">待分析</strong></div><p class="impact-reason" id="impactRecycleReason">上传包装图片后显示规则依据。</p><em>规则估算</em></div></div><button class="method-toggle" id="methodToggle" aria-expanded="false">这些数字是怎么算出来的？ <b>＋</b></button><div class="method" id="method"><p id="estimateBasis">依据：AI识别包装组件、包装几何估计、材料属性库、DEFRA 2024参考因子及结构减量方案。</p><p id="estimateConfidence">可信度随图片证据与几何信息变化；所有结果最终以实际测量和工程验证为准。</p></div></div></section>
@@ -645,6 +645,103 @@
         return next;
       }
 
+      function buildPrimaryMaterialMetric(analysisResult,redesignResult){
+        const analysis=analysisResult?.data||analysisResult||{};
+        const redesign=redesignResult?.data||redesignResult||{};
+        const materials=Array.isArray(analysis.packaging?.materials)?analysis.packaging.materials:[];
+        const materialText=row=>typeof row==="string"?row:`${row?.material||row?.name||row?.type||""} ${row?.component||""}`.trim();
+        const isUnknown=value=>/(?:\bunknown\b|\bunspecified\b|\bunidentified\b|^n\/?a$|未知|不明|待确认)/i.test(String(value||"").trim());
+        const isPlastic=value=>/(?:\bplastic\b|\bpet\b|塑料)/i.test(String(value||""));
+        const isPaper=value=>/(?:paper|paperboard|cardboard|carton|kraft|fiber|fibre|pulp|corrugated|纸|纸板|纸浆|瓦楞)/i.test(String(value||""));
+        const canonicalMaterial=row=>{
+          const raw=String(typeof row==="string"?row:row?.material||row?.name||row?.type||"").trim().toLowerCase();
+          if(!raw||isUnknown(raw))return null;
+          if(/molded pulp|moulded pulp|模塑纸浆/.test(raw))return "模塑纸浆";
+          if(/corrugated|瓦楞/.test(raw))return "瓦楞纸";
+          if(/coated paper|涂布纸/.test(raw))return "涂布纸";
+          if(/kraft|牛皮纸/.test(raw))return "牛皮纸";
+          if(/paperboard|cardboard|carton|纸板/.test(raw))return "纸板";
+          if(/paper|fiber|fibre|纸/.test(raw))return "纸材";
+          if(/\bpet\b/.test(raw))return "PET";
+          if(/plastic|塑料/.test(raw))return "塑料";
+          return raw.replace(/\s+/g," ");
+        };
+        const distinctCount=rows=>new Set((rows||[]).map(canonicalMaterial).filter(Boolean)).size;
+        const beforeState=redesign.before?.packaging_state||{};
+        const afterState=redesign.after?.packaging_state||{};
+        const beforePlastic=redesign.before?.plastic_weight_g??analysis.environmental_impact?.estimated_plastic_weight_g;
+        const afterPlastic=redesign.after?.plastic_weight_g;
+        const visiblePlastic=(Number.isFinite(beforePlastic)&&beforePlastic>0)||materials.some(row=>isPlastic(materialText(row)));
+        const recommended=(redesign.options||[]).find(option=>option.id===redesign.recommended_option)||{};
+        const actions=redesign.change_plan?.component_actions||[];
+        const selectedR04=(recommended.selected_rule_ids||[]).includes("R04")||actions.some(action=>action.rule_id==="R04");
+        const hasR04=(redesign.opportunities||[]).some(item=>item.rule_id==="R04"||item.action==="simplify_materials");
+        const plasticReduction=(recommended.selected_rule_ids||[]).includes("R03")||actions.some(action=>action.rule_id==="R03"||["remove","replace_material","lightweight"].includes(action.action)&&isPlastic(materialText(action)));
+
+        if(visiblePlastic){
+          const numericBefore=Number.isFinite(beforePlastic)&&beforePlastic>0;
+          const numericAfter=Number.isFinite(afterPlastic)&&afterPlastic>0;
+          return {
+            label:"塑料使用",
+            before:numericBefore?beforePlastic:"存在",
+            after:numericAfter?afterPlastic:plasticReduction?"减少":"存在",
+            unit:numericBefore||numericAfter?"克":"",
+            status:"estimated",
+            source:"AI识别 + 规则估算",
+          };
+        }
+
+        const beforeMaterialCount=distinctCount(materials);
+        if(beforeMaterialCount>=2){
+          const afterRows=Array.isArray(afterState.components)?afterState.components:[];
+          const measuredAfterCount=distinctCount(afterRows);
+          const afterMaterialCount=measuredAfterCount||Math.max(1,beforeMaterialCount-(selectedR04?1:0));
+          return {label:"材料种类",before:beforeMaterialCount,after:afterMaterialCount,unit:"种",status:"estimated",source:"AI识别 + 规则估算"};
+        }
+
+        if(hasR04){
+          return {label:"材料复杂度",before:"中等",after:"低",unit:"",status:"inferred",source:"规则估算"};
+        }
+
+        const knownMaterials=materials.filter(row=>canonicalMaterial(row));
+        const singlePaper=beforeMaterialCount===1&&knownMaterials.every(row=>isPaper(materialText(row)));
+        const paperWeight=state=>{
+          const rows=Array.isArray(state?.components)?state.components:[];
+          const paperRows=rows.filter(row=>row.material_family==="paper"||isPaper(row.material));
+          const weights=paperRows.map(row=>Number(row.estimated_weight_g)).filter(Number.isFinite);
+          return weights.length?Math.round(weights.reduce((sum,value)=>sum+value,0)):null;
+        };
+        if(singlePaper){
+          const stateBefore=paperWeight(beforeState),stateAfter=paperWeight(afterState);
+          const beforePaper=stateBefore??redesign.before?.packaging_weight_g??analysis.environmental_impact?.estimated_packaging_weight_g;
+          const afterPaper=stateAfter??redesign.after?.packaging_weight_g;
+          if(Number.isFinite(beforePaper)&&Number.isFinite(afterPaper)){
+            return {label:"纸材用量",before:beforePaper,after:afterPaper,unit:"克",status:"estimated",source:stateBefore!==null?"包装数字模型":"AI重量估算"};
+          }
+          return {label:"材料结构",before:"单一纸基",after:"单一纸基",unit:"",status:"inferred",source:"AI材料识别"};
+        }
+
+        const structure=beforeMaterialCount===1?(isPaper(materialText(knownMaterials[0]))?"单一纸基":"单一材料"):"暂无法判断";
+        return {label:"材料结构",before:structure,after:structure,unit:"",status:"inferred",source:beforeMaterialCount?"AI材料识别":"待补充材料信息"};
+      }
+
+      function renderPrimaryMaterialMetric(showFinal=false){
+        const metric=buildPrimaryMaterialMetric(latestAnalysisResult,latestRedesignResult);
+        const card=document.getElementById("primaryMaterialMetric");
+        const before=document.getElementById("materialMetricBefore"),after=document.getElementById("materialMetricAfter");
+        document.getElementById("materialMetricLabel").textContent=metric.label;
+        before.textContent=String(metric.before??"暂无法估算");
+        after.textContent=String((showFinal?metric.after:metric.before)??"暂无法估算");
+        document.getElementById("materialMetricUnit").textContent=metric.unit||"";
+        const missing=value=>value===null||value===undefined||value===""||value==="暂无法判断";
+        before.classList.toggle("metric-value-missing",missing(metric.before));
+        after.classList.toggle("metric-value-missing",missing(showFinal?metric.after:metric.before));
+        let provenance=card.querySelector(".metric-provenance");
+        if(!provenance){provenance=document.createElement("small");provenance.className="metric-provenance";card.append(provenance)}
+        provenance.textContent=metric.source;
+        provenance.dataset.status=metric.status;
+      }
+
       function applyRedesignResponse(result){
         const data=result&&result.data;
         if(!data)return;
@@ -682,7 +779,7 @@
       }
 
       function renderAnalysisNumbers(showFinal=false){
-        const provenanceKeys={layers:"layers",plasticWeight:"plastic_weight_g",spaceUtilization:"space_utilization",recyclability:"recyclability"};
+        const provenanceKeys={layers:"layers",spaceUtilization:"space_utilization",recyclability:"recyclability"};
         const sourceLabels={measured:"实测",estimated:"AI估算",inferred:"规则估算",pending:"暂无法估算"};
         const dashboard=document.getElementById("optimizationDashboard");
         if(!document.getElementById("metricEstimateNotice")){
@@ -715,6 +812,7 @@
             carbonNote.innerHTML=`<strong>参考碳排</strong><div class="carbon-values"><b>暂无法估算</b></div>${tags}<p>${reason} 补充材料信息后可重新计算。</p>${formula}`;
           }
         }
+        renderPrimaryMaterialMetric(showFinal);
         document.querySelectorAll("[data-before-metric]").forEach(element=>{
           const key=provenanceKeys[element.dataset.beforeMetric];
           const card=element.closest(".change-metric");
@@ -775,15 +873,20 @@
       function renderScoreBreakdown(kind="environment"){
         const panel=document.getElementById("scoreDetails"),breakdown=activeAnalysis.scoreBreakdown;
         if(!breakdown){panel.innerHTML='<div class="score-summary"><small>评分依据</small><strong>—</strong><p>上传图片并完成分析后，将展示评分构成与数据来源。</p></div>';return}
-        const data=breakdown[kind]||{};
+        const breakdownKey=kind==="supplyChain"?"supply_chain":kind;
+        const data=breakdown[breakdownKey]||{};
         const titles={environment:"环境表现",business:"商业可行性",supplyChain:"供应链可实施性"};
         const score=activeAnalysis.scores[kind];
         const items=Array.isArray(data.items)?data.items:[];
         const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
         const factorRows=items.map(item=>{
-          const available=Number.isFinite(item.score),width=available?Math.max(0,Math.min(100,item.score)):0;
-          const points=available?`${Number(item.points).toFixed(1)} / ${Number(item.max_points).toFixed(0)}`:"不适用";
-          return `<div class="score-factor"><div class="factor-title"><strong>${escapeHtml(item.title)}</strong><small>权重 ${escapeHtml(item.weight_percent)}%</small></div><div><div class="factor-meter"><i style="width:${width}%"></i></div><p class="factor-copy">${escapeHtml(item.explanation)}</p></div><div><div class="factor-points">${points}</div><div class="factor-tags"><span>${escapeHtml(item.source)}</span>${item.requires_validation?"<span>建议工程验证</span>":""}</div></div></div>`;
+          const rawMax=item.max_score??item.max_points,rawAwarded=item.score??item.points;
+          const maxScore=Number(rawMax),awarded=Number(rawAwarded);
+          const available=rawAwarded!==null&&rawAwarded!==undefined&&rawAwarded!==""&&rawMax!==null&&rawMax!==undefined&&rawMax!==""&&Number.isFinite(awarded)&&Number.isFinite(maxScore)&&maxScore>0;
+          const width=available?Math.max(0,Math.min(100,awarded/maxScore*100)):0;
+          const points=available?`${awarded.toFixed(Number.isInteger(awarded)?0:1)} / ${maxScore.toFixed(0)}`:"暂无法估算";
+          const status=item.status?`<span>${escapeHtml(item.status)}</span>`:"";
+          return `<div class="score-factor"><div class="factor-title"><strong>${escapeHtml(item.title)}</strong><small>权重 ${escapeHtml(item.weight_percent)}%</small></div><div><div class="factor-meter"><i style="width:${width}%"></i></div><p class="factor-copy">${escapeHtml(item.explanation||"暂无法估算，其他已知子项仍正常展示。")}</p></div><div><div class="factor-points">${points}</div><div class="factor-tags">${status}<span>${escapeHtml(item.source||"数据待补充")}</span>${item.requires_validation?"<span>建议工程验证</span>":""}</div></div></div>`;
         }).join("");
         const adjustments=[];
         if(kind==="environment"&&Number(data.no_improvement_penalty)>0)adjustments.push({title:"有效改善校正",value:`−${data.no_improvement_penalty}`,copy:"方案未达到有效改善阈值，综合推荐分会扣除该分值。",baseline:false});
@@ -814,6 +917,10 @@
           const key=element.dataset.afterMetric;
           animateNumber(element,activeAnalysis.before[key],activeAnalysis.after[key],900+index*120);
         });
+        const materialMetric=buildPrimaryMaterialMetric(latestAnalysisResult,latestRedesignResult);
+        const materialAfter=document.getElementById("materialMetricAfter");
+        if(Number.isFinite(materialMetric.before)&&Number.isFinite(materialMetric.after))animateNumber(materialAfter,materialMetric.before,materialMetric.after,1020);
+        else materialAfter.textContent=String(materialMetric.after??"暂无法估算");
       }
 
       function updateComparison(position){
@@ -897,7 +1004,7 @@
       }
 
       async function pollImageTask(taskId,requestId=redesignRequestId){
-        for(let attempt=0;attempt<20;attempt++){
+        for(let attempt=0;attempt<90;attempt++){
           await new Promise(resolve=>setTimeout(resolve,2500));
           if(requestId!==redesignRequestId)return null;
           const response=await fetch(`/api/redesign/image-status/${encodeURIComponent(taskId)}`,{signal:AbortSignal.timeout(10000)});
@@ -1149,6 +1256,20 @@
         fileInput.value="";
         fileInput.click();
       });
+      async function pollAnalysisTask(taskId){
+        for(let attempt=0;attempt<120;attempt++){
+          await new Promise(resolve=>setTimeout(resolve,1500));
+          const response=await fetch(`/api/analyze/status/${encodeURIComponent(taskId)}`,{signal:AbortSignal.timeout(10000)});
+          const responseText=await response.text();
+          let result;
+          try{result=responseText?JSON.parse(responseText):null}catch(parseError){result=null}
+          if(response.status===202)continue;
+          if(!response.ok)throw new Error(result?.error?.message||`包装分析状态查询失败（HTTP ${response.status}）`);
+          if(!result?.success)throw new Error(result?.error?.message||"包装分析失败");
+          return result;
+        }
+        throw new Error("包装分析时间较长，请稍后重试");
+      }
       confirmPhoto.addEventListener("click",async()=>{
         if(!pendingImage||!pendingFile)return;
         confirmPhoto.disabled=true;
@@ -1156,9 +1277,20 @@
         try{
           const formData=new FormData();
           formData.append("image",pendingFile);
-          const response=await fetch("/api/analyze",{method:"POST",body:formData});
-          if(!response.ok)throw new Error(`HTTP ${response.status}`);
-          const result=await response.json();
+          const response=await fetch("/api/analyze",{method:"POST",headers:{Prefer:"respond-async"},body:formData});
+          const responseText=await response.text();
+          let result;
+          try{result=responseText?JSON.parse(responseText):null}catch(parseError){result=null}
+          if(!response.ok){
+            const message=result?.error?.message||`包装分析服务暂时不可用（HTTP ${response.status}）`;
+            throw new Error(message);
+          }
+          if(!result)throw new Error("包装分析服务返回了无法识别的结果");
+          if(response.status===202){
+            const taskId=result?.data?.analysis_task_id;
+            if(!taskId)throw new Error("包装分析任务创建失败");
+            result=await pollAnalysisTask(taskId);
+          }
           console.log("Analyze result:",result);
           if(!result.success)throw new Error(result.error?.message||"包装分析失败");
           latestAnalysisResult=result;
@@ -1170,7 +1302,7 @@
           await requestRedesign();
         }catch(error){
           console.error("包装分析请求失败：",error);
-          alert("包装分析失败，请稍后重试");
+          alert(error instanceof Error&&error.message?error.message:"包装分析失败，请稍后重试");
         }finally{
           confirmPhoto.disabled=false;
           confirmPhoto.innerHTML=confirmPhotoMarkup;

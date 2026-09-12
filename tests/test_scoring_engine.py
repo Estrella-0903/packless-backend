@@ -101,6 +101,58 @@ def test_meaningful_balanced_option_beats_no_change_low_risk_option():
     assert chosen.score_breakdown["supply_chain"]["items"]
 
 
+def test_supply_chain_breakdown_is_structured_and_sums_to_total():
+    result = create_redesign_plan(fixture(
+        row("decorative outer sleeve", evidence="non-protective decoration only"),
+        row("outer box"), row("PET inner tray", "PET", "small rigid tray"), space=52,
+    ))
+    selected = option(result, "balanced")
+    supply = selected.score_breakdown["supply_chain"]
+    score_fields = (
+        "material_availability_score", "supplier_change_score",
+        "production_line_score", "tooling_score", "transport_protection_score",
+    )
+    assert supply["total_score"] == selected.supply_chain_score
+    assert sum(supply[key] for key in score_fields) == selected.supply_chain_score
+    assert sum(item["score"] for item in supply["items"]) == selected.supply_chain_score
+    assert [item["max_score"] for item in supply["items"]] == [25, 20, 20, 15, 20]
+    assert all(item["explanation"] and item["source"] and item["status"] for item in supply["items"])
+    assert {"material_availability_risk", "new_supplier_required",
+            "production_line_compatibility", "new_tooling_required",
+            "transport_protection_risk"} <= supply.keys()
+
+
+def test_current_68_point_case_uses_risk_matrix_ranges(monkeypatch):
+    monkeypatch.setenv("REDESIGN_MODE", "demo")
+    result = create_redesign_plan(fixture(
+        row("decorative outer sleeve", evidence="non-protective decoration only"),
+        row("outer box"),
+        row("decorative film", "PET", "non-functional decoration only"),
+        space=45,
+    ))
+    supply = option(result, "balanced").score_breakdown["supply_chain"]
+    assert supply["total_score"] == 68
+    assert [item["score"] for item in supply["items"]] == [16, 19, 15, 12, 6]
+    assert supply["material_availability_risk"] == "medium"
+    assert supply["supplier_change_requirement"] == "none"
+    assert supply["production_line_compatibility"] == "medium"
+    assert supply["tooling_requirement"] == "die_adjustment"
+    assert supply["new_tooling_required"] is False
+    assert supply["transport_protection_risk"] == "high"
+
+
+def test_all_score_families_expose_common_item_contract():
+    result = create_redesign_plan(fixture(row("outer box"), row("inner tray"), space=55))
+    selected = option(result, "balanced")
+    for family in ("environment", "business", "supply_chain"):
+        section = selected.score_breakdown[family]
+        assert "total_score" in section
+        assert section["items"]
+        for item in section["items"]:
+            assert {"score", "max_score", "explanation", "source"} <= item.keys()
+    assert sum(item["score"] for item in selected.score_breakdown["business"]["items"]) == selected.business_score
+
+
 def test_no_change_environment_score_and_overall_are_penalized():
     result = create_redesign_plan(fixture(row("outer box"), space=85))
     low_risk = option(result, "low_risk")
